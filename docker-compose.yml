@@ -1,15 +1,11 @@
 services:
 
-  postgres:
-    image: postgres
+  db:
+    image: postgres:latest
     restart: always
     environment:
-      POSTGRES_PASSWORD: devpass
+      POSTGRES_PASSWORD: myfursona
+      POSTGRES_USER: myfursona
+      POSTGRES_DB: myfursona
     ports:
       - 5432:5432
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8000:8080
