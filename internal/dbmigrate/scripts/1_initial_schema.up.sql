@@ -8,7 +8,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Creating the user table
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS userdata (
     user_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     email TEXT NOT NULL,
     -- name for the account, like @StaxTheFox
@@ -16,27 +16,28 @@ CREATE TABLE IF NOT EXISTS user (
     -- all lower name for searching, like @staxthefox
     normalized_name TEXT GENERATED ALWAYS AS (LOWER(account_name)) STORED,
     -- Custom name for display only, like "Stax the Foxxo :fox:"
-    pretty_name TEXT NOT NULL DEFAULT account_name,
+    pretty_name TEXT NOT NULL,
     pronouns TEXT NULL,
     account_type INT NOT NULL DEFAULT 0,
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE(user_id, email, account_name, normalized_name),
-)
+    UNIQUE(user_id, email, account_name, normalized_name)
+);
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
-UPDATE ON user FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+UPDATE ON userdata FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 
 
 -- Table for password authentication
 CREATE TABLE IF NOT EXISTS password_auth (
     auth_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    password_hash NOT NULL,
+    password_hash TEXT NOT NULL,
+    user_id UUID NOT NULL,
 
-    UNIQUE(auth_id, password_hash, user_id)
+    UNIQUE(auth_id, password_hash, user_id),
     -- User the password corresponds to
-    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES user (user_id),
-)
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+);
 
 -- Table for Fursonas
 CREATE TABLE IF NOT EXISTS fursonas (
@@ -46,7 +47,7 @@ CREATE TABLE IF NOT EXISTS fursonas (
     -- all lower name for searching, like staxthefox
     normalized_name TEXT GENERATED ALWAYS AS (LOWER(url_name)) STORED,
     -- Custom name for display only, like "Stax the Foxxo :fox:"
-    pretty_name TEXT NOT NULL DEFAULT account_name,
+    pretty_name TEXT NOT NULL,
     biography TEXT NULL,
     species TEXT NOT NULL,
     -- Specifies the status of the fursona, like if it's open for adoption / owned / adopted
@@ -55,9 +56,11 @@ CREATE TABLE IF NOT EXISTS fursonas (
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE(fursona_id, url_name, normalized_name)
+    user_id UUID NOT NULL,
 
-    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES user (user_id),
-)
+    UNIQUE(fursona_id, url_name, normalized_name),
+
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+);
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
 UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
