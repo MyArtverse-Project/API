@@ -13,7 +13,8 @@ const (
 	LogLevelError = 3
 )
 
-var logLevel = LogLevelOff
+// var logLevel = LogLevelOff
+var logLevel = LogLevelInfo
 
 func SetLogLevel(level int) {
 	if level >= 0 && level <= 3 {

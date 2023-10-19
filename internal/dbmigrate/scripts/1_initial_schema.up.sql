@@ -10,19 +10,17 @@ $$ LANGUAGE plpgsql;
 -- Creating the user table
 CREATE TABLE IF NOT EXISTS userdata (
     user_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    email TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
     -- name for the account, like @StaxTheFox
-    account_name TEXT NOT NULL,
+    account_name TEXT UNIQUE NOT NULL,
     -- all lower name for searching, like @staxthefox
-    normalized_name TEXT GENERATED ALWAYS AS (LOWER(account_name)) STORED,
+    normalized_name TEXT UNIQUE GENERATED ALWAYS AS (LOWER(account_name)) STORED,
     -- Custom name for display only, like "Stax the Foxxo :fox:"
     pretty_name TEXT NOT NULL,
     pronouns TEXT NULL,
     account_type INT NOT NULL DEFAULT 0,
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    UNIQUE(user_id, email, account_name, normalized_name)
+    updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
 UPDATE ON userdata FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
@@ -30,11 +28,10 @@ UPDATE ON userdata FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 
 -- Table for password authentication
 CREATE TABLE IF NOT EXISTS password_auth (
-    auth_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
-    password_hash TEXT NOT NULL,
-    user_id UUID NOT NULL,
+    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    password_hash TEXT UNIQUE NOT NULL,
+    user_id UUID UNIQUE NOT NULL,
 
-    UNIQUE(auth_id, password_hash, user_id),
     -- User the password corresponds to
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
 );
@@ -43,9 +40,9 @@ CREATE TABLE IF NOT EXISTS password_auth (
 CREATE TABLE IF NOT EXISTS fursonas (
     fursona_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     -- name for the fursona, like StaxTheFox, used in the URL
-    url_name TEXT NOT NULL,
+    url_name TEXT UNIQUE NOT NULL,
     -- all lower name for searching, like staxthefox
-    normalized_name TEXT GENERATED ALWAYS AS (LOWER(url_name)) STORED,
+    normalized_name TEXT UNIQUE GENERATED ALWAYS AS (LOWER(url_name)) STORED,
     -- Custom name for display only, like "Stax the Foxxo :fox:"
     pretty_name TEXT NOT NULL,
     biography TEXT NULL,
@@ -58,7 +55,18 @@ CREATE TABLE IF NOT EXISTS fursonas (
 
     user_id UUID NOT NULL,
 
-    UNIQUE(fursona_id, url_name, normalized_name),
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+);
+CREATE OR REPLACE TRIGGER set_timestamp BEFORE
+UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+
+CREATE TABLE IF NOT EXISTS verify (
+    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL,
+    token UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
 );

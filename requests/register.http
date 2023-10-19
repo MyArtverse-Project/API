@@ -1,0 +1,15 @@
+GET http://localhost:8080/v1/auth/verify/3d249c53-d295-43fe-ad2f-104c7de55835
+Accept: application/json
+
+###
+POST http://localhost:8080/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "Test7",
+  "email": "test7@test.local",
+  "password": "test_pass3",
+  "captcha": "test"
+}
+
+###

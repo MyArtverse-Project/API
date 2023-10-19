@@ -1,20 +1,18 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/MyFursona-Project/Backend/internal/dbmigrate"
-	"github.com/MyFursona-Project/Backend/internal/graph"
-	"github.com/MyFursona-Project/Backend/internal/router"
-	"github.com/jmoiron/sqlx"
+	"github.com/MyFursona-Project/Backend/cmd"
 )
 
+func main() {
+	cmd.Start()
+}
+
+/*
 const defaultPort = "8081"
 
 func main() {
+
 	src := "postgres://myfursona:myfursona@localhost:5432?sslmode=disable"
 
 	db, err := sqlx.Connect("postgres", src)
@@ -35,3 +33,4 @@ func main() {
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", router.GetListenerURL())
 	log.Fatal(http.ListenAndServe(router.GetListenerURL(), nil))
 }
+*/

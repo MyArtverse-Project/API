@@ -1,6 +1,10 @@
 package router
 
-import "os"
+import (
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
 
 const (
 	// We'll listen on this port, if nothing was specified
@@ -26,4 +30,8 @@ func GetListenerURL() string {
 
 	// Build the URL together
 	return inf + ":" + port
+}
+
+func CreateRouter() *gin.Engine {
+	return gin.Default()
 }
