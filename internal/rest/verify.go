@@ -10,7 +10,6 @@ import (
 
 func AuthVerify(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		token, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			c.Status(http.StatusBadRequest)

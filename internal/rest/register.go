@@ -59,7 +59,7 @@ func AuthRegister(db *sqlx.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Store the email token into redis
+		// Store the email token into caching
 		// TODO:
 
 		// send email

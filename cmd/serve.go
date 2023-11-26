@@ -4,6 +4,7 @@ import (
 	"github.com/MyFursona-Project/Backend/internal/database"
 	"github.com/MyFursona-Project/Backend/internal/dbmigrate"
 	"github.com/MyFursona-Project/Backend/internal/router"
+	"github.com/MyFursona-Project/Backend/internal/sessionAuth"
 )
 
 func Start() {
@@ -25,11 +26,16 @@ func Start() {
 		panic(err)
 	}
 
+	// Setup Session middleware
+	sessionStore, err := sessionAuth.SetupSessionGin()
+	if err != nil {
+		panic(err)
+	}
+
 	// Setup Router
 	r := router.CreateRouter()
 
 	// Setup Routes
-	router.SetRoutes(r, db)
 
 	// Start
 	err = r.Run(router.GetListenerURL())

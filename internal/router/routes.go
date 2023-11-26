@@ -2,16 +2,19 @@ package router
 
 import (
 	"github.com/MyFursona-Project/Backend/internal/rest"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/jmoiron/sqlx"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetRoutes(router *gin.Engine, db *sqlx.DB) {
+func SetRoutes(router *gin.Engine, db *sqlx.DB, store *redis.Store) {
+	router.Use(sessions.Sessions("MF-SESSION-ID", *store))
 	router.GET("/health", GetHealth)
-	router.POST("/v1/auth/register", rest.AuthRegister(db))
-	router.GET("/v1/auth/verify/:id", rest.AuthVerify(db))
+	router.POST("/v1/sessionAuth/register", rest.AuthRegister(db))
+	router.GET("/v1/sessionAuth/verify/:id", rest.AuthVerify(db))
 }
 
 // GetHealth returns a static health message

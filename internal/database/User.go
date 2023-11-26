@@ -63,3 +63,10 @@ func VerifyEmailToken(db *sqlx.DB, token uuid.UUID) error {
 
 	return nil
 }
+
+func CreateSession(db *sqlx.DB, user uuid.UUID) {
+	res, err := db.Exec("INSERT INTO session (user_id, session_key, user_agent) VALUES ($1, $2, $3)")
+	if err != nil {
+		return err
+	}
+}

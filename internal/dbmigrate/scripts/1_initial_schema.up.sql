@@ -2,9 +2,14 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Function to update updated_on when rows are updated
-CREATE OR REPLACE FUNCTION trigger_set_timestamp() RETURNS TRIGGER AS $$ BEGIN NEW.updated_on = NOW();
-RETURN NEW;
-END;
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+        RETURNS TRIGGER
+    AS
+$$
+    BEGIN
+        NEW.updated_on = NOW();
+    RETURN NEW;
+    END;
 $$ LANGUAGE plpgsql;
 
 -- Creating the user table
@@ -72,3 +77,18 @@ CREATE TABLE IF NOT EXISTS verify (
 );
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
 UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+
+    session_key TEXT UNIQUE NOT NULL,
+    user_agent TEXT NOT NULL,
+
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    valid_to TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+)
+
