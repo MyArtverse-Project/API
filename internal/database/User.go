@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"github.com/MyFursona-Project/Backend/internal/tools"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -34,15 +35,15 @@ func CreatePassword(db *sqlx.DB, userID uuid.UUID, password string) error {
 	return err
 }
 
-func CreateEmailToken(db *sqlx.DB, userID uuid.UUID) (uuid.UUID, error) {
-	token, err := uuid.NewRandom()
+func CreateEmailToken(db *sqlx.DB, userID uuid.UUID) (string, error) {
+	token, err := tools.RandomString(32)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	_, err = db.Exec("INSERT INTO verify (user_id, token) VALUES ($1, $2)", userID, token)
 	if err != nil {
-		return uuid.Nil, err
+		return "", err
 	}
 
 	return token, nil
@@ -64,9 +65,34 @@ func VerifyEmailToken(db *sqlx.DB, token uuid.UUID) error {
 	return nil
 }
 
-func CreateSession(db *sqlx.DB, user uuid.UUID) {
-	res, err := db.Exec("INSERT INTO session (user_id, session_key, user_agent) VALUES ($1, $2, $3)")
+func CreateSession(db *sqlx.DB, user uuid.UUID, userAgent string) (string, error) {
+	key, err := tools.RandomString(32)
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	_, err = db.Exec("INSERT INTO session (user_id, session_key, user_agent, active) VALUES ($1, $2, $3, TRUE)", user, key, userAgent)
+	if err != nil {
+		return "", err
+	}
+
+	return key, nil
+}
+
+type SessionCheckAnswer struct {
+}
+
+func CheckSession(db *sqlx.DB, sessionKey string) (bool, error) {
+	res, err := db.Query("SELECT CheckSession(session_key_in) VALUES ($1)", sessionKey)
+	if err != nil {
+		return false, err
+	}
+
+	if res.Err() != nil {
+		return false, res.Err()
+	}
+
+	res.
+
+	return true, nil
 }

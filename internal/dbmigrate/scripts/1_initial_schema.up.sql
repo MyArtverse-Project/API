@@ -87,8 +87,40 @@ CREATE TABLE IF NOT EXISTS sessions (
 
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    valid_to TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    valid_to TIMESTAMPTZ NOT NULL DEFAULT NOW() + '2 weeks',
+    active BOOL NOT NULL DEFAULT FALSE,
 
     CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
-)
+);
 
+CREATE OR REPLACE TRIGGER set_timestamp BEFORE
+UPDATE ON sessions FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+
+-- Handy utility function to check the session, while it'll automatically increase the session lifetime
+CREATE OR REPLACE FUNCTION CheckSession(session_key_in TEXT)
+    RETURNS BOOL
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    session_valid_to TIMESTAMPTZ;
+BEGIN
+    SELECT valid_to INTO session_valid_to FROM sessions WHERE session_key = session_key_in AND active = TRUE;
+
+--     Check if the session was found
+    IF NOT FOUND THEN
+        RETURN FALSE;
+    END IF;
+
+--     Check if the session is still valid
+    IF session_valid_to < NOW() THEN
+        RETURN FALSE;
+    END IF;
+
+--     Increase the session lifetime again
+    UPDATE sessions SET valid_to = NOW() + '2 weeks' WHERE session_key = session_key_in;
+
+--     Done
+    RETURN TRUE;
+END;
+$$;
