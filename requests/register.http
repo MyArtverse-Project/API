@@ -6,9 +6,9 @@ POST http://localhost:8080/v1/auth/register
 Content-Type: application/json
 
 {
-  "username": "Test7",
-  "email": "test7@test.local",
-  "password": "test_pass3",
+  "username": "Test2",
+  "email": "test2@test.local",
+  "password": "test_pass2",
   "captcha": "test"
 }
 

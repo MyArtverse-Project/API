@@ -68,7 +68,7 @@ UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 CREATE TABLE IF NOT EXISTS verify (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL,
-    token UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    token TEXT UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
 
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -76,7 +76,30 @@ CREATE TABLE IF NOT EXISTS verify (
     CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
 );
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
-UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+UPDATE ON verify FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
+
+-- Function to create a new user with password login
+CREATE OR REPLACE FUNCTION CreateLocalUser(email_in TEXT, account_name_in TEXT, pretty_name_in TEXT, hash_in TEXT, verify_token TEXT)
+    RETURNS UUID
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    user_id_l UUID;
+BEGIN
+--     Create the User
+    INSERT INTO userdata (email, account_name, pretty_name) VALUES (email_in, account_name_in, pretty_name_in) RETURNING user_id INTO user_id_l;
+
+--     Set the password
+    INSERT INTO password_auth (user_id, password_hash) VALUES (user_id_l, hash_in);
+
+--     Set the email verification token
+    INSERT INTO verify (user_id, token) VALUES (user_id_l, verify_token);
+
+--     Return the UserID of the created user
+    RETURN user_id_l;
+END;
+$$;
 
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
