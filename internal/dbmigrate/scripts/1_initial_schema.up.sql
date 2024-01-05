@@ -87,6 +87,7 @@ AS
 $$
 DECLARE
     user_id_l UUID;
+    verify_token_l UUID;
 BEGIN
 --     Create the User
     INSERT INTO userdata (email, account_name, pretty_name) VALUES (email_in, account_name_in, pretty_name_in) RETURNING user_id INTO user_id_l;
@@ -95,10 +96,10 @@ BEGIN
     INSERT INTO password_auth (user_id, password_hash) VALUES (user_id_l, hash_in);
 
 --     Set the email verification token
-    INSERT INTO verify (user_id) VALUES (user_id_l);
+    INSERT INTO verify (user_id) VALUES (user_id_l) RETURNING token INTO verify_token_l;
 
 --     Return the UserID of the created user
-    RETURN user_id_l;
+    RETURN verify_token_l;
 END;
 $$;
 

@@ -8,7 +8,7 @@ import (
 )
 
 type createLocalUserReturn struct {
-	UserID uuid.UUID `db:"result"`
+	VerifyCode uuid.UUID `db:"result"`
 }
 type checkVerifyTokenResult struct {
 	Result int `db:"result"`
@@ -20,16 +20,16 @@ func CreateLocalUser(db *sqlx.DB, email, username, password string) (uuid.UUID, 
 	hash := password
 
 	// Create the User
-	row := db.QueryRow("SELECT createlocaluser(email_in := $1, account_name_in := $2, pretty_name_in := $2, hash_in := $3, verify_token := $4) AS result", email, username, hash)
+	row := db.QueryRow("SELECT createlocaluser(email_in := $1, account_name_in := $2, pretty_name_in := $2, hash_in := $3) AS result", email, username, hash)
 
 	// Check the result
 	var CreateReturn createLocalUserReturn
-	err := row.Scan(&CreateReturn.UserID)
+	err := row.Scan(&CreateReturn.VerifyCode)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	return CreateReturn.UserID, nil
+	return CreateReturn.VerifyCode, nil
 }
 
 func CheckVerifyToken(db *sqlx.DB, token uuid.UUID) (bool, error) {
