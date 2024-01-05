@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS password_auth (
     user_id UUID UNIQUE NOT NULL,
 
     -- User the password corresponds to
-    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES userdata (user_id) ON DELETE CASCADE
 );
 
 -- Table for Fursonas
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS fursonas (
 
     user_id UUID NOT NULL,
 
-    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id) ON DELETE CASCADE
 );
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
 UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
@@ -68,18 +68,19 @@ UPDATE ON fursonas FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 CREATE TABLE IF NOT EXISTS verify (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL,
-    token TEXT UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    token UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    valid_until TIMESTAMPTZ NOT NULL DEFAULT NOW() + '2 weeks',
 
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id) ON DELETE CASCADE
 );
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
 UPDATE ON verify FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
 
 -- Function to create a new user with password login
-CREATE OR REPLACE FUNCTION CreateLocalUser(email_in TEXT, account_name_in TEXT, pretty_name_in TEXT, hash_in TEXT, verify_token TEXT)
+CREATE OR REPLACE FUNCTION CreateLocalUser(email_in TEXT, account_name_in TEXT, pretty_name_in TEXT, hash_in TEXT)
     RETURNS UUID
     LANGUAGE plpgsql
 AS
@@ -94,10 +95,40 @@ BEGIN
     INSERT INTO password_auth (user_id, password_hash) VALUES (user_id_l, hash_in);
 
 --     Set the email verification token
-    INSERT INTO verify (user_id, token) VALUES (user_id_l, verify_token);
+    INSERT INTO verify (user_id) VALUES (user_id_l);
 
 --     Return the UserID of the created user
     RETURN user_id_l;
+END;
+$$;
+
+-- Function to Validate and delete the Email verification Code
+CREATE OR REPLACE FUNCTION ValidateEmailToken(token_in UUID)
+--     Return Codes: 0 = Account verified, 1 = Code not found, 2 = Code Expired
+    RETURNS INT
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    valid_until_l TIMESTAMPTZ;
+BEGIN
+--     Find the token
+    SELECT valid_until INTO valid_until_l FROM verify WHERE token = token_in;
+    IF NOT FOUND THEN
+        RETURN 1;
+    END IF;
+
+--     Check if the token is valid
+    IF valid_until_l < NOW() THEN
+--         We'll clean the record since
+        DELETE FROM verify WHERE token = token_in;
+        RETURN 2;
+    end if;
+
+--     Delete it
+    DELETE FROM verify WHERE token = token_in;
+
+    RETURN 0;
 END;
 $$;
 
@@ -113,7 +144,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     valid_to TIMESTAMPTZ NOT NULL DEFAULT NOW() + '2 weeks',
     active BOOL NOT NULL DEFAULT FALSE,
 
-    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id)
+    CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE TRIGGER set_timestamp BEFORE
