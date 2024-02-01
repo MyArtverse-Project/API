@@ -104,32 +104,43 @@ END;
 $$;
 
 -- Function to Validate and delete the Email verification Code
-CREATE OR REPLACE FUNCTION ValidateEmailToken(token_in UUID)
+CREATE OR REPLACE FUNCTION ValidateEmailToken(IN token_in UUID, OUT status int2, OUT new_token UUID)
 --     Return Codes: 0 = Account verified, 1 = Code not found, 2 = Code Expired
-    RETURNS INT
+    RETURNS RECORD
     LANGUAGE plpgsql
 AS
 $$
 DECLARE
     valid_until_l TIMESTAMPTZ;
+    new_token_l UUID;
 BEGIN
 --     Find the token
     SELECT valid_until INTO valid_until_l FROM verify WHERE token = token_in;
     IF NOT FOUND THEN
-        RETURN 1;
+--         The token was not found
+        status := 1;
+        new_token = uuid_nil();
+        RETURN;
     END IF;
 
 --     Check if the token is valid
     IF valid_until_l < NOW() THEN
---         We'll clean the record since
-        DELETE FROM verify WHERE token = token_in;
-        RETURN 2;
+--         We'll set a new code since the old one is not valid anymore
+        new_token_l = uuid_generate_v4();
+        UPDATE verify SET token = new_token_l WHERE token = token_in;
+
+--         Return the new token
+        status := 2;
+        new_token := new_token_l;
+        RETURN;
     end if;
 
 --     Delete it
     DELETE FROM verify WHERE token = token_in;
 
-    RETURN 0;
+    status := 0;
+    new_token = uuid_nil();
+    RETURN;
 END;
 $$;
 

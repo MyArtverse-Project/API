@@ -11,7 +11,8 @@ type createLocalUserReturn struct {
 	VerifyCode uuid.UUID `db:"result"`
 }
 type checkVerifyTokenResult struct {
-	Result int `db:"result"`
+	Status   int       `db:"status"`
+	NewToken uuid.UUID `db:"new_token"`
 }
 
 func CreateLocalUser(db *sqlx.DB, email, username, password string) (uuid.UUID, error) {
@@ -32,39 +33,30 @@ func CreateLocalUser(db *sqlx.DB, email, username, password string) (uuid.UUID, 
 	return CreateReturn.VerifyCode, nil
 }
 
-func CheckVerifyToken(db *sqlx.DB, token uuid.UUID) (bool, error) {
+// CheckVerifyToken checks the given code for validity.
+func CheckVerifyToken(db *sqlx.DB, token uuid.UUID) (bool, uuid.UUID, error) {
 	// Check the token against the DB
-	row := db.QueryRow("SELECT ValidateEmailToken(token_in := $1) AS result", token)
+	row := db.QueryRow("SELECT status, new_token FROM ValidateEmailToken(token_in := $1)", token)
 
 	// Parse the response
 	var checkResult checkVerifyTokenResult
-	err := row.Scan(&checkResult.Result)
+	err := row.Scan(&checkResult.Status, &checkResult.NewToken)
 	if err != nil {
-		return false, err
+		return false, uuid.Nil, err
 	}
 
 	// Return Codes: 0 = Account verified, 1 = Code not found, 2 = Code Expired
-	switch checkResult.Result {
+	switch checkResult.Status {
 	case 0:
-		return true, nil
+		return true, uuid.Nil, nil
 	case 1:
-		return false, nil
+		return false, uuid.Nil, nil
 	case 2:
-		// The code is expired, we'll create a new one
-		// Create the Verification Token
-		tokenNew, err := tools.RandomString(32)
-		if err != nil {
-			return false, err
-		}
-
-		_, err = db.Exec("UPDATE token, valid_until FROM verify WHERE token = $1 VALUES ($2, NOW() + '2 weeks')", tokenNew, token)
-		if err != nil {
-			return false, err
-		}
-		return false, nil
+		// The code is expired, we'll have a new one
+		return false, checkResult.NewToken, nil
 
 	default:
-		return false, errors.New("received invalid value on Checking for a verify token")
+		return false, uuid.Nil, errors.New("received invalid value on Checking for a verify token")
 	}
 }
 

@@ -1,4 +1,4 @@
-GET http://localhost:8080/v1/auth/verify/4df87686-1700-4446-8af5-24d1286c1b63
+GET http://localhost:8080/v1/auth/verify/9c8ff6fc-23c8-462a-929c-2ea5c28baba4
 Accept: application/json
 
 ###
