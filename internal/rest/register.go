@@ -40,7 +40,7 @@ func AuthRegister(db *sqlx.DB) gin.HandlerFunc {
 		// TODO: Create
 
 		// create A local user with password login and email verification
-		token, err := database.CreateLocalUser(db, request.Email, request.Username, request.Password)
+		token, err := database.CreateLocalUser(db, &request.Email, &request.Username, &request.Password)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			tools.LogError("MyFursona", err.Error())

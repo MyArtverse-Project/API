@@ -159,34 +159,34 @@ CREATE TABLE IF NOT EXISTS sessions (
     CONSTRAINT fk_owner_id FOREIGN KEY (user_id) REFERENCES userdata (user_id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TRIGGER set_timestamp BEFORE
-UPDATE ON sessions FOR EACH ROW EXECUTE PROCEDURE trigger_set_timestamp();
-
 -- Handy utility function to check the session, while it'll automatically increase the session lifetime
 CREATE OR REPLACE FUNCTION CheckSession(session_key_in TEXT)
-    RETURNS BOOL
+    RETURNS UUID
     LANGUAGE plpgsql
 AS
 $$
 DECLARE
     session_valid_to TIMESTAMPTZ;
+    user_id_l UUID;
 BEGIN
-    SELECT valid_to INTO session_valid_to FROM sessions WHERE session_key = session_key_in AND active = TRUE;
+    SELECT valid_to, user_id INTO session_valid_to, user_id_l FROM sessions WHERE session_key = session_key_in AND active = TRUE;
 
 --     Check if the session was found
     IF NOT FOUND THEN
-        RETURN FALSE;
+        RETURN uuid_nil();
     END IF;
 
 --     Check if the session is still valid
     IF session_valid_to < NOW() THEN
-        RETURN FALSE;
+--         Mark the session key as inactive
+        UPDATE sessions SET active = FALSE WHERE session_key = session_key_in;
+        RETURN uuid_nil();
     END IF;
 
 --     Increase the session lifetime again
     UPDATE sessions SET valid_to = NOW() + '2 weeks' WHERE session_key = session_key_in;
 
 --     Done
-    RETURN TRUE;
+    RETURN user_id_l;
 END;
 $$;

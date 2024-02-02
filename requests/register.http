@@ -1,4 +1,19 @@
-GET http://localhost:8080/v1/auth/verify/9c8ff6fc-23c8-462a-929c-2ea5c28baba4
+GET http://localhost:8080/v1/auth/whoami
+Accept: application/json
+
+###
+POST http://localhost:8080/v1/auth/login
+Content-Type: application/json
+
+{
+  "login":"test2@test.local",
+  "password": "test_pass2"
+}
+
+
+
+###
+GET http://localhost:8080/v1/auth/verify/fb68f674-5e0a-4799-8ceb-85aa9dcc2516
 Accept: application/json
 
 ###
@@ -13,3 +28,4 @@ Content-Type: application/json
 }
 
 ###
+
