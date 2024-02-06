@@ -106,7 +106,7 @@ func CheckLocalLogin(db *sqlx.DB, login string, password *string, userAgent stri
 	var row *sql.Row
 
 	_, err := mail.ParseAddress(login)
-	if err != nil {
+	if err == nil {
 		row = db.QueryRow("SELECT password_hash, userdata.user_id FROM password_auth INNER JOIN userdata ON password_auth.user_id = userdata.user_id WHERE userdata.email = $1", login)
 	} else {
 		row = db.QueryRow("SELECT password_hash, userdata.user_id FROM password_auth INNER JOIN userdata ON password_auth.user_id = userdata.user_id WHERE userdata.normalized_name = LOWER($1)", login)

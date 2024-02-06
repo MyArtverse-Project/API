@@ -13,7 +13,7 @@ Content-Type: application/json
 
 
 ###
-GET http://localhost:8080/v1/auth/verify/fb68f674-5e0a-4799-8ceb-85aa9dcc2516
+GET http://localhost:8080/v1/auth/verify/0955dd06-4161-4e74-afd3-4155c822d954
 Accept: application/json
 
 ###

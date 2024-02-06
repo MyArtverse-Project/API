@@ -13,7 +13,7 @@ func SetRoutes(router *gin.Engine, db *sqlx.DB) {
 	router.GET("/health", GetHealth)
 	router.POST("/v1/auth/register", rest.AuthRegister(db))
 	router.GET("/v1/auth/verify/:id", rest.AuthVerify(db))
-	router.POST("v1/auth/login", rest.AuthLogin(db))
+	router.POST("/v1/auth/login", rest.AuthLogin(db))
 	router.GET("/v1/auth/whoami", rest.AuthWhoAmI(db))
 }
 
