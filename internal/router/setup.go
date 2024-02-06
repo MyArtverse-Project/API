@@ -1,9 +1,8 @@
 package router
 
 import (
-	"os"
-
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -17,13 +16,13 @@ const (
 
 func GetListenerURL() string {
 	// Determine the port we'll listen on
-	port := os.Getenv(portENV)
+	port := viper.GetString(portENV)
 	if port == "" {
 		port = defaultPort
 	}
 
 	// Determine the interface we'll bind to
-	inf := os.Getenv(interfaceENV)
+	inf := viper.GetString(interfaceENV)
 	if inf == "" {
 		inf = defaultInterface
 	}

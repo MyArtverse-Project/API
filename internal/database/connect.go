@@ -1,9 +1,8 @@
 package database
 
 import (
-	"os"
-
 	"github.com/jmoiron/sqlx"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -11,7 +10,7 @@ const (
 )
 
 func GetConnectionString() string {
-	return os.Getenv(DBURIENV)
+	return viper.GetString(DBURIENV)
 }
 
 func Connect() (*sqlx.DB, error) {

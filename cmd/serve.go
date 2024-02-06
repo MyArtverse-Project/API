@@ -4,9 +4,14 @@ import (
 	"github.com/MyFursona-Project/Backend/internal/database"
 	"github.com/MyFursona-Project/Backend/internal/dbmigrate"
 	"github.com/MyFursona-Project/Backend/internal/router"
+	"github.com/spf13/viper"
 )
 
 func Start() {
+	// Intialize Config
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+
 	// Open DB Connection
 	db, err := database.Connect()
 	if err != nil {
