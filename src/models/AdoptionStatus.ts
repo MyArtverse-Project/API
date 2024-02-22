@@ -18,7 +18,7 @@ export class AdoptionStatus {
     @JoinColumn()
     adoptee: User;
 
-    @Column()
+    @Column({ type: 'timestamp with time zone'})
     adopt_date: Date;
 
     @OneToOne(() => Character, character => character.adoptionStatus)

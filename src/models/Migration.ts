@@ -9,7 +9,7 @@ export class Migration {
     @Column()
     url: string;
 
-    @Column()
+    @Column({ type: 'timestamp with time zone'})
     migrate_date: Date;
 
     @OneToOne(() => Character, character => character.migration)
