@@ -10,8 +10,11 @@ const app = async () => {
     Dotenv.config();
 
     // Initalize Database and Fastify
-    await connectDatabase();
+    const connection = await connectDatabase();
     const server = fastify({ logger: true });
+    
+    // DB + Fastify
+    server.decorate('db', connection);
 
     // Health Check
     server.get('/health', async () => {

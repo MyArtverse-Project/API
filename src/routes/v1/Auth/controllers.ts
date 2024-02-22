@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import fastify, { FastifyReply, FastifyRequest } from "fastify";
 
 export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     // TODO
@@ -6,7 +6,7 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
 }
 
 export const register = async (request: FastifyRequest, reply: FastifyReply) => {
-    // TODO
+    
     return { hello: "world" };
 }
 

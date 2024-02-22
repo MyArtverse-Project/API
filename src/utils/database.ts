@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
  * Connects to the database
  * 
  */
-const connectDatabase = async () => {
+const connectDatabase = async (): Promise<DataSource> => {
     const connection = new DataSource({
         type: 'postgres',
         host: process.env.DB_HOST,
@@ -22,6 +22,7 @@ const connectDatabase = async () => {
         throw new Error(`Error connecting to database: ${err}`)
     } finally {
         console.log("MyArtverse is connected to the database!")
+        return connection;
     }
 }
 
