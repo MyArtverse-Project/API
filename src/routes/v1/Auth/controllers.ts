@@ -122,3 +122,27 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
     return reply.code(200).send({ message: "Password changed" });
 }
 
+export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { accessToken } = request.cookies;
+    if (!accessToken) {
+        return reply.code(401).send({ error: "Unauthorized" });
+    }
+    try {
+        const payload = await request.server.jwt.verify(accessToken) as any;
+        if (!payload) {
+            return reply.code(401).send({ error: "Unauthorized" });
+        }
+        const user = await request.server.db.getRepository(Authentication).findOne({ where: { id: payload.id } });
+        if (!user) {
+            return reply.code(401).send({ error: "Unauthorized" });
+        }
+        if (user.password) {
+            user.password = "";
+        }
+ 
+        return reply.code(200).send({ user });
+    } catch (error) {
+        reply.code(401).send({ error: "Unauthorized" });
+    }
+}
+
