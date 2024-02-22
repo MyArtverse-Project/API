@@ -1,28 +1,31 @@
-import { DataSource } from 'typeorm';
-import { Auth } from '../models/Auth';
+import { DataSource } from "typeorm"
+import { Auth } from "../models/Auth"
 
 /**
  * Connects to the database
- * 
+ *
  */
 const connectDatabase = async (): Promise<DataSource> => {
-    const connection = new DataSource({
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        username: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
-        entities: ["src/models/*.ts"],
-        synchronize: true,
-        logging: false,
+  const connection = new DataSource({
+    type: "postgres",
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    entities: ["src/models/*.ts"],
+    synchronize: true,
+    logging: false
+  })
+  await connection
+    .initialize()
+    .then(() => {
+      console.log("MyArtverse is connected to the database!")
     })
-    await connection.initialize().then(() => {
-        console.log("MyArtverse is connected to the database!")
-    }).catch((err) => {
-        throw new Error(`Error connecting to database: ${err}`)
+    .catch((err) => {
+      throw new Error(`Error connecting to database: ${err}`)
     })
-    return connection;
+  return connection
 }
 
-export default connectDatabase;
+export default connectDatabase
