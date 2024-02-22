@@ -10,6 +10,7 @@ const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
         if (!payload) {
             return reply.code(401).send({ error: "Unauthorized" });
         }
+        request.user = payload as { id: number };
         return;
     } catch (error) {
         reply.code(401).send({ error: "Unauthorized" });

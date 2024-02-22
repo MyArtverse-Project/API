@@ -1,18 +1,25 @@
 import fastifyCors from '@fastify/cors';
-import fastifyJwt from '@fastify/jwt';
 import * as Dotenv from 'dotenv';
 import fastify from 'fastify';
 import { DataSource } from 'typeorm';
 import authRoutes from './routes/v1/Auth/routes';
-import userRoutes from './routes/v1/Users/routes';
+import profileRoutes from './routes/v1/Profile/routes';
 import verifyToken from './utils/auth';
 import connectDatabase from './utils/database';
 import { FastifyCookieOptions } from '@fastify/cookie';
+import { User } from './models/Users';
+import fastifyJwt, { UserType } from '@fastify/jwt';
+
+    
 
 declare module 'fastify' {
     interface FastifyInstance {
         db: DataSource;
         auth: any
+    }
+
+    interface FastifyRequest {
+        user: UserType;
     }
 }
 
@@ -39,6 +46,7 @@ const app = async () => {
         parseOptions: {}
     } as FastifyCookieOptions)
 
+
     // CORS
     server.register(fastifyCors, {
         origin: process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
@@ -51,7 +59,7 @@ const app = async () => {
     });
 
     // Registering Routes
-    server.register(userRoutes, { prefix: '/v1/user' })
+    server.register(profileRoutes, { prefix: '/v1/user' })
     server.register(authRoutes, { prefix: '/v1/auth' })
 
     // Starting server
