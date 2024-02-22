@@ -1,12 +1,12 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 
 const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { token } = request.cookies;
-    if (!token) {
+    const { accessToken } = request.cookies;
+    if (!accessToken) {
         return reply.code(401).send({ error: "Unauthorized" });
     }
     try {
-        const payload = await request.server.jwt.verify(token)
+        const payload = await request.server.jwt.verify(accessToken)
         if (!payload) {
             return reply.code(401).send({ error: "Unauthorized" });
         }
