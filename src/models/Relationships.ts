@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { User } from './Users';
 
 @Entity('followers')
-export class Follower {
+export class Relationships {
     @PrimaryGeneratedColumn()
     id: number;
 

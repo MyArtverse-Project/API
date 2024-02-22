@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany } from 'typeorm';
 import { Authentication } from './Auth';
-import { Follower } from './UserFollow';
+import { Relationships } from './Relationships';
 import { AdoptionStatus } from './AdoptionStatus';
 
 @Entity('users')
@@ -41,11 +41,11 @@ export class User {
     @Column('jsonb', { nullable: true })
     badges: { roleName: string; rewardDate: Date }[];
 
-    @OneToMany(() => Follower, follower => follower.following)
-    followers: Follower[];
+    @OneToMany(() => Relationships, follower => follower.following)
+    followers: Relationships[];
 
-    @OneToMany(() => Follower, following => following.follower)
-    following: Follower[];
+    @OneToMany(() => Relationships, following => following.follower)
+    following: Relationships[];
 
     @OneToOne(() => Authentication, authentication => authentication.user)
     authentication: Authentication;
