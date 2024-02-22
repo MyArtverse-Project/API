@@ -7,13 +7,18 @@
   "license": "Apache-2.0",
   "scripts": {
     "start": "node index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts | pino-pretty"
   },
   "dependencies": {
+    "@fastify/cookie": "^9.3.1",
     "@fastify/cors": "^9.0.1",
+    "@fastify/jwt": "^8.0.0",
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.26.1",
     "pg": "^8.11.3",
+    "pino-pretty": "^10.3.1",
     "reflect-metadata": "^0.2.1",
     "typeorm": "^0.3.20"
   },

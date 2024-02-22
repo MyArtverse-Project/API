@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm';
+import { Authentication } from '../models/Auth';
 
 /**
  * Connects to the database
@@ -12,18 +13,16 @@ const connectDatabase = async (): Promise<DataSource> => {
         username: process.env.DB_USER,
         password: process.env.DB_PASS,
         database: process.env.DB_NAME,
-        entities: [__dirname + '/models/*.ts'],
+        entities: ["src/models/*.ts"],
         synchronize: true,
         logging: false,
     })
-    try {
-        await connection.initialize()
-    } catch (err) {
-        throw new Error(`Error connecting to database: ${err}`)
-    } finally {
+    await connection.initialize().then(() => {
         console.log("MyArtverse is connected to the database!")
-        return connection;
-    }
+    }).catch((err) => {
+        throw new Error(`Error connecting to database: ${err}`)
+    })
+    return connection;
 }
 
 export default connectDatabase;
