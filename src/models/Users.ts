@@ -1,7 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, OneToMany } from 'typeorm';
-import { Authentication } from './Auth';
+import { Auth } from './Auth';
 import { Relationships } from './Relationships';
 import { AdoptionStatus } from './AdoptionStatus';
+import { Character } from './Character';
+import { Commission } from './Listings';
 
 @Entity('users')
 export class User {
@@ -11,22 +13,22 @@ export class User {
     @Column({ unique: true })
     handle: string;
 
-    @Column()
+    @Column({ nullable: true })
     displayName: string;
 
-    @Column()
+    @Column({ nullable: true })
     bio: string;
 
-    @Column()
+    @Column({ nullable: true })
     avatarUrl: string;
 
-    @Column()
+    @Column({ nullable: true })
     bannerUrl: string;
 
-    @CreateDateColumn({ type: 'timestamp with time zone', name: 'dateRegistered' })
+    @CreateDateColumn({ type: 'timestamp with time zone', name: 'dateRegistered', nullable: true })
     dateRegistered: Date;
 
-    @UpdateDateColumn({ type: 'timestamp with time zone', name: 'dateUpdated' })
+    @UpdateDateColumn({ type: 'timestamp with time zone', name: 'dateUpdated', nullable: true  })
     dateUpdated: Date;
 
     @Column({ default: false })
@@ -47,8 +49,8 @@ export class User {
     @OneToMany(() => Relationships, following => following.follower)
     following: Relationships[];
 
-    @OneToOne(() => Authentication, authentication => authentication.user)
-    authentication: Authentication;
+    @OneToOne(() => Auth, authentication => authentication.user)
+    auth: Auth;
 
     @OneToMany(() => AdoptionStatus, adoptionStatus => adoptionStatus.previous_owner)
     adoptionStatuses: AdoptionStatus[];
@@ -56,11 +58,11 @@ export class User {
     @OneToOne(() => AdoptionStatus, adoptionStatus => adoptionStatus.ownership)
     adoptionStatus: AdoptionStatus;
 
-    @Column()
-    charactersCount: number;
+    @OneToMany(() => Character, character => character.owner)
+    characters: Character[];
 
-    @Column()
-    listingsCount: number;
+    @OneToMany(() => Commission, commission => commission.user)
+    listings: Commission[];
 
     @Column({ default: 'offline' })
     onlineStatus: string;
@@ -70,6 +72,4 @@ export class User {
 
     @Column('jsonb', { nullable: true })
     previousAliases: { displayName: string; changeDate: Date }[];
-
-
 }

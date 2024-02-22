@@ -1,7 +1,8 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne } from "typeorm";
 import { Attributes } from "./Attributes";
 import { AdoptionStatus } from "./AdoptionStatus";
 import { Migration } from "./Migration";
+import { User } from "./Users";
 
 @Entity()
 export class Character {
@@ -34,4 +35,7 @@ export class Character {
     @OneToOne(() => AdoptionStatus, adoptionStatus => adoptionStatus.character)
     @JoinColumn()
     adoptionStatus: AdoptionStatus;
+
+    @ManyToOne(() => User, user => user.characters)
+    owner: User;
 }

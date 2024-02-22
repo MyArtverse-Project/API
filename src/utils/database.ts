@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { Authentication } from '../models/Auth';
+import { Auth } from '../models/Auth';
 
 /**
  * Connects to the database
