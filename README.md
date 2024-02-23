@@ -19,7 +19,5 @@ To run the server, install the dependencies with `yarn` or `yarn install`, run t
 
 ## Links
 
-- [http://localhost:8080] -- Mailslurper Client
-- [http://localhost:8081] -- Backend Application
-
-
+- [http://localhost:8080](http://localhost:8080) -- Mailslurper Client
+- [http://localhost:8081](http://localhost:8081) -- Backend Application

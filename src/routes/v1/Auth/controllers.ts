@@ -145,14 +145,15 @@ export const register = async (
     request.server.mailer.sendMail({
       from: process.env.SMTP_EMAIL_FROM,
       to: email,
-      html: html(`${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`),
+      html: html(
+        `${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`
+      ),
       subject: "Welcome to MyArtverse",
       text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
     })
   } catch (error) {
     throw new Error(`Error sending email: ${error}`)
   }
-
 
   // Return the token
   return reply.code(201).send({ email, username })
@@ -196,12 +197,10 @@ export const changePassword = async (
 }
 
 export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = await request.server.db
-    .getRepository(Auth)
-    .findOne({
-      where: { id: (request.user as any).id },
-      relations: { user: true }
-    })
+  const user = await request.server.db.getRepository(Auth).findOne({
+    where: { id: (request.user as any).id },
+    relations: { user: true }
+  })
   if (!user) {
     return reply.code(401).send({ error: "Unauthorized" })
   }

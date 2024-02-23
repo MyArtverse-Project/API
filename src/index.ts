@@ -7,7 +7,7 @@ import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { FastifyCookieOptions } from "@fastify/cookie"
-import nodemailer, { SentMessageInfo } from 'nodemailer'
+import nodemailer, { SentMessageInfo } from "nodemailer"
 import fastifyJwt, { UserType } from "@fastify/jwt"
 
 declare module "fastify" {
@@ -40,7 +40,7 @@ const app = async () => {
   const mailer = nodemailer.createTransport({
     host: process.env.SMTP_EMAIL_HOST,
     port: Number(process.env.SMTP_EMAIL_PORT),
-    secure: process.env.NODE_ENV === "production" ? true : false,
+    secure: process.env.NODE_ENV === "production" ? true : false
   })
 
   // Mailer Decorator

@@ -12,7 +12,7 @@ export class Auth {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column('boolean', { default: 'false' })
+  @Column("boolean", { default: "false" })
   verified: boolean
 
   @Column("uuid", { default: () => "uuid_generate_v4()" })
