@@ -6,7 +6,8 @@ import {
   logout,
   refreshToken,
   register,
-  whoami
+  whoami,
+  verify
 } from "./controllers"
 
 async function authRoutes(server: FastifyInstance) {
@@ -17,6 +18,7 @@ async function authRoutes(server: FastifyInstance) {
   server.post("/change-password", { onRequest: [server.auth] }, changePassword)
   server.post("/refresh-token", refreshToken)
   server.get("/whoami", { onRequest: [server.auth] }, whoami)
+  server.post('/verify/:uuid', verify);
 }
 
 export default authRoutes

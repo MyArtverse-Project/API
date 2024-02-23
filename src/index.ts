@@ -7,13 +7,14 @@ import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { FastifyCookieOptions } from "@fastify/cookie"
-import { User } from "./models/Users"
+import nodemailer, { SentMessageInfo } from 'nodemailer'
 import fastifyJwt, { UserType } from "@fastify/jwt"
 
 declare module "fastify" {
   interface FastifyInstance {
     db: DataSource
     auth: any
+    mailer: nodemailer.Transporter<SentMessageInfo>
   }
 
   interface FastifyRequest {
@@ -34,6 +35,16 @@ const app = async () => {
 
   // Auth Decorator
   server.decorate("auth", verifyToken)
+
+  // Initialize Nodemailer
+  const mailer = nodemailer.createTransport({
+    host: process.env.SMTP_EMAIL_HOST,
+    port: Number(process.env.SMTP_EMAIL_PORT),
+    secure: process.env.NODE_ENV === "production" ? true : false,
+  })
+
+  // Mailer Decorator
+  server.decorate("mailer", mailer).addHook("onClose", () => mailer.close())
 
   // JWT
   server.register(fastifyJwt, { secret: String(process.env.MA_JWT_SECRET) })

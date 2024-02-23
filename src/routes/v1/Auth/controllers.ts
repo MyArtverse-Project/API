@@ -2,6 +2,7 @@ import bcrypt from "bcrypt"
 import { FastifyReply, FastifyRequest } from "fastify"
 import { Auth } from "../../../models/Auth"
 import { User } from "../../../models/Users"
+import { html } from "../../../utils/mail"
 
 export const refreshToken = async (
   request: FastifyRequest,
@@ -140,6 +141,19 @@ export const register = async (
     return reply.code(500).send({ error: "Error creating user" })
   }
 
+  try {
+    request.server.mailer.sendMail({
+      from: process.env.SMTP_EMAIL_FROM,
+      to: email,
+      html: html(`${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`),
+      subject: "Welcome to MyArtverse",
+      text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
+    })
+  } catch (error) {
+    throw new Error(`Error sending email: ${error}`)
+  }
+
+
   // Return the token
   return reply.code(201).send({ email, username })
 }
@@ -156,7 +170,7 @@ export const forgotPassword = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  // TODO
+  // TODO: Send Email with reset link
   return { hello: "world" }
 }
 
@@ -196,4 +210,17 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   return reply.code(200).send({ user })
+}
+
+export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { uuid } = request.params as { uuid: string }
+  let user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { verificationUUID: uuid } })
+  if (!user) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+  user.verified = true
+  await request.server.db.getRepository(Auth).save(user)
+  return reply.code(200).send({ message: "User verified" })
 }
