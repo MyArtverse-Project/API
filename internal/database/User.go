@@ -83,7 +83,7 @@ type SessionCheckAnswer struct {
 }
 
 func CheckSession(db *sqlx.DB, sessionKey string) (uuid.UUID, error) {
-	row := db.QueryRow("SELECT CheckSession(session_key_in) VALUES ($1) AS response", sessionKey)
+	row := db.QueryRow("SELECT CheckSession($1) AS response", sessionKey)
 	if row.Err() != nil {
 		return uuid.Nil, row.Err()
 	}
@@ -92,6 +92,10 @@ func CheckSession(db *sqlx.DB, sessionKey string) (uuid.UUID, error) {
 	err := row.Scan(&sessionRow.UserID)
 	if err != nil {
 		return uuid.Nil, err
+	}
+
+	if sessionRow.UserID == uuid.Nil {
+		return uuid.Nil, errors.New("the session doesn't exists")
 	}
 
 	return sessionRow.UserID, nil
