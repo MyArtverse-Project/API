@@ -13,6 +13,10 @@ type LoginData struct {
 	Password string `json:"password"`
 }
 
+type LoginResponse struct {
+	Session string `json:"session"`
+}
+
 func AuthLogin(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check for the right content-Header
@@ -30,16 +34,16 @@ func AuthLogin(db *sqlx.DB) gin.HandlerFunc {
 			return
 		}
 
-		session, err := database.CheckLocalLogin(db, loginData.Login, &loginData.Password, c.Request.Header["User-Agent"][0])
+		var session LoginResponse
+		session.Session, err = database.CheckLocalLogin(db, loginData.Login, &loginData.Password, c.Request.Header["User-Agent"][0])
 		if err != nil {
 			c.AbortWithStatus(http.StatusUnauthorized)
 			tools.LogError("MyFursona", err.Error())
 			return
 		}
 
-		c.SetCookie("S-SESSION-MF", session, 30000, "/", "*", true, true)
-
-		c.Status(http.StatusOK)
+		// Return the session
+		c.JSON(http.StatusOK, &session)
 		return
 	}
 }

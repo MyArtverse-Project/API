@@ -1,5 +1,6 @@
 GET http://localhost:8080/v1/auth/whoami
 Accept: application/json
+Authorization: Bearer QOwdCYgfxVzWIbzepWyvyPAF9VBErL7lPGI6NL8gM4Y
 
 ###
 POST http://localhost:8080/v1/auth/login
