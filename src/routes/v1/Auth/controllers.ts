@@ -62,6 +62,10 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(400).send({ error: "Invalid email or password" })
   }
 
+  if (!user.verified) {
+    return reply.code(401).send({ error: "You must be verified to login" })
+  }
+
   const accessToken = request.server.jwt.sign(
     { id: user.id },
     { expiresIn: "10m" }

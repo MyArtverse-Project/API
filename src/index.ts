@@ -8,19 +8,27 @@ import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { FastifyCookieOptions } from "@fastify/cookie"
 import nodemailer, { SentMessageInfo } from "nodemailer"
-import fastifyJwt, { UserType } from "@fastify/jwt"
+import fastifyJwt from "@fastify/jwt"
+import { characterRoutes } from "./routes/v1/Characters/routes"
+import multipart from "@fastify/multipart"
+import { S3Client } from "@aws-sdk/client-s3"
 
 declare module "fastify" {
   interface FastifyInstance {
     db: DataSource
     auth: any
     mailer: nodemailer.Transporter<SentMessageInfo>
+    s3: S3Client
   }
 
-  interface FastifyRequest {
-    user: UserType
+  interface UserRequest extends FastifyRequest {
+    user: {
+      id: number
+    }
   }
 }
+
+
 
 const app = async () => {
   Dotenv.config()
@@ -28,6 +36,20 @@ const app = async () => {
   // Initalize Database and Fastify
   const connection = await connectDatabase()
   const server = fastify({ logger: true })
+  
+  // S3
+  const s3 = new S3Client({
+    endpoint: process.env.S3_ENDPOINT as string,
+    region: process.env.AWS_DEFAULT_REGION as string,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+    },
+    forcePathStyle: true
+  });
+
+
+  server.decorate("s3", s3)
 
   // DB + Fastify
   server.decorate("db", connection)
@@ -62,14 +84,22 @@ const app = async () => {
     methods: ["GET", "POST", "PUT", "DELETE"]
   })
 
+  // Multer
+  server.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB Limit
+    }
+  })
+
   // Health Check
   server.get("/health", async () => {
-    return { hello: "world" }
+    return { status: "ok" }
   })
 
   // Registering Routes
   server.register(profileRoutes, { prefix: "/v1/user" })
   server.register(authRoutes, { prefix: "/v1/auth" })
+  server.register(characterRoutes, { prefix: '/v1/character' })
 
   // Starting server
   server.listen(
@@ -86,5 +116,7 @@ const app = async () => {
     }
   )
 }
+
+
 
 app()

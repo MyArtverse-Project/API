@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
-  OneToMany
+  OneToMany,
 } from "typeorm"
 import { Auth } from "./Auth"
 import { Relationships } from "./Relationships"
