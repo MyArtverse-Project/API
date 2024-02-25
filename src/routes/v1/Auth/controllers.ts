@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt"
 import { FastifyReply, FastifyRequest } from "fastify"
 import { html } from "@/utils/mail"
@@ -41,7 +42,7 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   const { email, password } = body
 
   // Check if email exists
-  let user = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
   if (!user) {
     return reply.code(400).send({ error: "Invalid email or password" })
   }
@@ -86,12 +87,12 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   const { email, password, username } = body
 
   // Check if email is already in use
-  let authCheck = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
+  const authCheck = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
   if (authCheck) {
     return reply.code(400).send({ error: "Email already in use" })
   }
   // Check if username is already in use
-  let userCheck = await request.server.db.getRepository(User).findOne({ where: { handle: username } })
+  const userCheck = await request.server.db.getRepository(User).findOne({ where: { handle: username } })
   if (userCheck) {
     return reply.code(400).send({ error: "Username already in use" })
   }
@@ -146,7 +147,7 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
     return reply.code(400).send({ error: "New password is required" })
   }
   const { newPassword, userId } = body
-  let user = await request.server.db.getRepository(Auth).findOne({ where: { id: userId } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { id: userId } })
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
@@ -173,7 +174,7 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
-  let user = await request.server.db.getRepository(Auth).findOne({ where: { verificationUUID: uuid } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { verificationUUID: uuid } })
   if (!user) {
     return reply.code(404).send({ error: "User not found" })
   }

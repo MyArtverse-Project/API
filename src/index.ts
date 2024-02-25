@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCors from "@fastify/cors"
 import * as dotenv from "dotenv"
 import fastify from "fastify"
@@ -6,9 +7,10 @@ import authRoutes from "./routes/v1/Auth/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
-import { FastifyCookieOptions } from "@fastify/cookie"
+import type { FastifyCookieOptions } from "@fastify/cookie"
 import nodemailer, { type SentMessageInfo } from "nodemailer"
 import fastifyJwt, { type UserType } from "@fastify/jwt"
+import fastifyCookie from "@fastify/cookie"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -50,7 +52,7 @@ const app = async () => {
   server.register(fastifyJwt, { secret: String(process.env.MA_JWT_SECRET) })
 
   // Cookie
-  server.register(require("@fastify/cookie"), {
+  server.register(fastifyCookie, {
     secret: process.env.MA_COOKIE_SECRET,
     parseOptions: {}
   } as FastifyCookieOptions)
