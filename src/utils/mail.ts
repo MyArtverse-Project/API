@@ -1,5 +1,5 @@
 export const html = (url: string) => {
-    // TODO: Improve HTML Email
+  // TODO: Improve HTML Email
   return `
     <body style="background: #fff;">
     <table width="100%" border="0" cellspacing="0" cellpadding="0">
