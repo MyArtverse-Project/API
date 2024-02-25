@@ -2,7 +2,6 @@ import { DataSource } from "typeorm"
 
 /**
  * Connects to the database
- *
  */
 const connectDatabase = async (): Promise<DataSource> => {
   const connection = new DataSource({
@@ -24,6 +23,7 @@ const connectDatabase = async (): Promise<DataSource> => {
     .catch((err) => {
       throw new Error(`Error connecting to database: ${err}`)
     })
+
   return connection
 }
 

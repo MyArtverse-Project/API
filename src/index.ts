@@ -1,5 +1,5 @@
 import fastifyCors from "@fastify/cors"
-import * as Dotenv from "dotenv"
+import * as dotenv from "dotenv"
 import fastify from "fastify"
 import { DataSource } from "typeorm"
 import authRoutes from "./routes/v1/Auth/routes"
@@ -7,8 +7,8 @@ import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { FastifyCookieOptions } from "@fastify/cookie"
-import nodemailer, { SentMessageInfo } from "nodemailer"
-import fastifyJwt, { UserType } from "@fastify/jwt"
+import nodemailer, { type SentMessageInfo } from "nodemailer"
+import fastifyJwt, { type UserType } from "@fastify/jwt"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -23,7 +23,7 @@ declare module "fastify" {
 }
 
 const app = async () => {
-  Dotenv.config()
+  dotenv.config()
 
   // Initalize Database and Fastify
   const connection = await connectDatabase()
@@ -57,8 +57,7 @@ const app = async () => {
 
   // CORS
   server.register(fastifyCors, {
-    origin:
-      process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
+    origin: process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
     methods: ["GET", "POST", "PUT", "DELETE"]
   })
 

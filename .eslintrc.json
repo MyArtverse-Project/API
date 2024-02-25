@@ -1,0 +1,12 @@
+{
+  "root": true,
+  "extends": ["plugin:@typescript-eslint/recommended"],
+  "plugins": ["unused-imports"],
+  "rules": {
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "unused-imports/no-unused-imports": "error"
+  },
+  "parser": "@typescript-eslint/parser",
+  "ignorePatterns": ["dist", ".eslintrc.json"]
+}

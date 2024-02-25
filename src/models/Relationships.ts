@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm"
-import { User } from "./Users"
+import User from "./Users"
 
 @Entity("followers")
-export class Relationships {
+export default class Relationships {
   @PrimaryGeneratedColumn()
   id: number
 

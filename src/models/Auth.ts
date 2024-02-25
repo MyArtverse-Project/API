@@ -1,14 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn
-} from "typeorm"
-import { User } from "./Users"
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm"
+import User from "./Users"
 
 @Entity()
-export class Auth {
+export default class Auth {
   @PrimaryGeneratedColumn()
   id: number
 
