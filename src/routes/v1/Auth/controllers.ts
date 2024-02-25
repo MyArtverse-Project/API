@@ -1,13 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt"
 import { FastifyReply, FastifyRequest } from "fastify"
-import { Auth } from "../../../models/Auth"
-import { User } from "../../../models/Users"
-import { html } from "../../../utils/mail"
+import { html } from "@/utils/mail"
+import { Auth, User } from "@/models"
 
-export const refreshToken = async (
-  request: FastifyRequest,
-  reply: FastifyReply
-) => {
+export const refreshToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const { refreshToken } = request.cookies
   if (!refreshToken) {
     return reply.code(401).send({ error: "Unauthorized" })
@@ -17,16 +14,11 @@ export const refreshToken = async (
     if (!payload) {
       return reply.code(401).send({ error: "Unauthorized" })
     }
-    const user = await request.server.db
-      .getRepository(Auth)
-      .findOne({ where: { id: payload.id } })
+    const user = await request.server.db.getRepository(Auth).findOne({ where: { id: payload.id } })
     if (!user) {
       return reply.code(401).send({ error: "Unauthorized" })
     }
-    const accessToken = request.server.jwt.sign(
-      { id: user.id },
-      { expiresIn: "10m" }
-    )
+    const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
@@ -50,9 +42,7 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   const { email, password } = body
 
   // Check if email exists
-  let user = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { email: email } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
   if (!user) {
     return reply.code(400).send({ error: "Invalid email or password" })
   }
@@ -62,14 +52,8 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(400).send({ error: "Invalid email or password" })
   }
 
-  const accessToken = request.server.jwt.sign(
-    { id: user.id },
-    { expiresIn: "10m" }
-  )
-  const refreshToken = request.server.jwt.sign(
-    { id: user.id },
-    { expiresIn: "7d" }
-  )
+  const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
+  const refreshToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "7d" })
 
   // Return the token
   return reply
@@ -91,33 +75,24 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     .send({ accessToken: accessToken, refreshToken: refreshToken })
 }
 
-export const register = async (
-  request: FastifyRequest,
-  reply: FastifyReply
-) => {
+export const register = async (request: FastifyRequest, reply: FastifyReply) => {
   const body = request.body as {
     email: string
     password: string
     username: string
   }
   if (!body.email || !body.password || !body.username) {
-    return reply
-      .code(400)
-      .send({ error: "Username, Email and password are required" })
+    return reply.code(400).send({ error: "Username, Email and password are required" })
   }
   const { email, password, username } = body
 
   // Check if email is already in use
-  let authCheck = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { email: email } })
+  const authCheck = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
   if (authCheck) {
     return reply.code(400).send({ error: "Email already in use" })
   }
   // Check if username is already in use
-  let userCheck = await request.server.db
-    .getRepository(User)
-    .findOne({ where: { handle: username } })
+  const userCheck = await request.server.db.getRepository(User).findOne({ where: { handle: username } })
   if (userCheck) {
     return reply.code(400).send({ error: "Username already in use" })
   }
@@ -145,9 +120,7 @@ export const register = async (
     request.server.mailer.sendMail({
       from: process.env.SMTP_EMAIL_FROM,
       to: email,
-      html: html(
-        `${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`
-      ),
+      html: html(`${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`),
       subject: "Welcome to MyArtverse",
       text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
     })
@@ -160,33 +133,21 @@ export const register = async (
 }
 
 export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
-  return reply
-    .code(200)
-    .clearCookie("accessToken")
-    .clearCookie("refreshToken")
-    .send({ message: "Logged out" })
+  return reply.code(200).clearCookie("accessToken").clearCookie("refreshToken").send({ message: "Logged out" })
 }
 
-export const forgotPassword = async (
-  request: FastifyRequest,
-  reply: FastifyReply
-) => {
+export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
   // TODO: Send Email with reset link
   return { hello: "world" }
 }
 
-export const changePassword = async (
-  request: FastifyRequest,
-  reply: FastifyReply
-) => {
+export const changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
   const body = request.body as { newPassword: string; userId: number }
   if (!body.newPassword) {
     return reply.code(400).send({ error: "New password is required" })
   }
   const { newPassword, userId } = body
-  let user = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { id: userId } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { id: userId } })
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
@@ -213,9 +174,7 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
-  let user = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { verificationUUID: uuid } })
+  const user = await request.server.db.getRepository(Auth).findOne({ where: { verificationUUID: uuid } })
   if (!user) {
     return reply.code(404).send({ error: "User not found" })
   }

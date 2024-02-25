@@ -1,14 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn
-} from "typeorm"
-import { Character } from "./Character"
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm"
+import Character from "./Character"
 
 @Entity()
-export class Attributes {
+export default class Attributes {
   @PrimaryGeneratedColumn()
   id: number
 
