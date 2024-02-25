@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from "typeorm"
-import { Character } from "./Character"
+import Character from "./Character"
 
 @Entity()
-export class Migration {
+export default class Migration {
   @PrimaryGeneratedColumn()
   id: number
 

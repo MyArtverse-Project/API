@@ -1,17 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fastifyCors from "@fastify/cors"
-import * as Dotenv from "dotenv"
+import * as dotenv from "dotenv"
 import fastify from "fastify"
 import { DataSource } from "typeorm"
 import authRoutes from "./routes/v1/Auth/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
-import { FastifyCookieOptions } from "@fastify/cookie"
-import nodemailer, { SentMessageInfo } from "nodemailer"
-import fastifyJwt from "@fastify/jwt"
+import nodemailer, { type SentMessageInfo } from "nodemailer"
 import { characterRoutes } from "./routes/v1/Characters/routes"
 import multipart from "@fastify/multipart"
 import { S3Client } from "@aws-sdk/client-s3"
+import type { FastifyCookieOptions } from "@fastify/cookie"
+import fastifyJwt from "@fastify/jwt"
+import fastifyCookie from "@fastify/cookie"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -31,7 +33,7 @@ declare module "fastify" {
 
 
 const app = async () => {
-  Dotenv.config()
+  dotenv.config()
 
   // Initalize Database and Fastify
   const connection = await connectDatabase()
@@ -72,15 +74,14 @@ const app = async () => {
   server.register(fastifyJwt, { secret: String(process.env.MA_JWT_SECRET) })
 
   // Cookie
-  server.register(require("@fastify/cookie"), {
+  server.register(fastifyCookie, {
     secret: process.env.MA_COOKIE_SECRET,
     parseOptions: {}
   } as FastifyCookieOptions)
 
   // CORS
   server.register(fastifyCors, {
-    origin:
-      process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
+    origin: process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
     methods: ["GET", "POST", "PUT", "DELETE"]
   })
 

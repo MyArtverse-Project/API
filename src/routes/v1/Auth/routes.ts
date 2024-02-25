@@ -1,14 +1,5 @@
 import { FastifyInstance } from "fastify"
-import {
-  changePassword,
-  forgotPassword,
-  login,
-  logout,
-  refreshToken,
-  register,
-  whoami,
-  verify
-} from "./controllers"
+import { changePassword, forgotPassword, login, logout, refreshToken, register, whoami, verify } from "./controllers"
 
 async function authRoutes(server: FastifyInstance) {
   server.post("/login", login)

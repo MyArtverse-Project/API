@@ -1,15 +1,8 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn
-} from "typeorm"
-import { User } from "./Users"
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm"
+import User from "./Users"
 
 @Entity("commissions")
-export class Commission {
+export default class Commission {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

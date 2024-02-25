@@ -1,18 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn,
-  ManyToOne
-} from "typeorm"
-import { Attributes } from "./Attributes"
-import { AdoptionStatus } from "./AdoptionStatus"
-import { Migration } from "./Migration"
-import { User } from "./Users"
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne } from "typeorm"
+import Attributes from "./Attributes"
+import AdoptionStatus from "./AdoptionStatus"
+import Migration from "./Migration"
+import User from "./Users"
 
 @Entity()
-export class Character {
+export default class Character {
   @PrimaryGeneratedColumn()
   id: number
 

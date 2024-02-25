@@ -7,14 +7,14 @@ import {
   OneToOne,
   OneToMany,
 } from "typeorm"
-import { Auth } from "./Auth"
-import { Relationships } from "./Relationships"
-import { AdoptionStatus } from "./AdoptionStatus"
-import { Character } from "./Character"
-import { Commission } from "./Listings"
+import Auth from "./Auth"
+import Relationships from "./Relationships"
+import AdoptionStatus from "./AdoptionStatus"
+import Character from "./Character"
+import Commission from "./Listings"
 
 @Entity("users")
-export class User {
+export default class User {
   @PrimaryGeneratedColumn()
   id: number
 
@@ -68,10 +68,7 @@ export class User {
   @OneToOne(() => Auth, (authentication) => authentication.user)
   auth: Auth
 
-  @OneToMany(
-    () => AdoptionStatus,
-    (adoptionStatus) => adoptionStatus.previous_owner
-  )
+  @OneToMany(() => AdoptionStatus, (adoptionStatus) => adoptionStatus.previous_owner)
   adoptionStatuses: AdoptionStatus[]
 
   @OneToOne(() => AdoptionStatus, (adoptionStatus) => adoptionStatus.ownership)
