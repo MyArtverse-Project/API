@@ -8,5 +8,5 @@
     "unused-imports/no-unused-imports": "error"
   },
   "parser": "@typescript-eslint/parser",
-  "ignorePatterns": ["dist", ".eslintrc.json"]
+  "ignorePatterns": ["dist", ".eslintrc.json", "README.md"]
 }
