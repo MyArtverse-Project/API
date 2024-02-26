@@ -44,14 +44,16 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   const { email, password } = body
 
   // Check if email exists
-  const user = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { email: email }, relations: { user: true } })
   if (!user) {
-    return reply.code(400).send({ error: "Invalid email or password" })
+    return reply.code(400).send({ email: "Invalid email", password: null })
   }
 
   // Check if password is correct
   if (!bcrypt.compareSync(password, user.password)) {
-    return reply.code(400).send({ error: "Invalid email or password" })
+    return reply.code(400).send({ email: null, password: "Invalid password" })
   }
 
   if (!user.verified) {
@@ -78,7 +80,7 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
       secure: process.env.NODE_ENV === "production" ? true : false,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
     })
-    .send({ accessToken: accessToken, refreshToken: refreshToken })
+    .send({ accessToken: accessToken, refreshToken: refreshToken, handler: user.user.handle })
 }
 
 export const register = async (request: FastifyRequest, reply: FastifyReply) => {

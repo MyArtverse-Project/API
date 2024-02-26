@@ -78,8 +78,10 @@ const app = async () => {
 
   // CORS
   server.register(fastifyCors, {
-    origin: process.env.NODE_ENV === "production" ? process.env.MA_FRONTEND_URL : "*",
-    methods: ["GET", "POST", "PUT", "DELETE"]
+    origin: process.env.MA_FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
   })
 
   // Multer
