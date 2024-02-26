@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt"
 import { FastifyReply, FastifyRequest } from "fastify"
-import { html } from "@/utils/mail"
-import { Auth, User } from "@/models"
+import { Auth, User } from "../../../models"
+import { html } from "../../../utils"
+// import { html } from "@/utils"
+// import { Auth, User } from "@/models"
 
 export const refreshToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const { refreshToken } = request.cookies

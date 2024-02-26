@@ -1,4 +1,4 @@
-export const html = (url: string) => {
+const html = (url: string) => {
   // TODO: Improve HTML Email
   return `
     <body style="background: #fff;">
@@ -43,3 +43,5 @@ export const html = (url: string) => {
 </body>
     `
 }
+
+export default html

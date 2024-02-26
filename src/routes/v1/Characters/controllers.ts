@@ -1,6 +1,8 @@
 import { FastifyReply, FastifyRequest } from "fastify"
-import { uploadToS3 } from "../../../utils/images"
-import User from "@/models/Users"
+import { User } from "../../../models"
+import { uploadToS3 } from "../../../utils"
+// import { uploadToS3 } from "@/utils"
+// import User from "@/models/Users"
 
 export const getCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = await request.server.db.getRepository(User).findOne({
