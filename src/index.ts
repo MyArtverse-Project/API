@@ -72,16 +72,14 @@ const app = async () => {
 
   // Cookie
   server.register(fastifyCookie, {
-    secret: process.env.MA_COOKIE_SECRET,
-    parseOptions: {}
+    secret: process.env.MA_COOKIE_SECRET
   } as FastifyCookieOptions)
 
   // CORS
   server.register(fastifyCors, {
     origin: process.env.MA_FRONTEND_URL || "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    methods: ["GET", "POST", "PUT", "DELETE"]
   })
 
   // Multer
@@ -100,6 +98,7 @@ const app = async () => {
   server.register(profileRoutes, { prefix: "/v1/user" })
   server.register(authRoutes, { prefix: "/v1/auth" })
   server.register(characterRoutes, { prefix: "/v1/character" })
+  server.register(profileRoutes, { prefix: "/v1/profile" })
 
   // Starting server
   server.listen(

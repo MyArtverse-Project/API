@@ -70,15 +70,15 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
       path: "/",
       domain: "localhost",
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+      secure: false,
+      sameSite: "lax"
     })
     .setCookie("refreshToken", refreshToken, {
       path: "/",
       domain: "localhost",
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+      secure: false,
+      sameSite: "lax"
     })
     .send({ accessToken: accessToken, refreshToken: refreshToken, handler: user.user.handle })
 }
