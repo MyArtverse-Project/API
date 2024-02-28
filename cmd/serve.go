@@ -25,6 +25,12 @@ func Start() {
 		panic(err)
 	}
 
+	// Setup Session middleware
+	//sessionStore, err := sessionAuth.SetupSessionGin()
+	//if err != nil {
+	//	panic(err)
+	//}
+
 	// Setup Router
 	r := router.CreateRouter()
 

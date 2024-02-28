@@ -31,7 +31,6 @@ func AuthRegister(db *sqlx.DB) gin.HandlerFunc {
 		if err != nil {
 			c.AbortWithStatus(http.StatusBadRequest)
 			tools.LogError("MyFursona", err.Error())
-			fmt.Println("Error: " + err.Error())
 			return
 		}
 
@@ -40,39 +39,22 @@ func AuthRegister(db *sqlx.DB) gin.HandlerFunc {
 		// Check request data
 		// TODO: Create
 
-		// create User
-		UID, err := database.CreateUser(db, request.Email, request.Username)
+		// create A local user with password login and email verification
+		token, err := database.CreateLocalUser(db, &request.Email, &request.Username, &request.Password)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			tools.LogError("MyFursona", err.Error())
-			fmt.Println("Error: " + err.Error())
 			return
 		}
 
-		// Create Password login
-		// TODO: Add hashing
-
-		// Create email token
-		// TODO: Cache in Redis
-		_, err = database.CreateEmailToken(db, UID)
-		if err != nil {
-			return
-		}
-
-		// Store the email token into redis
+		// Store the email token into caching
 		// TODO:
 
 		// send email
 		// TODO:
+		fmt.Println("Email Token: " + token.String())
 
 		// Success response
 		c.Status(http.StatusCreated)
 	}
-}
-
-func SetPassword(password string) {
-	// Hash the password
-
-	// Store it into the DB
-
 }
