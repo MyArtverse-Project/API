@@ -24,11 +24,11 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
-        path: "/",
         domain: "localhost",
+        path: "/",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production" ? true : false,
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+        secure: false,
+        sameSite: "lax"
       })
       .send({ accessToken })
   } catch (error) {
@@ -67,17 +67,17 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
     .setCookie("accessToken", accessToken, {
-      path: "/",
       domain: "localhost",
+      path: "/",
       httpOnly: true,
-      secure: false,
+      secure: "auto",
       sameSite: "lax"
     })
     .setCookie("refreshToken", refreshToken, {
-      path: "/",
       domain: "localhost",
+      path: "/",
       httpOnly: true,
-      secure: false,
+      secure: "auto",
       sameSite: "lax"
     })
     .send({ accessToken: accessToken, refreshToken: refreshToken, handler: user.user.handle })

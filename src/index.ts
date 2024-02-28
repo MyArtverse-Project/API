@@ -68,7 +68,10 @@ const app = async () => {
   server.decorate("mailer", mailer).addHook("onClose", () => mailer.close())
 
   // JWT
-  server.register(fastifyJwt, { secret: String(process.env.MA_JWT_SECRET) })
+  server.register(fastifyJwt, {
+    secret: String(process.env.MA_JWT_SECRET),
+    cookie: { cookieName: "accessToken", signed: false }
+  })
 
   // Cookie
   server.register(fastifyCookie, {
@@ -78,8 +81,7 @@ const app = async () => {
   // CORS
   server.register(fastifyCors, {
     origin: process.env.MA_FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"]
+    credentials: true
   })
 
   // Multer
