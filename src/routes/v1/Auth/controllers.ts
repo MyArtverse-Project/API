@@ -11,16 +11,20 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
   if (!refreshToken) {
     return reply.code(401).send({ error: "Unauthorized" })
   }
+
   try {
     const payload = (await request.server.jwt.verify(refreshToken)) as any
     if (!payload) {
       return reply.code(401).send({ error: "Unauthorized" })
     }
+
     const user = await request.server.db.getRepository(Auth).findOne({ where: { id: payload.id } })
     if (!user) {
       return reply.code(401).send({ error: "Unauthorized" })
     }
+
     const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
+
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
@@ -41,12 +45,14 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   if (!body.email || !body.password) {
     return reply.code(400).send({ error: "Email and password are required" })
   }
+
   const { email, password } = body
 
   // Check if email exists
   const user = await request.server.db
     .getRepository(Auth)
     .findOne({ where: { email: email }, relations: { user: true } })
+
   if (!user) {
     return reply.code(400).send({ email: "Invalid email", password: null })
   }
@@ -89,9 +95,11 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     password: string
     username: string
   }
+
   if (!body.email || !body.password || !body.username) {
     return reply.code(400).send({ error: "Username, Email and password are required" })
   }
+
   const { email, password, username } = body
 
   // Check if email is already in use
@@ -99,6 +107,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   if (authCheck) {
     return reply.code(400).send({ error: "Email already in use" })
   }
+
   // Check if username is already in use
   const userCheck = await request.server.db.getRepository(User).findOne({ where: { handle: username } })
   if (userCheck) {
@@ -156,14 +165,17 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
   if (!body.newPassword) {
     return reply.code(400).send({ error: "New password is required" })
   }
+
   const { newPassword, userId } = body
   const user = await request.server.db.getRepository(Auth).findOne({ where: { id: userId } })
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
+
   const hashedPassword = bcrypt.hashSync(newPassword, 10)
   user.password = hashedPassword
   await request.server.db.getRepository(Auth).save(user)
+
   return reply.code(200).send({ message: "Password changed" })
 }
 
@@ -172,9 +184,11 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
     where: { id: (request.user as any).id },
     relations: { user: true }
   })
+
   if (!user) {
     return reply.code(401).send({ error: "Unauthorized" })
   }
+
   if (user.password) {
     user.password = ""
   }
@@ -188,7 +202,9 @@ export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   if (!user) {
     return reply.code(404).send({ error: "User not found" })
   }
+
   user.verified = true
   await request.server.db.getRepository(Auth).save(user)
+
   return reply.code(200).send({ message: "User verified" })
 }

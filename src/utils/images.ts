@@ -21,10 +21,12 @@ const uploadToS3 = async (client: S3Client, file: BusboyFileStream, key: string,
     ContentType: mimetype,
     ContentLength: length
   })
+
   try {
     const result = await client.send(command)
     // Delete the temp file
     fs.unlinkSync(tempFilePath)
+
     return result
   } catch (error) {
     // Delete the temp file

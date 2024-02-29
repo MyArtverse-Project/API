@@ -1,11 +1,33 @@
 {
   "root": true,
+  "env": {
+    "es6": true,
+    "node": true
+  },
   "extends": ["plugin:@typescript-eslint/recommended"],
-  "plugins": ["unused-imports"],
+  "plugins": ["unused-imports", "@stylistic"],
   "rules": {
+    "no-var": "error",
+    "no-duplicate-imports": "error",
+    "no-console": "warn",
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-unused-vars": "warn",
-    "unused-imports/no-unused-imports": "error"
+    "unused-imports/no-unused-imports": "warn",
+    "newline-before-return": "error",
+    "@stylistic/function-call-spacing": ["error", "never"],
+    "@stylistic/space-before-blocks": "error",
+    "@stylistic/keyword-spacing": ["error", { "before": true }],
+    "@stylistic/padding-line-between-statements": [
+      "error",
+      { "blankLine": "always", "prev": "directive", "next": "*" },
+      {
+        "blankLine": "always",
+        "prev": ["multiline-const", "function"],
+        "next": ["const", "let", "block-like", "export", "return", "try"]
+      },
+      { "blankLine": "always", "prev": "block-like", "next": "*" },
+      { "blankLine": "always", "prev": "*", "next": ["try"] }
+    ]
   },
   "parser": "@typescript-eslint/parser",
   "ignorePatterns": ["dist", ".eslintrc.json", "README.md"]

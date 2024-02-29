@@ -11,9 +11,8 @@ import nodemailer, { type SentMessageInfo } from "nodemailer"
 import { characterRoutes } from "./routes/v1/Characters/routes"
 import multipart from "@fastify/multipart"
 import { S3Client } from "@aws-sdk/client-s3"
-import type { FastifyCookieOptions } from "@fastify/cookie"
+import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
 import fastifyJwt from "@fastify/jwt"
-import fastifyCookie from "@fastify/cookie"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -115,6 +114,7 @@ const app = async () => {
         server.log.error(err)
         process.exit(1)
       }
+
       console.log(`server listening on ${address}`)
     }
   )
