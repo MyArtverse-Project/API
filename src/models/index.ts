@@ -7,4 +7,13 @@ import Migration from "./Migration"
 import Relationships from "./Relationships"
 import User from "./Users"
 
-export { AdoptionStatus, Attributes, Auth, Character, Commission, Migration, Relationships, User }
+export {
+  AdoptionStatus,
+  Attributes,
+  Auth,
+  Character,
+  Commission,
+  Migration,
+  Relationships,
+  User
+}

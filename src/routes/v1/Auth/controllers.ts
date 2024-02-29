@@ -18,7 +18,10 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
       return reply.code(401).send({ error: "Unauthorized" })
     }
 
-    const user = await request.server.db.getRepository(Auth).findOne({ where: { id: payload.id } })
+    const user = await request.server.db
+      .getRepository(Auth)
+      .findOne({ where: { id: payload.id } })
+
     if (!user) {
       return reply.code(401).send({ error: "Unauthorized" })
     }
@@ -86,7 +89,11 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
       secure: "auto",
       sameSite: "lax"
     })
-    .send({ accessToken: accessToken, refreshToken: refreshToken, handler: user.user.handle })
+    .send({
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      handler: user.user.handle
+    })
 }
 
 export const register = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -103,13 +110,19 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   const { email, password, username } = body
 
   // Check if email is already in use
-  const authCheck = await request.server.db.getRepository(Auth).findOne({ where: { email: email } })
+  const authCheck = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { email: email } })
+
   if (authCheck) {
     return reply.code(400).send({ error: "Email already in use" })
   }
 
   // Check if username is already in use
-  const userCheck = await request.server.db.getRepository(User).findOne({ where: { handle: username } })
+  const userCheck = await request.server.db
+    .getRepository(User)
+    .findOne({ where: { handle: username } })
+
   if (userCheck) {
     return reply.code(400).send({ error: "Username already in use" })
   }
@@ -152,7 +165,11 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
 }
 
 export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).clearCookie("accessToken").clearCookie("refreshToken").send({ message: "Logged out" })
+  return reply
+    .code(200)
+    .clearCookie("accessToken")
+    .clearCookie("refreshToken")
+    .send({ message: "Logged out" })
 }
 
 export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -167,7 +184,10 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
   }
 
   const { newPassword, userId } = body
-  const user = await request.server.db.getRepository(Auth).findOne({ where: { id: userId } })
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { id: userId } })
+
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
@@ -198,7 +218,10 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
-  const user = await request.server.db.getRepository(Auth).findOne({ where: { verificationUUID: uuid } })
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { verificationUUID: uuid } })
+
   if (!user) {
     return reply.code(404).send({ error: "User not found" })
   }

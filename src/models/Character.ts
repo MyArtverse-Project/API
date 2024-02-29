@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne } from "typeorm"
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+  ManyToOne
+} from "typeorm"
 import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
 import Migration from "./Migration"

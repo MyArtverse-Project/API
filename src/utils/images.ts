@@ -5,7 +5,12 @@ import os from "os"
 import path from "path"
 import { pipeline } from "stream/promises"
 
-const uploadToS3 = async (client: S3Client, file: BusboyFileStream, key: string, mimetype: string) => {
+const uploadToS3 = async (
+  client: S3Client,
+  file: BusboyFileStream,
+  key: string,
+  mimetype: string
+) => {
   // Create a temporary file to store the file
   const tempFilePath = path.join(os.tmpdir(), key)
   await pipeline(file, fs.createWriteStream(tempFilePath))
