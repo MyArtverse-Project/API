@@ -80,7 +80,7 @@ const app = async () => {
   // CORS
   server.register(fastifyCors, {
     origin:
-      `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}${process.env.MA_FRONTEND_PORT}` ||
+      `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}` ||
       "http://localhost:3000",
     credentials: true
   })
