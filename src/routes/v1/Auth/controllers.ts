@@ -27,7 +27,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
         domain: "localhost",
         path: "/",
         httpOnly: true,
-        secure: false,
+        secure: "auto",
         sameSite: "lax"
       })
       .send({ accessToken })
