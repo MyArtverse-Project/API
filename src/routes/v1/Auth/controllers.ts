@@ -24,7 +24,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
-        domain: "localhost",
+        domain: process.env.MA_FRONTEND_DOMAIN,
         path: "/",
         httpOnly: true,
         secure: "auto",
@@ -67,14 +67,14 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
     .setCookie("accessToken", accessToken, {
-      domain: "localhost",
+      domain: process.env.MA_FRONTEND_DOMAIN,
       path: "/",
       httpOnly: true,
       secure: "auto",
       sameSite: "lax"
     })
     .setCookie("refreshToken", refreshToken, {
-      domain: "localhost",
+      domain: process.env.MA_FRONTEND_DOMAIN,
       path: "/",
       httpOnly: true,
       secure: "auto",
@@ -128,7 +128,9 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     request.server.mailer.sendMail({
       from: process.env.SMTP_EMAIL_FROM,
       to: email,
-      html: html(`${process.env.MA_FRONTEND_URL}/verify/${data.verificationUUID}`),
+      html: html(
+        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}${process.env.MA_FRONTEND_PORT}/verify/${data.verificationUUID}`
+      ),
       subject: "Welcome to MyArtverse",
       text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
     })
