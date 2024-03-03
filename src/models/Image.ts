@@ -22,4 +22,10 @@ export class Image {
 
   @UpdateDateColumn()
   updatedAt: Date
+
+  @Column()
+  type: "character" | "user"
+
+  @Column()
+  ownerId: string
 }

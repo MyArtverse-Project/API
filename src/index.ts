@@ -100,7 +100,7 @@ const app = async () => {
   })
 
   // Upload Route
-  server.post("/upload", { preHandler: [server.auth] }, async (request, reply) => {
+  server.post("/upload-user", { preHandler: [server.auth] }, async (request, reply) => {
     const user = await request.server.db.getRepository(User).findOne({
       where: { id: Number((request.user as { id: string }).id) }
     })
@@ -113,19 +113,26 @@ const app = async () => {
     }
 
     const { file, filename, mimetype } = data
-    const uploadResult = await uploadToS3(request.server.s3, file, filename, mimetype)
+    const uploadResult = await uploadToS3(
+      request.server.s3,
+      file,
+      filename,
+      mimetype,
+      "character",
+      user.id
+    )
 
     // TODO: Modify the image as needed for art protection with password protected filter
     if (!uploadResult) {
       return reply.code(500).send({ message: "Error uploading file" })
     }
 
-    const url =
-      await `https://${process.env.S3_BUCKET}.${process.env.S3_ENDPOINT}/${filename}`
-
-    const image = await request.server.db
-      .getRepository(Image)
-      .save({ url: url, altText: filename })
+    const image = await request.server.db.getRepository(Image).save({
+      url: uploadResult.url,
+      altText: filename,
+      type: "user",
+      ownerId: user.id.toString()
+    })
 
     return reply.code(200).send({ message: "Art uploaded", url: image.url })
   })

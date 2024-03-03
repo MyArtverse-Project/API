@@ -4,8 +4,7 @@ import {
   deleteCharacter,
   getCharacter,
   getCharacters,
-  updateCharacter,
-  uploadArt
+  updateCharacter
 } from "./controllers"
 
 export async function characterRoutes(server: FastifyInstance) {
@@ -14,5 +13,4 @@ export async function characterRoutes(server: FastifyInstance) {
   server.post("/characters", { preHandler: [server.auth] }, createCharacter)
   server.put("/characters/:id", { preHandler: [server.auth] }, updateCharacter)
   server.delete("/characters/:id", { preHandler: [server.auth] }, deleteCharacter)
-  server.post("/characters/upload", { preHandler: [server.auth] }, uploadArt)
 }
