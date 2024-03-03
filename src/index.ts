@@ -13,6 +13,8 @@ import multipart from "@fastify/multipart"
 import { S3Client } from "@aws-sdk/client-s3"
 import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
 import fastifyJwt from "@fastify/jwt"
+import { uploadToS3 } from "./utils"
+import { User, Image } from "./models"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -97,6 +99,37 @@ const app = async () => {
     return { status: "ok" }
   })
 
+  // Upload Route
+  server.post("/upload", { preHandler: [server.auth] }, async (request, reply) => {
+    const user = await request.server.db.getRepository(User).findOne({
+      where: { id: Number((request.user as { id: string }).id) }
+    })
+    if (!user) return reply.code(401).send({ message: "Unauthorized" })
+
+    // Get the file from the request
+    const data = await request.file()
+    if (!data) {
+      return reply.code(400).send({ message: "No file uploaded" })
+    }
+
+    const { file, filename, mimetype } = data
+    const uploadResult = await uploadToS3(request.server.s3, file, filename, mimetype)
+
+    // TODO: Modify the image as needed for art protection with password protected filter
+    if (!uploadResult) {
+      return reply.code(500).send({ message: "Error uploading file" })
+    }
+
+    const url =
+      await `https://${process.env.S3_BUCKET}.${process.env.S3_ENDPOINT}/${filename}`
+
+    const image = await request.server.db
+      .getRepository(Image)
+      .save({ url: url, altText: filename })
+
+    return reply.code(200).send({ message: "Art uploaded", url: image.url })
+  })
+
   // Registering Routes
   server.register(profileRoutes, { prefix: "/v1/user" })
   server.register(authRoutes, { prefix: "/v1/auth" })
@@ -115,7 +148,7 @@ const app = async () => {
         process.exit(1)
       }
 
-      console.log(`server listening on ${address}`)
+      server.log.info(`server listening on ${address}`)
     }
   )
 }
