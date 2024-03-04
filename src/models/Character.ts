@@ -13,8 +13,8 @@ import User from "./Users"
 
 @Entity()
 export default class Character {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column()
   name: string

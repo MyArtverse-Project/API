@@ -11,7 +11,7 @@ const uploadToS3 = async (
   key: string,
   mimetype: string,
   type: "character" | "user",
-  ownerId: number
+  ownerId: string
 ) => {
   // Create a temporary file to store the file
   const tempFilePath = path.join(os.tmpdir(), key)

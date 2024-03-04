@@ -3,8 +3,8 @@ import User from "./Users"
 
 @Entity()
 export default class Auth {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column("boolean", { default: "false" })
   verified: boolean

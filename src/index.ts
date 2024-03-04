@@ -26,7 +26,7 @@ declare module "fastify" {
 
   interface UserRequest extends FastifyRequest {
     user: {
-      id: number
+      id: string
     }
   }
 }
@@ -101,8 +101,9 @@ const app = async () => {
 
   // Upload Route
   server.post("/upload-user", { preHandler: [server.auth] }, async (request, reply) => {
+    const userRequest = request.user as { id: string }
     const user = await request.server.db.getRepository(User).findOne({
-      where: { id: Number((request.user as { id: string }).id) }
+      where: { id: userRequest.id }
     })
     if (!user) return reply.code(401).send({ message: "Unauthorized" })
 

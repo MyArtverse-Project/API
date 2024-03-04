@@ -3,8 +3,8 @@ import Character from "./Character"
 
 @Entity()
 export default class Attributes {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column()
   bio: string

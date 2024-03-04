@@ -1,8 +1,9 @@
 import { FastifyInstance } from "fastify"
-import { me } from "./controllers"
+import { getProfile, me } from "./controllers"
 
 async function profileRoutes(server: FastifyInstance) {
   server.get("/me", { onRequest: [server.auth] }, me)
+  server.get("/:handle", getProfile)
 }
 
 export default profileRoutes

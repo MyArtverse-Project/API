@@ -12,7 +12,7 @@ import User from "./Users"
 @Entity()
 export default class AdoptionStatus {
   @PrimaryGeneratedColumn()
-  id: number
+  id: string
 
   @OneToOne(() => User, (user) => user.adoptionStatus)
   @JoinColumn()

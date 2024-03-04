@@ -178,7 +178,7 @@ export const forgotPassword = async (request: FastifyRequest, reply: FastifyRepl
 }
 
 export const changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
-  const body = request.body as { newPassword: string; userId: number }
+  const body = request.body as { newPassword: string; userId: string }
   if (!body.newPassword) {
     return reply.code(400).send({ error: "New password is required" })
   }
@@ -218,6 +218,10 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
+  if (!uuid || uuid.length !== 36) {
+    return reply.code(400).send({ error: "Valid UUID is required" })
+  }
+
   const user = await request.server.db
     .getRepository(Auth)
     .findOne({ where: { verificationUUID: uuid } })
