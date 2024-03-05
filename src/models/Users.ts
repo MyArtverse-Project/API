@@ -15,8 +15,8 @@ import Commission from "./Listings"
 
 @Entity("users")
 export default class User {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column({ unique: true })
   handle: string

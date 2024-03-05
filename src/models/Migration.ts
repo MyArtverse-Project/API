@@ -3,8 +3,8 @@ import Character from "./Character"
 
 @Entity()
 export default class Migration {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @Column()
   url: string

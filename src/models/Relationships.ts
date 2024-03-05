@@ -3,8 +3,8 @@ import User from "./Users"
 
 @Entity("followers")
 export default class Relationships {
-  @PrimaryGeneratedColumn()
-  id: number
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
   @ManyToOne(() => User, (user) => user.following)
   following: User

@@ -164,7 +164,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   return reply.code(201).send({ email, username })
 }
 
-export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
+export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
     .clearCookie("accessToken")
@@ -172,13 +172,13 @@ export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
     .send({ message: "Logged out" })
 }
 
-export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+export const forgotPassword = async () => {
   // TODO: Send Email with reset link
   return { hello: "world" }
 }
 
 export const changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
-  const body = request.body as { newPassword: string; userId: number }
+  const body = request.body as { newPassword: string; userId: string }
   if (!body.newPassword) {
     return reply.code(400).send({ error: "New password is required" })
   }
@@ -218,6 +218,10 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
+  if (!uuid || uuid.length !== 36) {
+    return reply.code(400).send({ error: "Valid UUID is required" })
+  }
+
   const user = await request.server.db
     .getRepository(Auth)
     .findOne({ where: { verificationUUID: uuid } })

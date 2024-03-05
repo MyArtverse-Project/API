@@ -2,6 +2,7 @@ import AdoptionStatus from "./AdoptionStatus"
 import Attributes from "./Attributes"
 import Auth from "./Auth"
 import Character from "./Character"
+import { Image } from "./Image"
 import Commission from "./Listings"
 import Migration from "./Migration"
 import Relationships from "./Relationships"
@@ -13,6 +14,7 @@ export {
   Auth,
   Character,
   Commission,
+  Image,
   Migration,
   Relationships,
   User

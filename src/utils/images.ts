@@ -9,11 +9,14 @@ const uploadToS3 = async (
   client: S3Client,
   file: BusboyFileStream,
   key: string,
-  mimetype: string
+  mimetype: string,
+  type: "character" | "user",
+  ownerId: string
 ) => {
   // Create a temporary file to store the file
   const tempFilePath = path.join(os.tmpdir(), key)
   await pipeline(file, fs.createWriteStream(tempFilePath))
+  const directory = type === "character" ? "characters" : "users"
 
   // Get Size for Content-Length
   const { size: length } = fs.statSync(tempFilePath)
@@ -21,7 +24,7 @@ const uploadToS3 = async (
 
   const command = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET as string,
-    Key: key,
+    Key: `${directory}/${ownerId}/${key}`,
     Body: fileStream,
     ContentType: mimetype,
     ContentLength: length
@@ -32,7 +35,10 @@ const uploadToS3 = async (
     // Delete the temp file
     fs.unlinkSync(tempFilePath)
 
-    return result
+    return {
+      ...result,
+      url: `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${directory}/${ownerId}/${key}`
+    }
   } catch (error) {
     // Delete the temp file
     fs.unlinkSync(tempFilePath)
