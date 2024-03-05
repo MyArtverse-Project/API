@@ -28,13 +28,13 @@ export default class Character {
   @Column()
   species: string
 
-  @Column()
+  @Column({ default: false })
   is_hybrid: boolean
 
-  @Column()
+  @Column({ nullable: true })
   avatar_url: string
 
-  @Column()
+  @Column({ nullable: true })
   reference_sheet_url: string
 
   @OneToOne(() => Attributes, (attributes) => attributes.character)
@@ -49,7 +49,7 @@ export default class Character {
   @JoinColumn()
   adoptionStatus: AdoptionStatus
 
-  @OneToOne(() => User, (user) => user.mainCharacter, { cascade: true })
+  @OneToOne(() => User, (user) => user.mainCharacter, { nullable: true })
   mainOwner: User
 
   @ManyToOne(() => User, (user) => user.characters)

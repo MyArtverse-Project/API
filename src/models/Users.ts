@@ -5,7 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
-  OneToMany
+  OneToMany,
+  JoinColumn
 } from "typeorm"
 import Auth from "./Auth"
 import Relationships from "./Relationships"
@@ -84,10 +85,12 @@ export default class User {
   adoptionStatus: AdoptionStatus
 
   @OneToMany(() => Character, (character) => character.owner)
+  @JoinColumn()
   characters: Character[]
 
   @OneToOne(() => Character, (character) => character.mainOwner)
-  mainCharacter: Character
+  @JoinColumn()
+  mainCharacter: Character | null
 
   @OneToMany(() => Commission, (commission) => commission.user)
   listings: Commission[]
