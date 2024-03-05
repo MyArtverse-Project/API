@@ -1,4 +1,4 @@
-import { FastifySchema } from "fastify"
+import type { FastifySchema } from "fastify"
 
 export const GET_CHARACTER_BY_ID_SCHEMA: FastifySchema = {
   description: "Retrieving character details by ID",
