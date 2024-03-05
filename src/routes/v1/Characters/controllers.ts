@@ -16,18 +16,18 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ characters: user?.characters })
 }
 
-export const getCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+export const getCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ character: {} })
 }
 
-export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+export const createCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(201).send({ character: {} })
 }
 
-export const updateCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+export const updateCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ character: {} })
 }
 
-export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+export const deleteCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ message: "Character deleted" })
 }

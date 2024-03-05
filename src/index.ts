@@ -15,7 +15,6 @@ import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
 import fastifyJwt from "@fastify/jwt"
 import swaggerUI from "@fastify/swagger-ui"
 import swagger from "@fastify/swagger"
-import { swaggerConfig } from "./swagger"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -149,16 +148,16 @@ const app = async () => {
       deepLinking: false
     },
     uiHooks: {
-      onRequest: function (request, reply, next) {
+      onRequest: function (_request, _reply, next) {
         next()
       },
-      preHandler: function (request, reply, next) {
+      preHandler: function (_request, _reply, next) {
         next()
       }
     },
     staticCSP: true,
     transformStaticCSP: (header) => header,
-    transformSpecification: (swaggerObject, request, reply) => {
+    transformSpecification: (swaggerObject) => {
       return swaggerObject
     },
     transformSpecificationClone: true
