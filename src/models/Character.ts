@@ -20,16 +20,22 @@ export default class Character {
   name: string
 
   @Column()
-  full_name: string
+  visible: boolean
+
+  @Column()
+  nickname: string
 
   @Column()
   species: string
 
-  @Column()
+  @Column({ default: false })
   is_hybrid: boolean
 
-  @Column()
+  @Column({ nullable: true })
   avatar_url: string
+
+  @Column({ nullable: true })
+  reference_sheet_url: string
 
   @OneToOne(() => Attributes, (attributes) => attributes.character)
   @JoinColumn()
@@ -42,6 +48,9 @@ export default class Character {
   @OneToOne(() => AdoptionStatus, (adoptionStatus) => adoptionStatus.character)
   @JoinColumn()
   adoptionStatus: AdoptionStatus
+
+  @OneToOne(() => User, (user) => user.mainCharacter, { nullable: true })
+  mainOwner: User
 
   @ManyToOne(() => User, (user) => user.characters)
   owner: User

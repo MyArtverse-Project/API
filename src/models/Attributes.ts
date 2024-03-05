@@ -12,8 +12,11 @@ export default class Attributes {
   @Column()
   pronouns: string
 
+  @Column()
+  gender: string
+
   @Column("jsonb")
-  preferences: { likes: string; dislikes: string }
+  preferences: { likes: string[]; dislikes: string[] }
 
   @Column("jsonb")
   custom_fields: { property: string; value: string }[]

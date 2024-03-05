@@ -23,9 +23,9 @@ export class Image {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @Column()
+  @Column({ nullable: true })
   type: "character" | "user"
 
-  @Column()
+  @Column({ nullable: true })
   ownerId: string
 }
