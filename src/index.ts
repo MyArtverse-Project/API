@@ -13,8 +13,8 @@ import multipart from "@fastify/multipart"
 import { S3Client } from "@aws-sdk/client-s3"
 import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
 import fastifyJwt from "@fastify/jwt"
-import { uploadToS3 } from "./utils"
-import { User, Image } from "./models"
+import swaggerUI from "@fastify/swagger-ui"
+import swagger from "@fastify/swagger"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -138,6 +138,30 @@ const app = async () => {
 
   //   return reply.code(200).send({ message: "Art uploaded", url: image.url })
   // })
+
+  // Swaggy Styff
+  await server.register(swagger)
+  await server.register(swaggerUI, {
+    routePrefix: "/documentation",
+    uiConfig: {
+      docExpansion: "full",
+      deepLinking: false
+    },
+    uiHooks: {
+      onRequest: function (_request, _reply, next) {
+        next()
+      },
+      preHandler: function (_request, _reply, next) {
+        next()
+      }
+    },
+    staticCSP: true,
+    transformStaticCSP: (header) => header,
+    transformSpecification: (swaggerObject) => {
+      return swaggerObject
+    },
+    transformSpecificationClone: true
+  })
 
   // Registering Routes
   server.register(profileRoutes, { prefix: "/v1/user" })

@@ -164,7 +164,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   return reply.code(201).send({ email, username })
 }
 
-export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
+export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
     .clearCookie("accessToken")
@@ -172,7 +172,7 @@ export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
     .send({ message: "Logged out" })
 }
 
-export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+export const forgotPassword = async () => {
   // TODO: Send Email with reset link
   return { hello: "world" }
 }
