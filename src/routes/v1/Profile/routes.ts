@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify"
+import type { FastifyInstance } from "fastify"
 import { getProfile, me, uploadProfileAvatar, uploadProfileBanner } from "./controllers"
 import {
   GET_PROFILE_SCHEMA,

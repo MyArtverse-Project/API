@@ -2,7 +2,7 @@ interface UserPayload {
   id: string
   profileId?: string
 }
-import { FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth } from "../models"
 
 const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {

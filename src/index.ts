@@ -2,7 +2,7 @@
 import fastifyCors from "@fastify/cors"
 import * as dotenv from "dotenv"
 import fastify from "fastify"
-import { DataSource } from "typeorm"
+import type { DataSource } from "typeorm"
 import authRoutes from "./routes/v1/Auth/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"

@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import { User } from "../../../models"
 // import { uploadToS3 } from "@/utils"
 // import User from "@/models/Users"

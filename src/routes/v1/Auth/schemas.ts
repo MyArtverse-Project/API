@@ -1,4 +1,4 @@
-import { FastifySchema } from "fastify"
+import type { FastifySchema } from "fastify"
 
 export const LOGIN_SCHEMA: FastifySchema = {
   description: "Authenticating a user, taking a email and password",
