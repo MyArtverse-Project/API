@@ -1,5 +1,6 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
-import { BusboyFileStream } from "@fastify/busboy"
+import type { S3Client } from "@aws-sdk/client-s3"
+import { PutObjectCommand } from "@aws-sdk/client-s3"
+import type { BusboyFileStream } from "@fastify/busboy"
 import * as fs from "fs"
 import os from "os"
 import path from "path"

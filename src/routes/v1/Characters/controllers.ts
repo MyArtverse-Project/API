@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import { Attributes, Character, User } from "../../../models"
 
 interface GetCharacterParams {

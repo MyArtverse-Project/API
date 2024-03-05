@@ -1,4 +1,4 @@
-import { FastifySchema } from "fastify"
+import type { FastifySchema } from "fastify"
 
 export const ME_SCHEMA: FastifySchema = {
   description: "Get the current user's information",
@@ -30,7 +30,7 @@ export const ME_SCHEMA: FastifySchema = {
           }
         },
         pronouns: { type: "string" },
-        nationaility: { type: "string" },
+        nationality: { type: "string" },
         birthday: { type: "string", format: "date-time" }
       },
       404: {
@@ -81,7 +81,7 @@ export const GET_PROFILE_SCHEMA: FastifySchema = {
           }
         },
         pronouns: { type: "string" },
-        nationaility: { type: "string" },
+        nationality: { type: "string" },
         birthday: { type: "string", format: "date-time" }
       },
       404: {

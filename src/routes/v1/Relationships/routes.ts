@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify"
+import type { FastifyInstance } from "fastify"
 import { root } from "./controllers"
 
 async function relationshipRoutes(server: FastifyInstance) {

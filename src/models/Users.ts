@@ -26,7 +26,7 @@ export default class User {
   pronouns: string
 
   @Column({ nullable: true })
-  nationaility: string
+  nationality: string
 
   @Column({ nullable: true })
   birthday: Date
