@@ -38,7 +38,7 @@ const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
         }
       })
 
-      if (!user) return reply.code(401).send({ message: "Unauthorized" })
+      if (!auth) return reply.code(401).send({ message: "Unauthorized" })
       request.user = { ...payload, profileId: auth?.user.id }
       // Send new access token
       const newAccessToken = request.server.jwt.sign({ id: payload.id })
