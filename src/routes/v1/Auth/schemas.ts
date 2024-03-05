@@ -163,20 +163,16 @@ export const REFRESH_TOKEN_SCHEMA: FastifySchema = {
 }
 
 export const WHOAMI_SCHEMA: FastifySchema = {
-  description: "Returns user information for the currently authenticated user",
+  description: "Returns the currently authenticated user's information",
   tags: ["Auth"],
   summary: "Get current user's information",
   response: {
     200: {
       type: "object",
-      description: "User Information",
       properties: {
-        user: {
-          type: "object",
-          properties: {
-            // Define user object properties here based on your User model
-          }
-        }
+        id: { type: "string" },
+        handle: { type: "string" },
+        pronouns: { type: "string", nullable: true }
       }
     },
     401: {

@@ -200,20 +200,17 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
 }
 
 export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = await request.server.db.getRepository(Auth).findOne({
-    where: { id: (request.user as any).id },
+  const user = request.user as { id: string }
+  const data = await request.server.db.getRepository(Auth).findOne({
+    where: { id: user.id },
     relations: { user: true }
   })
 
-  if (!user) {
+  if (!data) {
     return reply.code(401).send({ error: "Unauthorized" })
   }
 
-  if (user.password) {
-    user.password = ""
-  }
-
-  return reply.code(200).send({ user })
+  return reply.code(200).send({ ...data.user })
 }
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {

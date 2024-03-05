@@ -86,6 +86,9 @@ export default class User {
   @OneToMany(() => Character, (character) => character.owner)
   characters: Character[]
 
+  @OneToOne(() => Character, (character) => character.mainOwner)
+  mainCharacter: Character
+
   @OneToMany(() => Commission, (commission) => commission.user)
   listings: Commission[]
 
