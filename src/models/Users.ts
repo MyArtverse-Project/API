@@ -22,6 +22,15 @@ export default class User {
   handle: string
 
   @Column({ nullable: true })
+  pronouns: string
+
+  @Column({ nullable: true })
+  nationaility: string
+
+  @Column({ nullable: true })
+  birthday: Date
+
+  @Column({ nullable: true })
   displayName: string
 
   @Column({ nullable: true })

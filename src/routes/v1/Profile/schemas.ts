@@ -28,7 +28,10 @@ export const ME_SCHEMA: FastifySchema = {
               label: { type: "string" }
             }
           }
-        }
+        },
+        pronouns: { type: "string" },
+        nationaility: { type: "string" },
+        birthday: { type: "string", format: "date-time" }
       },
       404: {
         description: "User not found",
@@ -76,7 +79,10 @@ export const GET_PROFILE_SCHEMA: FastifySchema = {
               label: { type: "string" }
             }
           }
-        }
+        },
+        pronouns: { type: "string" },
+        nationaility: { type: "string" },
+        birthday: { type: "string", format: "date-time" }
       },
       404: {
         description: "Profile not found",
