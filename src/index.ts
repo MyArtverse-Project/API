@@ -27,6 +27,7 @@ declare module "fastify" {
   interface UserRequest extends FastifyRequest {
     user: {
       id: string
+      profileId: string
     }
   }
 }
@@ -99,44 +100,44 @@ const app = async () => {
     return { status: "ok" }
   })
 
-  // Upload Route
-  server.post("/upload-user", { preHandler: [server.auth] }, async (request, reply) => {
-    const userRequest = request.user as { id: string }
-    const user = await request.server.db.getRepository(User).findOne({
-      where: { id: userRequest.id }
-    })
-    if (!user) return reply.code(401).send({ message: "Unauthorized" })
+  // // Upload Route
+  // server.post("/upload-user", { preHandler: [server.auth] }, async (request, reply) => {
+  //   const userRequest = request.user as { id: string }
+  //   const user = await request.server.db.getRepository(User).findOne({
+  //     where: { id: userRequest.id }
+  //   })
+  //   if (!user) return reply.code(401).send({ message: "Unauthorized" })
 
-    // Get the file from the request
-    const data = await request.file()
-    if (!data) {
-      return reply.code(400).send({ message: "No file uploaded" })
-    }
+  //   // Get the file from the request
+  //   const data = await request.file()
+  //   if (!data) {
+  //     return reply.code(400).send({ message: "No file uploaded" })
+  //   }
 
-    const { file, filename, mimetype } = data
-    const uploadResult = await uploadToS3(
-      request.server.s3,
-      file,
-      filename,
-      mimetype,
-      "character",
-      user.id
-    )
+  //   const { file, filename, mimetype } = data
+  //   const uploadResult = await uploadToS3(
+  //     request.server.s3,
+  //     file,
+  //     filename,
+  //     mimetype,
+  //     "character",
+  //     user.id
+  //   )
 
-    // TODO: Modify the image as needed for art protection with password protected filter
-    if (!uploadResult) {
-      return reply.code(500).send({ message: "Error uploading file" })
-    }
+  //   // TODO: Modify the image as needed for art protection with password protected filter
+  //   if (!uploadResult) {
+  //     return reply.code(500).send({ message: "Error uploading file" })
+  //   }
 
-    const image = await request.server.db.getRepository(Image).save({
-      url: uploadResult.url,
-      altText: filename,
-      type: "user",
-      ownerId: user.id.toString()
-    })
+  //   const image = await request.server.db.getRepository(Image).save({
+  //     url: uploadResult.url,
+  //     altText: filename,
+  //     type: "user",
+  //     ownerId: user.id
+  //   })
 
-    return reply.code(200).send({ message: "Art uploaded", url: image.url })
-  })
+  //   return reply.code(200).send({ message: "Art uploaded", url: image.url })
+  // })
 
   // Registering Routes
   server.register(profileRoutes, { prefix: "/v1/user" })
