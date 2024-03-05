@@ -30,11 +30,11 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   return reply.code(404).send({ error: "Profile not found" })
 }
 
-export const uploadProfileAvatar = async (
+export const uploadProfileBanner = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  const user = request.user as { id: string }
+  const user = request.user as { id: string; profileId: string }
   const data = await request.file()
   if (!data) {
     return reply.code(400).send({ message: "No file uploaded" })
@@ -62,7 +62,52 @@ export const uploadProfileAvatar = async (
   })
 
   const userData = await request.server.db.getRepository(User).findOne({
-    where: { id: user.id }
+    where: { id: user.profileId }
+  })
+
+  if (!userData) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  userData.bannerUrl = image.url
+  await request.server.db.getRepository(User).save(userData)
+
+  return reply.code(200).send({ message: "Banner uploaded", url: image.url })
+}
+
+export const uploadProfileAvatar = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const user = request.user as { id: string; profileId: string }
+  const data = await request.file()
+  if (!data) {
+    return reply.code(400).send({ message: "No file uploaded" })
+  }
+
+  const { file, filename, mimetype } = data
+  const uploadResult = await uploadToS3(
+    request.server.s3,
+    file,
+    filename,
+    mimetype,
+    "user",
+    user.id
+  )
+
+  if (!uploadResult) {
+    return reply.code(500).send({ message: "Error uploading file" })
+  }
+
+  const image = await request.server.db.getRepository(Image).save({
+    url: uploadResult.url,
+    altText: filename,
+    type: "user",
+    ownerId: user.id
+  })
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId }
   })
 
   if (!userData) {
