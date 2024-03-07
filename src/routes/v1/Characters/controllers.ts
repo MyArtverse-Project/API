@@ -30,7 +30,7 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
     }
   })
   if (!data) return reply.status(404).send("No user found.")
-
+  
   return reply.code(200).send({ characters: data.characters })
 }
 
@@ -61,7 +61,6 @@ export const getCharacterByName = async (
   reply: FastifyReply
 ) => {
   const { name, ownerHandle } = request.params as GetCharacterParams
-  console.log({ name, ownerHandle })
   if (!name || !ownerHandle) {
     return reply.code(400).send({
       error: "You must provide a name with the owner's handle of the character."
@@ -100,7 +99,7 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
     dislikes,
     is_hybrid
   } = request.body as CreateCharacterBody
-  console.log({ ...request.body })
+  
   const user = request.user as { id: string; profileId: string }
   const data = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId }

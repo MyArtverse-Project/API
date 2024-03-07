@@ -67,7 +67,8 @@ export const REGISTER_SCHEMA: FastifySchema = {
       type: "object",
       description: "Email or Username is already in use",
       properties: {
-        error: { type: "string" }
+        email: { type: "string", nullable: true },
+        username: { type: "string", nullable: true }
       }
     },
     500: {

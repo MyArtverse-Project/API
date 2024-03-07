@@ -27,7 +27,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
     }
 
     const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
-
+    
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
@@ -114,17 +114,13 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     .getRepository(Auth)
     .findOne({ where: { email: email } })
 
-  if (authCheck) {
-    return reply.code(400).send({ error: "Email already in use" })
-  }
-
   // Check if username is already in use
   const userCheck = await request.server.db
     .getRepository(User)
     .findOne({ where: { handle: username } })
 
-  if (userCheck) {
-    return reply.code(400).send({ error: "Username already in use" })
+  if (authCheck || userCheck) {
+    return reply.code(400).send({ email: authCheck ? "Email is already in use" : null, username: userCheck ? "Username is already taken" : null })
   }
 
   // Hash the password
@@ -167,8 +163,8 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
 export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
-    .clearCookie("accessToken")
     .clearCookie("refreshToken")
+    .clearCookie("accessToken")
     .send({ message: "Logged out" })
 }
 
