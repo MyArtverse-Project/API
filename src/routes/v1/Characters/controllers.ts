@@ -34,6 +34,20 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ characters: data.characters })
 }
 
+export const getOwnersCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { ownerHandle } = request.params as { ownerHandle: string }
+  const data = await request.server.db.getRepository(User).findOne({
+    where: { handle: ownerHandle },
+    relations: {
+      characters: true,
+      mainCharacter: true
+    }
+  })
+  if (!data) return reply.status(404).send("No user found.")
+
+  return reply.code(200).send({ characters: data.characters, mainCharacter: data.mainCharacter ?? null })
+}
+
 export const getCharacterById = async (request: FastifyRequest, reply: FastifyReply) => {
   const { id } = request.params as GetCharacterParams
 

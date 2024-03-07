@@ -5,6 +5,7 @@ import {
   getCharacterById,
   getCharacterByName,
   getCharacters,
+  getOwnersCharacters,
   updateCharacter
 } from "./controllers"
 import {
@@ -14,7 +15,8 @@ import {
 } from "./schema"
 
 export async function characterRoutes(server: FastifyInstance) {
-  server.get("/", { preHandler: [server.auth] }, getCharacters)
+  server.get("/", { onRequest: [server.auth] }, getCharacters)
+  server.get("/:ownerHandle", getOwnersCharacters)
   server.get("/id/:id", { schema: GET_CHARACTER_BY_ID_SCHEMA }, getCharacterById)
   server.get(
     "/name/:ownerHandle/:name",
