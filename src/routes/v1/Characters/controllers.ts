@@ -30,7 +30,7 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
     }
   })
   if (!data) return reply.status(404).send("No user found.")
-  
+
   return reply.code(200).send({ characters: data.characters })
 }
 
@@ -99,7 +99,7 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
     dislikes,
     is_hybrid
   } = request.body as CreateCharacterBody
-  
+
   const user = request.user as { id: string; profileId: string }
   const data = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId }

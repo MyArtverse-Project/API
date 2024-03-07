@@ -27,7 +27,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
     }
 
     const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
-    
+
     return reply
       .code(200)
       .setCookie("accessToken", accessToken, {
@@ -120,7 +120,12 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     .findOne({ where: { handle: username } })
 
   if (authCheck || userCheck) {
-    return reply.code(400).send({ email: authCheck ? "Email is already in use" : null, username: userCheck ? "Username is already taken" : null })
+    return reply
+      .code(400)
+      .send({
+        email: authCheck ? "Email is already in use" : null,
+        username: userCheck ? "Username is already taken" : null
+      })
   }
 
   // Hash the password
