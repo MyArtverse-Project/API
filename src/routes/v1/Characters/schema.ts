@@ -64,15 +64,31 @@ export const GET_CHARACTER_BY_NAME_SCHEMA: FastifySchema = {
         id: { type: "string" },
         name: { type: "string" },
         species: { type: "string" },
-        bio: { type: "string", nullable: true },
-        likes: {
-          type: "array",
-          items: { type: "string" }
+        attributes: {
+          type: "object",
+          properties: {
+            preferences: {
+              type: "object",
+              properties: {
+                likes: { type: "array", items: { type: "string" } },
+                dislikes: { type: "array", items: { type: "string" } }
+              }
+            },
+            custom_fields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  property: { type: "string" },
+                  value: { type: "string" }
+                }
+              },
+            },
+            gender: { type: "string" },
+            pronouns: { type: "string" },
+
+          }
         },
-        dislikes: {
-          type: "array",
-          items: { type: "string" }
-        }
       }
     },
     404: {

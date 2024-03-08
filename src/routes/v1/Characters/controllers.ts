@@ -85,7 +85,8 @@ export const getCharacterByName = async (
     const data = await request.server.db.getRepository(Character).findOne({
       where: { owner: { handle: ownerHandle }, name: name },
       relations: {
-        owner: true
+        owner: true,
+        attributes: true
       }
     })
 
