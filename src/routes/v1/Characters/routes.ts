@@ -28,6 +28,9 @@ export async function characterRoutes(server: FastifyInstance) {
     { preHandler: [server.auth], schema: CREATE_CHARACTER_SCHEMA },
     createCharacter
   )
+  // TODO: Upload Artwork
+  // TODO: Upload Ref Sheet
+  // TODO: Assign Ref Sheet to Artwork
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
   server.delete("/delete/:id", { preHandler: [server.auth] }, deleteCharacter)
 }

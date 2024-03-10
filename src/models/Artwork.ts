@@ -3,11 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  ManyToOne
 } from "typeorm"
+import User from "./Users"
 
-@Entity("images")
-export class Image {
+@Entity("artwork")
+export class Artwork {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

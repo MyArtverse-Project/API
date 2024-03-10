@@ -82,13 +82,12 @@ export const GET_CHARACTER_BY_NAME_SCHEMA: FastifySchema = {
                   property: { type: "string" },
                   value: { type: "string" }
                 }
-              },
+              }
             },
             gender: { type: "string" },
-            pronouns: { type: "string" },
-
+            pronouns: { type: "string" }
           }
-        },
+        }
       }
     },
     404: {

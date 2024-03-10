@@ -22,7 +22,7 @@ const refreshTokenLogic = async (request: FastifyRequest, reply: FastifyReply) =
     const payload = (await request.server.jwt.verify<{ id: string }>(
       refreshToken
     )) as UserPayload
-    
+
     const auth = await request.server.db.getRepository(Auth).findOne({
       where: { id: payload.id },
       relations: { user: true }

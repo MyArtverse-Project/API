@@ -34,7 +34,10 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ characters: data.characters })
 }
 
-export const getOwnersCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
+export const getOwnersCharacters = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
   const { ownerHandle } = request.params as { ownerHandle: string }
   const data = await request.server.db.getRepository(User).findOne({
     where: { handle: ownerHandle },
@@ -45,7 +48,9 @@ export const getOwnersCharacters = async (request: FastifyRequest, reply: Fastif
   })
   if (!data) return reply.status(404).send("No user found.")
 
-  return reply.code(200).send({ characters: data.characters, mainCharacter: data.mainCharacter ?? null })
+  return reply
+    .code(200)
+    .send({ characters: data.characters, mainCharacter: data.mainCharacter ?? null })
 }
 
 export const getCharacterById = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -153,6 +158,8 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
 
   return reply.code(200).send({ character: newCharacter })
 }
+
+
 
 export const updateCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ character: {} })

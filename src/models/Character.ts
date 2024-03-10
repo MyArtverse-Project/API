@@ -4,12 +4,14 @@ import {
   Column,
   OneToOne,
   JoinColumn,
-  ManyToOne
+  ManyToOne,
+  OneToMany
 } from "typeorm"
 import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
 import Migration from "./Migration"
 import User from "./Users"
+import { RefSheet } from "./RefSheet"
 
 @Entity()
 export default class Character {
@@ -18,6 +20,9 @@ export default class Character {
 
   @Column()
   name: string
+
+  @Column({ nullable: true })
+  safename: string
 
   @Column()
   visible: boolean
@@ -34,8 +39,8 @@ export default class Character {
   @Column({ nullable: true })
   avatar_url: string
 
-  @Column({ nullable: true })
-  reference_sheet_url: string
+  @OneToMany(() => RefSheet, (refSheet) => refSheet.character)
+  refSheets: RefSheet[]
 
   @OneToOne(() => Attributes, (attributes) => attributes.character)
   @JoinColumn()

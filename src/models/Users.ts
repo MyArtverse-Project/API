@@ -6,13 +6,15 @@ import {
   UpdateDateColumn,
   OneToOne,
   OneToMany,
-  JoinColumn
+  JoinColumn,
+  ManyToOne
 } from "typeorm"
 import Auth from "./Auth"
 import Relationships from "./Relationships"
 import AdoptionStatus from "./AdoptionStatus"
 import Character from "./Character"
 import Commission from "./Listings"
+import { Artwork } from "./Artwork"
 
 @Entity("users")
 export default class User {
@@ -103,4 +105,8 @@ export default class User {
 
   @Column("jsonb", { nullable: true })
   previousAliases: { displayName: string; changeDate: Date }[]
+
+  @ManyToOne(() => Artwork, (artwork) => artwork)
+  artworks: Artwork[]
+
 }
