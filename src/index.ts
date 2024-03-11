@@ -15,11 +15,13 @@ import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
 import fastifyJwt from "@fastify/jwt"
 import swaggerUI from "@fastify/swagger-ui"
 import swagger from "@fastify/swagger"
+import { checkModAbovePermissions } from "./utils/permission"
 
 declare module "fastify" {
   interface FastifyInstance {
     db: DataSource
     auth: any
+    permissionAboveMod: any
     mailer: nodemailer.Transporter<SentMessageInfo>
     s3: S3Client
   }
@@ -58,6 +60,9 @@ const app = async () => {
 
   // Auth Decorator
   server.decorate("auth", verifyToken)
+  
+  // Permission Dectorator
+  server.decorate("permissionAboveMod", checkModAbovePermissions)
 
   // Initialize Nodemailer
   const mailer = nodemailer.createTransport({

@@ -16,6 +16,13 @@ import Character from "./Character"
 import Commission from "./Listings"
 import { Artwork } from "./Artwork"
 
+export enum Role {
+  USER = "user",
+  MODERATOR = "moderator",
+  ADMIN = "admin",
+  DEVELOPER = "developer"
+}
+
 @Entity("users")
 export default class User {
   @PrimaryGeneratedColumn("uuid")
@@ -108,5 +115,8 @@ export default class User {
 
   @ManyToOne(() => Artwork, (artwork) => artwork)
   artworks: Artwork[]
+
+  @Column({ default: Role.USER })
+  role: Role
 
 }

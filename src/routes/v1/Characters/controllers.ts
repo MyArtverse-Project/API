@@ -159,7 +159,21 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
   return reply.code(200).send({ character: newCharacter })
 }
 
+export const uploadArtwork = async (_request: FastifyRequest, reply: FastifyReply) => {
+  return reply.code(200).send({ message: "Avatar uploaded" })
+}
 
+export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyReply) => {
+  return reply.code(200).send({ message: "Avatar set" })
+}
+
+export const uploadRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
+  return reply.code(200).send({ message: "Ref sheet uploaded" })
+}
+
+export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
+  return reply.code(200).send({ message: "Ref sheet set" })
+}
 
 export const updateCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ character: {} })

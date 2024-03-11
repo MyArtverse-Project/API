@@ -6,7 +6,11 @@ import {
   getCharacterByName,
   getCharacters,
   getOwnersCharacters,
-  updateCharacter
+  updateCharacter,
+  setArtAsAvatar,
+  setArtAsRefSheet,
+  uploadArtwork,
+  uploadRefSheet
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
@@ -28,9 +32,10 @@ export async function characterRoutes(server: FastifyInstance) {
     { preHandler: [server.auth], schema: CREATE_CHARACTER_SCHEMA },
     createCharacter
   )
-  // TODO: Upload Artwork
-  // TODO: Upload Ref Sheet
-  // TODO: Assign Ref Sheet to Artwork
+  server.post("/upload-artwork", { onRequest: [server.auth] }, () => uploadArtwork)
+  server.post("/upload-ref-sheet", { onRequest: [server.auth] }, () => uploadRefSheet)
+  server.post("/assign-ref-sheet", { onRequest: [server.auth] }, () => setArtAsRefSheet)
+  server.post("/assign-avatar", { onRequest: [server.auth] }, () => setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
   server.delete("/delete/:id", { preHandler: [server.auth] }, deleteCharacter)
 }

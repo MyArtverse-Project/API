@@ -20,7 +20,6 @@ async function profileRoutes(server: FastifyInstance) {
     { onRequest: [server.auth], schema: UPLOAD_PROFILE_BANNER_SCHEMA },
     uploadProfileBanner
   )
-  // TODO: Designate Account as Artist
 }
 
 export default profileRoutes
