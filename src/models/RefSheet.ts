@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
@@ -9,14 +10,16 @@ import {
 } from "typeorm"
 import { Artwork } from "./Artwork"
 import Character from "./Character"
-import User from "./Users"
 
 @Entity("refSheets")
 export class RefSheet {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
-  @OneToOne(() => Artwork, (artwork) => artwork)
+  @Column()
+  active: boolean
+
+  @OneToOne(() => Artwork, (artwork) => artwork, { eager: true })
   @JoinColumn()
   artwork: Artwork
 
@@ -29,7 +32,4 @@ export class RefSheet {
   @ManyToOne(() => Character, (character) => character.refSheets)
   @JoinColumn()
   character: Character
-
-  @OneToOne(() => User, (user) => user.artworks)
-  creator: User
 }
