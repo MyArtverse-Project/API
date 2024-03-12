@@ -60,7 +60,7 @@ const app = async () => {
 
   // Auth Decorator
   server.decorate("auth", verifyToken)
-  
+
   // Permission Dectorator
   server.decorate("permissionAboveMod", checkModAbovePermissions)
 

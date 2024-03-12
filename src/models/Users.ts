@@ -118,5 +118,4 @@ export default class User {
 
   @Column({ default: Role.USER })
   role: Role
-
 }
