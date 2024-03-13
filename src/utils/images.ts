@@ -1,12 +1,11 @@
-import type { S3Client } from "@aws-sdk/client-s3"
-import { PutObjectCommand } from "@aws-sdk/client-s3"
+import { PutObjectCommand, type S3Client } from "@aws-sdk/client-s3"
 import type { BusboyFileStream } from "@fastify/busboy"
 import * as fs from "fs"
 import os from "os"
 import path from "path"
 import { pipeline } from "stream/promises"
 
-const uploadToS3 = async (
+export const uploadToS3 = async (
   client: S3Client,
   file: BusboyFileStream,
   key: string,
@@ -46,5 +45,3 @@ const uploadToS3 = async (
     throw error
   }
 }
-
-export default uploadToS3

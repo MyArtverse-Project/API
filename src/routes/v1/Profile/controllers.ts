@@ -1,6 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { Image, User } from "../../../models"
+import { User } from "../../../models"
 import { uploadToS3 } from "../../../utils"
+import { Artwork } from "../../../models/Artwork"
+import { Comment as Comments } from "../../../models/Comments"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -54,7 +56,7 @@ export const uploadProfileBanner = async (
     return reply.code(500).send({ message: "Error uploading file" })
   }
 
-  const image = await request.server.db.getRepository(Image).save({
+  const image = await request.server.db.getRepository(Artwork).save({
     url: uploadResult.url,
     altText: filename,
     type: "user",
@@ -81,6 +83,7 @@ export const uploadProfileAvatar = async (
 ) => {
   const user = request.user as { id: string; profileId: string }
   const data = await request.file()
+
   if (!data) {
     return reply.code(400).send({ message: "No file uploaded" })
   }
@@ -99,7 +102,7 @@ export const uploadProfileAvatar = async (
     return reply.code(500).send({ message: "Error uploading file" })
   }
 
-  const image = await request.server.db.getRepository(Image).save({
+  const image = await request.server.db.getRepository(Artwork).save({
     url: uploadResult.url,
     altText: filename,
     type: "user",
@@ -118,4 +121,51 @@ export const uploadProfileAvatar = async (
   await request.server.db.getRepository(User).save(userData)
 
   return reply.code(200).send({ message: "Avatar uploaded", url: image.url })
+}
+
+export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { handle } = request.params as { handle: string }
+  const { content } = request.body as { content: string }
+
+  const profile = await request.server.db.getRepository(User).findOne({
+    where: { handle: handle }
+  })
+
+  const author = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId }
+  })
+
+  if (!profile || !author) {
+    return reply.code(404).send({ error: "Profile not found" })
+  }
+
+  const comment = await request.server.db.getRepository(Comments).save({
+    content: content,
+    author: author,
+    user: profile
+  })
+
+  if (!comment) {
+    return reply.code(500).send({ error: "Error commenting" })
+  }
+
+  return reply.code(200).send({ message: "Commented" })
+}
+
+export const getComments = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.params as { handle: string }
+  const comments = await request.server.db.getRepository(Comments).find({
+    where: { user: { handle: user.handle } },
+    relations: {
+      author: true,
+      user: true
+    }
+  })
+
+  if (!comments) {
+    return reply.code(404).send({ error: "No comments found" })
+  }
+
+  return reply.code(200).send(comments)
 }

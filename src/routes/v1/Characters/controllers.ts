@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Attributes, Character, User } from "../../../models"
+import { uploadToS3 } from "../../../utils"
+import { Artwork } from "../../../models/Artwork"
 
 interface GetCharacterParams {
   id?: string
@@ -159,8 +161,35 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
   return reply.code(200).send({ character: newCharacter })
 }
 
-export const uploadArtwork = async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send({ message: "Avatar uploaded" })
+export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string, profileId: string }
+  const data = await request.file()
+  if (!data) {
+    return reply.code(400).send({ message: "No file uploaded" })
+  }
+  
+  const { file, filename, mimetype } = data;
+  const uploadResult = await uploadToS3(
+    request.server.s3,
+    file,
+    filename,
+    mimetype,
+    "user",
+    user.id
+  )
+
+  if (!uploadResult) {
+    return reply.code(500).send({ message: "Error uploading file" })
+  }
+
+  const image = await request.server.db.getRepository(Artwork).save({
+    url: uploadResult.url,
+    altText: filename,
+    type: "user",
+    ownerId: user.id
+  })
+
+  return reply.code(200).send({ message: "Artwork uploaded", url: image.url })
 }
 
 export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyReply) => {

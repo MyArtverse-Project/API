@@ -18,6 +18,9 @@ export class Comment {
   content: string
 
   @ManyToOne(() => User, { nullable: true })
+  author: User
+
+  @ManyToOne(() => User, { nullable: true })
   user: User
 
   @ManyToOne(() => Artwork, { nullable: true })

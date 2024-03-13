@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify"
-import { getProfile, me, uploadProfileAvatar, uploadProfileBanner } from "./controllers"
+import { commentProfile, getComments, getProfile, me, uploadProfileAvatar, uploadProfileBanner } from "./controllers"
 import {
   GET_PROFILE_SCHEMA,
   ME_SCHEMA,
@@ -20,6 +20,8 @@ async function profileRoutes(server: FastifyInstance) {
     { onRequest: [server.auth], schema: UPLOAD_PROFILE_BANNER_SCHEMA },
     uploadProfileBanner
   )
+  server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
+  server.get("/:handle/comments", getComments)
 }
 
 export default profileRoutes
