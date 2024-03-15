@@ -266,6 +266,25 @@ export const updateCharacter = async (_request: FastifyRequest, reply: FastifyRe
   return reply.code(200).send({ character: {} })
 }
 
-export const deleteCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send({ message: "Character deleted" })
+// WIP
+export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { safename } = request.params as { safename: string }
+
+  // TODO: Delete Images associated with character under the Owner
+  // TODO: Delete Ref Sheets associated with character under the Owner
+  // TODO: Delete Comments associated with character
+  // TODO:
+
+  const data = await request.server.db.getRepository(Character).findOne({
+    where: { safename: safename, owner: { id: user.profileId } }
+  })
+
+  if (!data) return reply.status(404).send("No character found.")
+  const result = await request.server.db.getRepository(Character).delete(data)
+  if (result.affected == 0) return reply.status(500).send("Error deleting character.")
+
+  return reply.code(200).send({ message: "Character deleted." })
+
 }
+

@@ -34,12 +34,12 @@ export async function characterRoutes(server: FastifyInstance) {
     { preHandler: [server.auth], schema: CREATE_CHARACTER_SCHEMA },
     createCharacter
   )
+  server.delete("/:safename/delete", { onRequest: [server.auth] }, deleteCharacter)
   server.post("/upload-artwork", { onRequest: [server.auth] }, () => uploadArtwork)
   server.post("/upload-ref-sheet", { onRequest: [server.auth] }, () => uploadRefSheet)
   server.post("/assign-ref-sheet", { onRequest: [server.auth] }, () => setArtAsRefSheet)
   server.post("/assign-avatar", { onRequest: [server.auth] }, () => setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
-  server.delete("/delete/:id", { preHandler: [server.auth] }, deleteCharacter)
   server.post("/:handle/:safeName/comment", { onRequest: [server.auth] }, commentCharacter)
   server.get("/:handle/:safeName/comments", getComments)
 }
