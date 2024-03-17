@@ -5,18 +5,23 @@ import {
   OneToOne,
   JoinColumn,
   ManyToOne,
-  OneToMany
+  OneToMany,
+  ManyToMany
 } from "typeorm"
 import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
 import Migration from "./Migration"
 import User from "./Users"
 import { RefSheet } from "./RefSheet"
+import { Artwork } from "./Artwork"
 
 @Entity()
 export default class Character {
   @PrimaryGeneratedColumn("uuid")
   id: string
+
+  @ManyToMany(() => Artwork, (artwork) => artwork)
+  artworks: Artwork[]
 
   @Column()
   name: string

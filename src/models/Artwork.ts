@@ -4,17 +4,19 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne
+  ManyToOne,
+  OneToMany,
+  ManyToMany,
+  OneToOne
 } from "typeorm"
 import User from "./Users"
+import Character from "./Character"
+import { Image } from "./Image"
 
 @Entity("artwork")
 export class Artwork {
   @PrimaryGeneratedColumn("uuid")
   id: string
-
-  @Column({ type: "varchar", length: 300 })
-  url: string
 
   @Column({ type: "varchar", length: 300, nullable: true })
   altText: string
@@ -25,9 +27,8 @@ export class Artwork {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @Column({ nullable: true })
-  type: "character" | "user"
+  @OneToOne(() => Image)
 
-  @Column({ nullable: true })
-  ownerId: string
+  @ManyToMany(() => Character, (character) => character.artworks)
+  characters: Character[]
 }
