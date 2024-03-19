@@ -10,6 +10,7 @@
     "start": "node index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts | pino-pretty",
     "lint": "eslint . --quiet && prettier --write .",
+    "lint:fix": "eslint . --quiet --fix && prettier --write .",
     "prepare": "husky || true"
   },
   "husky": {

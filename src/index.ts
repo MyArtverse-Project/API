@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { S3Client } from "@aws-sdk/client-s3"
+import { fastifyCookie, type FastifyCookieOptions } from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
+import fastifyJwt from "@fastify/jwt"
+import multipart from "@fastify/multipart"
+import swagger from "@fastify/swagger"
+import swaggerUI from "@fastify/swagger-ui"
 import * as dotenv from "dotenv"
 import fastify from "fastify"
+import nodemailer, { type SentMessageInfo } from "nodemailer"
 import type { DataSource } from "typeorm"
 import authRoutes from "./routes/v1/Auth/routes"
+import { characterRoutes } from "./routes/v1/Characters/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
-import nodemailer, { type SentMessageInfo } from "nodemailer"
-import { characterRoutes } from "./routes/v1/Characters/routes"
-import multipart from "@fastify/multipart"
-import { S3Client } from "@aws-sdk/client-s3"
-import { type FastifyCookieOptions, fastifyCookie } from "@fastify/cookie"
-import fastifyJwt from "@fastify/jwt"
-import swaggerUI from "@fastify/swagger-ui"
-import swagger from "@fastify/swagger"
 import { checkModAbovePermissions } from "./utils/permission"
 
 declare module "fastify" {
@@ -104,45 +104,6 @@ const app = async () => {
   server.get("/health", async () => {
     return { status: "ok" }
   })
-
-  // // Upload Route
-  // server.post("/upload-user", { preHandler: [server.auth] }, async (request, reply) => {
-  //   const userRequest = request.user as { id: string }
-  //   const user = await request.server.db.getRepository(User).findOne({
-  //     where: { id: userRequest.id }
-  //   })
-  //   if (!user) return reply.code(401).send({ message: "Unauthorized" })
-
-  //   // Get the file from the request
-  //   const data = await request.file()
-  //   if (!data) {
-  //     return reply.code(400).send({ message: "No file uploaded" })
-  //   }
-
-  //   const { file, filename, mimetype } = data
-  //   const uploadResult = await uploadToS3(
-  //     request.server.s3,
-  //     file,
-  //     filename,
-  //     mimetype,
-  //     "character",
-  //     user.id
-  //   )
-
-  //   // TODO: Modify the image as needed for art protection with password protected filter
-  //   if (!uploadResult) {
-  //     return reply.code(500).send({ message: "Error uploading file" })
-  //   }
-
-  //   const image = await request.server.db.getRepository(Image).save({
-  //     url: uploadResult.url,
-  //     altText: filename,
-  //     type: "user",
-  //     ownerId: user.id
-  //   })
-
-  //   return reply.code(200).send({ message: "Art uploaded", url: image.url })
-  // })
 
   // Swaggy Styff
   await server.register(swagger)

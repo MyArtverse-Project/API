@@ -150,7 +150,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
       from: process.env.SMTP_EMAIL_FROM,
       to: email,
       html: html(
-        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}${process.env.MA_FRONTEND_PORT}/verify/${data.verificationUUID}`
+        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/verify/${data.verificationUUID}`
       ),
       subject: "Welcome to MyArtverse",
       text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
