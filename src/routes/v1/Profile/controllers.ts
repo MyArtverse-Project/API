@@ -20,9 +20,9 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
 export const updateProfile = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
   const { avatarLink, birthday, displayName, pronouns } = request.body as {
-    displayName: string,
-    pronouns: string,
-    birthday: Date,
+    displayName: string
+    pronouns: string
+    birthday: Date
     avatarLink: string
   }
 
@@ -124,8 +124,14 @@ export const upload = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(400).send({ error: "No file uploaded" })
   }
 
-  const result = await uploadToS3(request.server.s3, file, filename, mimetype, user.profileId)
-  
+  const result = await uploadToS3(
+    request.server.s3,
+    file,
+    filename,
+    mimetype,
+    user.profileId
+  )
+
   if (!result) {
     return reply.code(500).send({ error: "Error uploading" })
   }

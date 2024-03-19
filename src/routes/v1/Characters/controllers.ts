@@ -173,13 +173,13 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
 }
 
 export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = request.user as { id: string, profileId: string }
+  const user = request.user as { id: string; profileId: string }
   const data = await request.file()
   if (!data) {
     return reply.code(400).send({ message: "No file uploaded" })
   }
 
-  const { file, filename, mimetype } = data;
+  const { file, filename, mimetype } = data
   const uploadResult = await uploadToS3(
     request.server.s3,
     file,
@@ -205,7 +205,10 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
 
 export const commentCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const { safeName, ownerHandle } = request.params as { safeName: string, ownerHandle: string }
+  const { safeName, ownerHandle } = request.params as {
+    safeName: string
+    ownerHandle: string
+  }
   const { content } = request.body as { content: string }
 
   const character = await request.server.db.getRepository(Character).findOne({
@@ -234,7 +237,10 @@ export const commentCharacter = async (request: FastifyRequest, reply: FastifyRe
 }
 
 export const getComments = async (request: FastifyRequest, reply: FastifyReply) => {
-  const { ownerHandle, safeName } = request.params as { ownerHandle: string, safeName: string }
+  const { ownerHandle, safeName } = request.params as {
+    ownerHandle: string
+    safeName: string
+  }
   const comments = await request.server.db.getRepository(Comment).find({
     where: { character: { safename: safeName, owner: { handle: ownerHandle } } },
     relations: {
@@ -285,6 +291,4 @@ export const deleteCharacter = async (request: FastifyRequest, reply: FastifyRep
   if (result.affected == 0) return reply.status(500).send("Error deleting character.")
 
   return reply.code(200).send({ message: "Character deleted." })
-
 }
-

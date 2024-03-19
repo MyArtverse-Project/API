@@ -28,7 +28,6 @@ export class Artwork {
   updatedAt: Date
 
   @OneToOne(() => Image)
-
   @ManyToMany(() => Character, (character) => character.artworks)
   characters: Character[]
 }

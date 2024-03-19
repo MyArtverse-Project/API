@@ -40,6 +40,10 @@ export async function characterRoutes(server: FastifyInstance) {
   server.post("/assign-ref-sheet", { onRequest: [server.auth] }, () => setArtAsRefSheet)
   server.post("/assign-avatar", { onRequest: [server.auth] }, () => setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
-  server.post("/:handle/:safeName/comment", { onRequest: [server.auth] }, commentCharacter)
+  server.post(
+    "/:handle/:safeName/comment",
+    { onRequest: [server.auth] },
+    commentCharacter
+  )
   server.get("/:handle/:safeName/comments", getComments)
 }

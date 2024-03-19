@@ -30,40 +30,29 @@ Backend for MyArtverse, will be merged into the actual project once MVP is compl
 
    ```json
    {
-      "Version": "2012-10-17",
-      "Statement": [
-         {
-               "Effect": "Allow",
-               "Principal": {
-                  "AWS": [
-                     "*"
-                  ]
-               },
-               "Action": [
-                  "s3:GetBucketLocation",
-                  "s3:ListBucket",
-                  "s3:ListBucketMultipartUploads"
-               ],
-               "Resource": [
-                  "arn:aws:s3:::myartverse"
-               ]
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "AWS": ["*"]
          },
-         {
-               "Effect": "Allow",
-               "Principal": {
-                  "AWS": [
-                     "*"
-                  ]
-               },
-               "Action": [
-                  "s3:GetObject",
-                  "s3:ListMultipartUploadParts"
-               ],
-               "Resource": [
-                  "arn:aws:s3:::myartverse/*"
-               ]
-         }
-      ]
+         "Action": [
+           "s3:GetBucketLocation",
+           "s3:ListBucket",
+           "s3:ListBucketMultipartUploads"
+         ],
+         "Resource": ["arn:aws:s3:::myartverse"]
+       },
+       {
+         "Effect": "Allow",
+         "Principal": {
+           "AWS": ["*"]
+         },
+         "Action": ["s3:GetObject", "s3:ListMultipartUploadParts"],
+         "Resource": ["arn:aws:s3:::myartverse/*"]
+       }
+     ]
    }
    ```
 
