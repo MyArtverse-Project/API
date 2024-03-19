@@ -15,6 +15,15 @@ export const ME_SCHEMA: FastifySchema = {
         bio: { type: "string" },
         avatarUrl: { type: "string" },
         bannerUrl: { type: "string" },
+        characters: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+            }
+          }
+        },
         dateRegistered: { type: "string", format: "date-time" },
         dateUpdated: { type: "string", format: "date-time" },
         hasArtistAccess: { type: "boolean" },

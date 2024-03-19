@@ -8,12 +8,17 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
 
   const userData = await request.server.db
     .getRepository(User)
-    .findOne({ where: { id: user.profileId } })
+    .findOne({
+      where: { id: user.profileId }, relations: {
+        characters: true
+      }
+    })
 
   if (!userData) {
     return reply.code(404).send({ error: "User not found" })
   }
 
+  if (!userData.characters) userData.characters = [];
   return reply.code(200).send({ ...userData })
 }
 
