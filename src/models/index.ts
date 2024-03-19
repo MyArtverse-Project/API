@@ -4,6 +4,7 @@ import Auth from "./Auth"
 import Character from "./Character"
 import { Artwork } from "./Artwork"
 import Commission from "./Listings"
+import { Image } from "./Image"
 import Migration from "./Migration"
 import Relationships from "./Relationships"
 import User from "./Users"
@@ -14,7 +15,8 @@ export {
   Auth,
   Character,
   Commission,
-  Artwork as Image,
+  Artwork,
+  Image,
   Migration,
   Relationships,
   User
