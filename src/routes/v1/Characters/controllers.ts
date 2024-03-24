@@ -185,7 +185,6 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
     file,
     filename,
     mimetype,
-    "user",
     user.id
   )
 
@@ -209,6 +208,7 @@ export const commentCharacter = async (request: FastifyRequest, reply: FastifyRe
     safeName: string
     ownerHandle: string
   }
+
   const { content } = request.body as { content: string }
 
   const character = await request.server.db.getRepository(Character).findOne({
@@ -241,6 +241,7 @@ export const getComments = async (request: FastifyRequest, reply: FastifyReply) 
     ownerHandle: string
     safeName: string
   }
+
   const comments = await request.server.db.getRepository(Comment).find({
     where: { character: { safename: safeName, owner: { handle: ownerHandle } } },
     relations: {

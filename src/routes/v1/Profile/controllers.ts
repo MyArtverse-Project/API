@@ -6,19 +6,18 @@ import { uploadToS3 } from "../../../utils"
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
 
-  const userData = await request.server.db
-    .getRepository(User)
-    .findOne({
-      where: { id: user.profileId }, relations: {
-        characters: true
-      }
-    })
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+    relations: {
+      characters: true
+    }
+  })
 
   if (!userData) {
     return reply.code(404).send({ error: "User not found" })
   }
 
-  if (!userData.characters) userData.characters = [];
+  if (!userData.characters) userData.characters = []
   return reply.code(200).send({ ...userData })
 }
 

@@ -20,7 +20,7 @@ export const ME_SCHEMA: FastifySchema = {
           items: {
             type: "object",
             properties: {
-              id: { type: "string" },
+              id: { type: "string" }
             }
           }
         },

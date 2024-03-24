@@ -4,12 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm"
-import { Artwork } from "./Artwork"
 import Character from "./Character"
+import { RefSheetVariant } from "./RefSheetVarients"
 
 @Entity("refSheets")
 export class RefSheet {
@@ -19,9 +19,8 @@ export class RefSheet {
   @Column()
   active: boolean
 
-  @OneToOne(() => Artwork, (artwork) => artwork, { eager: true })
-  @JoinColumn()
-  artwork: Artwork
+  @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet)
+  variants: RefSheetVariant[]
 
   @CreateDateColumn()
   createdAt: Date
