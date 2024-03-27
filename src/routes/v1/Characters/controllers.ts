@@ -44,14 +44,19 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   const finalCharacters = []
   for (const chars of data.characters) {
     if (chars.id == data.mainCharacter?.id) {
-      finalCharacters.unshift(chars)
-      return
+      // TODO: Better way to do this
+      // @ts-expect-error : This is for the front-end
+      chars["mainCharacter"] = true
+      finalCharacters.push(chars)
+      continue
     }
     
     finalCharacters.push(chars)
   }
-console.log(finalCharacters)
-  return reply.code(200).send({ ...finalCharacters })
+
+  console.log(finalCharacters)
+
+  return reply.code(200).send(finalCharacters)
 }
 
 export const getOwnersCharacters = async (
