@@ -3,6 +3,8 @@ import { Attributes, Character, User } from "../../../models"
 import { uploadToS3 } from "../../../utils"
 import { Artwork } from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
+import { RefSheetVariant } from "../../../models/RefSheetVarients"
+import { RefSheet } from "../../../models/RefSheet"
 
 interface GetCharacterParams {
   id?: string
@@ -12,16 +14,21 @@ interface GetCharacterParams {
 
 interface CreateCharacterBody {
   name: string
-  visible: boolean
   nickname: string
+  visiblility: "public" | "private" | "followers"
   mainCharacter: boolean
-  species: string
-  pronouns: string
-  gender: string
-  bio: string
-  likes: string[]
-  dislikes: string[]
-  is_hybrid: boolean
+  characterAvatar: string
+}
+
+interface RefSheet {
+  refSheetName: string
+  colors: string[]
+  varient: {
+    name: string
+    url: string,
+    main: boolean,
+    nsfw: boolean
+  }[]
 }
 
 export const getCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -29,12 +36,22 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   const data = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId },
     relations: {
-      characters: true
+      characters: true,
+      mainCharacter: true
     }
   })
   if (!data) return reply.status(404).send("No user found.")
-
-  return reply.code(200).send({ characters: data.characters })
+  const finalCharacters = []
+  for (const chars of data.characters) {
+    if (chars.id == data.mainCharacter?.id) {
+      finalCharacters.unshift(chars)
+      return
+    }
+    
+    finalCharacters.push(chars)
+  }
+console.log(finalCharacters)
+  return reply.code(200).send({ ...finalCharacters })
 }
 
 export const getOwnersCharacters = async (
@@ -111,19 +128,14 @@ export const getCharacterByName = async (
 export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const {
     name,
-    visible,
     nickname,
+    visiblility,
     mainCharacter,
-    species,
-    pronouns,
-    gender,
-    bio,
-    likes,
-    dislikes,
-    is_hybrid
+    characterAvatar
   } = request.body as CreateCharacterBody
 
   const user = request.user as { id: string; profileId: string }
+
   const data = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId }
   })
@@ -139,22 +151,12 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
     return reply.code(400).send({ error: "Character with that name already exists." })
   }
 
-  const attributes = await request.server.db.getRepository(Attributes).save({
-    bio: bio,
-    pronouns: pronouns,
-    gender: gender,
-    preferences: { likes, dislikes },
-    custom_fields: []
-  })
-
   const newCharacter = await request.server.db.getRepository(Character).save({
     name: name,
     safeName: safeName,
-    visible: visible,
+    visibility: visiblility,
     nickname: nickname,
-    species: species,
-    is_hybrid: is_hybrid,
-    attributes: attributes,
+    avatarUrl: characterAvatar,
     owner: data
   })
 
@@ -164,10 +166,6 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
     data.mainCharacter = newCharacter
     await request.server.db.getRepository(User).save(data)
   }
-
-  if (!data.characters) data.characters = []
-  data.characters.push(newCharacter)
-  await request.server.db.getRepository(User).save(data)
 
   return reply.code(200).send({ character: newCharacter })
 }

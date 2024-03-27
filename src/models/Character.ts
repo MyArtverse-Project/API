@@ -29,20 +29,20 @@ export default class Character {
   @Column({ nullable: true })
   safename: string
 
-  @Column()
-  visible: boolean
+  @Column({ default: "public" })
+  visibility: string
 
-  @Column()
+  @Column({ nullable: true })
   nickname: string
 
-  @Column()
+  @Column({ nullable: true })
   species: string
 
   @Column({ default: false })
-  is_hybrid: boolean
+  isHybrid: boolean
 
   @Column({ nullable: true })
-  avatar_url: string
+  avatarUrl: string
 
   @OneToMany(() => RefSheet, (refSheet) => refSheet.character)
   refSheets: RefSheet[]

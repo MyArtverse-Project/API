@@ -64,6 +64,7 @@ export const GET_CHARACTER_BY_NAME_SCHEMA: FastifySchema = {
         id: { type: "string" },
         name: { type: "string" },
         species: { type: "string" },
+        mainCharacter: { type: "boolean" },
         attributes: {
           type: "object",
           properties: {
@@ -115,15 +116,10 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
     type: "object",
     required: [
       "name",
-      "visible",
+      "visibility",
       "nickname",
-      "species",
-      "pronouns",
-      "gender",
-      "bio",
-      "likes",
-      "dislikes",
-      "is_hybrid"
+      "mainCharacter",
+      "characterAvatar",
     ],
     properties: {
       name: { type: "string", description: "Character's name" },
@@ -140,6 +136,28 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
       pronouns: { type: "string", description: "Character's pronouns" },
       gender: { type: "string", description: "Character's gender" },
       bio: { type: "string", description: "Character's biography" },
+      refSheet: {
+        type: "object",
+        properties: {
+          refSheetName: { type: "string", description: "Name of the refsheet" },
+          colors: {
+            type: "array",
+            items: { type: "string", description: "List of colors" }
+          },
+          varient: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string", description: "Name of the varient" },
+                url: { type: "string", description: "URL of the varient" },
+                main: { type: "boolean", description: "Whether this is the main varient" },
+                nsfw: { type: "boolean", description: "Whether this is a NSFW varient" }
+              }
+            }
+          }
+        }
+      },
       likes: {
         type: "array",
         items: { type: "string" },

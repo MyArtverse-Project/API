@@ -10,10 +10,13 @@ export class RefSheetVariant {
   name: string
 
   @Column()
+  nsfw: boolean
+
+  @Column()
   url: string
 
   @Column()
-  image: string
+  main: boolean
 
   @ManyToOne(() => RefSheet, (refSheet) => refSheet.variants)
   refSheet: RefSheet

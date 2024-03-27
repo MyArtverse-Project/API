@@ -17,6 +17,12 @@ export class RefSheet {
   id: string
 
   @Column()
+  refSheetName: string
+
+  @Column({ type: "jsonb" })
+  colors: string[]
+
+  @Column()
   active: boolean
 
   @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet)
