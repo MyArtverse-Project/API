@@ -114,13 +114,7 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
   summary: "Creates a new character for the authenticated user",
   body: {
     type: "object",
-    required: [
-      "name",
-      "visibility",
-      "nickname",
-      "mainCharacter",
-      "characterAvatar",
-    ],
+    required: ["name", "visibility", "nickname", "mainCharacter", "characterAvatar"],
     properties: {
       name: { type: "string", description: "Character's name" },
       visible: {
@@ -151,7 +145,10 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
               properties: {
                 name: { type: "string", description: "Name of the varient" },
                 url: { type: "string", description: "URL of the varient" },
-                main: { type: "boolean", description: "Whether this is the main varient" },
+                main: {
+                  type: "boolean",
+                  description: "Whether this is the main varient"
+                },
                 nsfw: { type: "boolean", description: "Whether this is a NSFW varient" }
               }
             }

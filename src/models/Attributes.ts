@@ -6,19 +6,19 @@ export default class Attributes {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
-  @Column()
+  @Column({ nullable: true })
   bio: string
 
-  @Column()
+  @Column({ nullable: true })
   pronouns: string
 
-  @Column()
+  @Column({ nullable: true })
   gender: string
 
-  @Column("jsonb")
+  @Column("jsonb", { default: {} })
   preferences: { likes: string[]; dislikes: string[] }
 
-  @Column("jsonb")
+  @Column("jsonb", { default: {} })
   custom_fields: { property: string; value: string }[]
 
   @OneToOne(() => Character, (character) => character.attributes)

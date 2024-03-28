@@ -47,7 +47,10 @@ export default class Character {
   @OneToMany(() => RefSheet, (refSheet) => refSheet.character)
   refSheets: RefSheet[]
 
-  @OneToOne(() => Attributes, (attributes) => attributes.character)
+  @OneToOne(() => Attributes, (attributes) => attributes.character, {
+    cascade: true,
+    eager: true
+  })
   @JoinColumn()
   attributes: Attributes
 

@@ -1,10 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Attributes, Character, User } from "../../../models"
-import { uploadToS3 } from "../../../utils"
 import { Artwork } from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
-import { RefSheetVariant } from "../../../models/RefSheetVarients"
-import { RefSheet } from "../../../models/RefSheet"
+import { uploadToS3 } from "../../../utils"
 
 interface GetCharacterParams {
   id?: string
@@ -20,13 +18,29 @@ interface CreateCharacterBody {
   characterAvatar: string
 }
 
+interface EditCharacterBody {
+  name?: string
+  nickname?: string
+  visibility?: "public" | "private" | "followers"
+  mainCharacter?: boolean
+  species?: string
+  isHybrid?: boolean
+  likes?: string[]
+  dislikes?: string[]
+  avatarUrl?: string
+  reference_sheet_url?: string | null
+  bio: string
+  pronouns: "He/Him" | "She/Her" | "They/Them"
+  customFields: { key: string; value: string }[]
+}
+
 interface RefSheet {
   refSheetName: string
   colors: string[]
   varient: {
     name: string
-    url: string,
-    main: boolean,
+    url: string
+    main: boolean
     nsfw: boolean
   }[]
 }
@@ -50,7 +64,7 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
       finalCharacters.push(chars)
       continue
     }
-    
+
     finalCharacters.push(chars)
   }
 
@@ -130,14 +144,50 @@ export const getCharacterByName = async (
   }
 }
 
+export const getCharacterWithOwner = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const { name } = request.params as GetCharacterParams
+  const { profileId } = request.user as { profileId: string }
+  if (!name) {
+    return reply.code(400).send({
+      error: "You must provide a name of your character."
+    })
+  }
+
+  try {
+    const data = await request.server.db.getRepository(Character).findOne({
+      where: { owner: { id: profileId }, name: name },
+      relations: {
+        owner: true,
+        attributes: true,
+        mainOwner: true
+      }
+    })
+
+    const attributes = await request.server.db.getRepository(Attributes).findOne({
+      where: { character: { name: name } }
+    })
+
+    if (!data) {
+      return reply.code(404).send({ error: "Character not found." })
+    }
+
+    const finalData = { ...data, attributes } as Record<string, unknown>
+    // Remove owner data
+    finalData["mainCharacter"] = data.owner.id == data.mainOwner.id
+    delete finalData.mainOwner
+
+    return reply.code(200).send(finalData)
+  } catch (error) {
+    return reply.code(500).send({ error: "Internal server" })
+  }
+}
+
 export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
-  const {
-    name,
-    nickname,
-    visiblility,
-    mainCharacter,
-    characterAvatar
-  } = request.body as CreateCharacterBody
+  const { name, nickname, visiblility, mainCharacter, characterAvatar } =
+    request.body as CreateCharacterBody
 
   const user = request.user as { id: string; profileId: string }
 
@@ -163,6 +213,10 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
     nickname: nickname,
     avatarUrl: characterAvatar,
     owner: data
+  })
+
+  await request.server.db.getRepository(Attributes).save({
+    character: newCharacter
   })
 
   if (mainCharacter) {
@@ -203,6 +257,30 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
   })
 
   return reply.code(200).send({ message: "Artwork uploaded", url: image.url })
+}
+
+export const updateCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { id } = request.params as { id: string }
+  const body = request.body as EditCharacterBody
+  const data = await request.server.db.getRepository(Character).findOne({
+    where: { id: id, owner: { id: user.profileId } },
+    relations: {
+      attributes: true
+    }
+  })
+
+  if (!data) return reply.status(404).send("No character found.")
+
+  const finalData = {
+    ...data,
+    ...body
+  }
+
+  const result = await request.server.db.getRepository(Character).save(finalData)
+  if (!result) return reply.status(500).send("Error updating character.")
+
+  return reply.code(200).send({ message: "Character updated." })
 }
 
 export const commentCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -270,10 +348,6 @@ export const uploadRefSheet = async (_request: FastifyRequest, reply: FastifyRep
 
 export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ message: "Ref sheet set" })
-}
-
-export const updateCharacter = async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send({ character: {} })
 }
 
 // WIP
