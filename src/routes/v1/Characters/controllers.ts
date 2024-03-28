@@ -68,8 +68,6 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
     finalCharacters.push(chars)
   }
 
-  console.log(finalCharacters)
-
   return reply.code(200).send(finalCharacters)
 }
 
@@ -165,6 +163,7 @@ export const getCharacterWithOwner = async (
         mainOwner: true
       }
     })
+    console.log(data)
 
     const attributes = await request.server.db.getRepository(Attributes).findOne({
       where: { character: { name: name } }
@@ -176,7 +175,7 @@ export const getCharacterWithOwner = async (
 
     const finalData = { ...data, attributes } as Record<string, unknown>
     // Remove owner data
-    finalData["mainCharacter"] = data.owner.id == data.mainOwner.id
+    finalData["mainCharacter"] = data.mainOwner ? true : false
     delete finalData.mainOwner
 
     return reply.code(200).send(finalData)
@@ -342,8 +341,9 @@ export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyRep
   return reply.code(200).send({ message: "Avatar set" })
 }
 
-export const uploadRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send({ message: "Ref sheet uploaded" })
+export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const body = request.body as RefSheet
 }
 
 export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
