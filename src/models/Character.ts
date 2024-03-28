@@ -44,7 +44,8 @@ export default class Character {
   @Column({ nullable: true })
   avatarUrl: string
 
-  @OneToMany(() => RefSheet, (refSheet) => refSheet.character)
+  @OneToMany(() => RefSheet, (refSheet) => refSheet.character, { eager: true })
+  @JoinColumn()
   refSheets: RefSheet[]
 
   @OneToOne(() => Attributes, (attributes) => attributes.character, {

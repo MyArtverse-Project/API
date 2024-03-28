@@ -25,7 +25,8 @@ export class RefSheet {
   @Column()
   active: boolean
 
-  @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet)
+  @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet, { eager: true })
+  @JoinColumn()
   variants: RefSheetVariant[]
 
   @CreateDateColumn()

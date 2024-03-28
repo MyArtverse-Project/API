@@ -15,7 +15,7 @@ export class RefSheetVariant {
   @Column()
   url: string
 
-  @Column()
+  @Column({ default: false })
   main: boolean
 
   @ManyToOne(() => RefSheet, (refSheet) => refSheet.variants)

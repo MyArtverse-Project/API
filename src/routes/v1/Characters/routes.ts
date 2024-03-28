@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import {
   createCharacter,
-  deleteCharacter,
+  // deleteCharacter,
   getCharacterById,
   getCharacterByName,
   getCharacters,
@@ -36,9 +36,9 @@ export async function characterRoutes(server: FastifyInstance) {
     createCharacter
   )
   server.get("/me/:name", { onRequest: [server.auth] }, getCharacterWithOwner)
-  server.delete("/:safename/delete", { onRequest: [server.auth] }, deleteCharacter)
+  // server.delete("/:safename/delete", { onRequest: [server.auth] }, deleteCharacter)
   server.post("/upload-artwork", { onRequest: [server.auth] }, uploadArtwork)
-  server.post("/upload-ref-sheet", { onRequest: [server.auth] }, uploadRefSheet)
+  server.post("/upload-ref", { onRequest: [server.auth] }, uploadRefSheet)
   server.post("/assign-ref-sheet", { onRequest: [server.auth] }, setArtAsRefSheet)
   server.post("/assign-avatar", { onRequest: [server.auth] }, setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)

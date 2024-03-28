@@ -3,72 +3,25 @@ import { Attributes, Character, User } from "../../../models"
 import { Artwork } from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
+import type { RefSheet as RefSheetType, GetCharacterParams, CreateCharacterBody, EditCharacterBody } from "../../../types/CharacterTypes"
+import { RefSheetVariant } from "../../../models/RefSheetVarients"
+import { RefSheet } from "../../../models/RefSheet"
 
-interface GetCharacterParams {
-  id?: string
-  name?: string
-  ownerHandle?: string
-}
 
-interface CreateCharacterBody {
-  name: string
-  nickname: string
-  visiblility: "public" | "private" | "followers"
-  mainCharacter: boolean
-  characterAvatar: string
-}
-
-interface EditCharacterBody {
-  name?: string
-  nickname?: string
-  visibility?: "public" | "private" | "followers"
-  mainCharacter?: boolean
-  species?: string
-  isHybrid?: boolean
-  likes?: string[]
-  dislikes?: string[]
-  avatarUrl?: string
-  reference_sheet_url?: string | null
-  bio: string
-  pronouns: "He/Him" | "She/Her" | "They/Them"
-  customFields: { key: string; value: string }[]
-}
-
-interface RefSheet {
-  refSheetName: string
-  colors: string[]
-  varient: {
-    name: string
-    url: string
-    main: boolean
-    nsfw: boolean
-  }[]
-}
 
 export const getCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const data = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId },
+  const character = await request.server.db.getRepository(Character).find({
+    where: { owner: { id: user.profileId } },
     relations: {
-      characters: true,
-      mainCharacter: true
+      attributes: true,
+      refSheets: true,
     }
   })
-  if (!data) return reply.status(404).send("No user found.")
-  const finalCharacters = []
-  for (const chars of data.characters) {
-    if (chars.id == data.mainCharacter?.id) {
-      // TODO: Better way to do this
-      // @ts-expect-error : This is for the front-end
-      chars["mainCharacter"] = true
-      finalCharacters.push(chars)
-      continue
-    }
 
-    finalCharacters.push(chars)
-  }
+  if (!character) return reply.status(404).send("No characters found.")
 
-  return reply.code(200).send(finalCharacters)
+  return reply.code(200).send(character)
 }
 
 export const getOwnersCharacters = async (
@@ -163,7 +116,6 @@ export const getCharacterWithOwner = async (
         mainOwner: true
       }
     })
-    console.log(data)
 
     const attributes = await request.server.db.getRepository(Attributes).findOne({
       where: { character: { name: name } }
@@ -343,30 +295,63 @@ export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyRep
 
 export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const body = request.body as RefSheet
+  const body = request.body as { refSheet: RefSheetType, characterId: string }
+  const data = await request.server.db.getRepository(Character).findOne({
+    where: { id: body.characterId, owner: { id: user.profileId } }
+  })
+
+  if (!data) return reply.status(404).send("No character found.")
+
+    const refSheet = await request.server.db.getRepository(RefSheet).save({
+    refSheetName: body.refSheet.refSheetName,
+    colors: body.refSheet.colors,
+    character: data,
+    active: true
+  })
+
+  for (const variant of body.refSheet.variants) {
+    await request.server.db.getRepository(RefSheetVariant).save({
+      name: variant.name,
+      url: variant.url,
+      active: variant.active,
+      nsfw: variant.nsfw,
+      refSheet: refSheet
+    })
+  }
+
+  const finalRefSheet = await request.server.db.getRepository(RefSheet).findOne({
+    where: { id: refSheet.id },
+    relations: {
+      variants: true
+    }
+  })
+
+  return reply.code(200).send({ message: "Ref sheet uploaded", refSheet: finalRefSheet })
+
+
 }
 
 export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ message: "Ref sheet set" })
 }
 
-// WIP
-export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = request.user as { id: string; profileId: string }
-  const { safename } = request.params as { safename: string }
+// // WIP
+// export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+//   const user = request.user as { id: string; profileId: string }
+//   const { safename } = request.params as { safename: string }
 
-  // TODO: Delete Images associated with character under the Owner
-  // TODO: Delete Ref Sheets associated with character under the Owner
-  // TODO: Delete Comments associated with character
-  // TODO:
+//   // TODO: Delete Images associated with character under the Owner
+//   // TODO: Delete Ref Sheets associated with character under the Owner
+//   // TODO: Delete Comments associated with character
+//   // TODO:
 
-  const data = await request.server.db.getRepository(Character).findOne({
-    where: { safename: safename, owner: { id: user.profileId } }
-  })
+//   const data = await request.server.db.getRepository(Character).findOne({
+//     where: { safename: safename, owner: { id: user.profileId } }
+//   })
 
-  if (!data) return reply.status(404).send("No character found.")
-  const result = await request.server.db.getRepository(Character).delete(data)
-  if (result.affected == 0) return reply.status(500).send("Error deleting character.")
+//   if (!data) return reply.status(404).send("No character found.")
+//   const result = await request.server.db.getRepository(Character).delete(data)
+//   if (result.affected == 0) return reply.status(500).send("Error deleting character.")
 
-  return reply.code(200).send({ message: "Character deleted." })
-}
+//   return reply.code(200).send({ message: "Character deleted." })
+// }
