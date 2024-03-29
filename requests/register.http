@@ -1,4 +1,20 @@
-GET http://localhost:8080/v1/auth/verify/3d249c53-d295-43fe-ad2f-104c7de55835
+GET http://localhost:8080/v1/auth/whoami
+Accept: application/json
+Authorization: Bearer QOwdCYgfxVzWIbzepWyvyPAF9VBErL7lPGI6NL8gM4Y
+
+###
+POST http://localhost:8080/v1/auth/login
+Content-Type: application/json
+
+{
+  "login":"test2@test.local",
+  "password": "test_pass2"
+}
+
+
+
+###
+GET http://localhost:8080/v1/auth/verify/c223836f-c244-4445-83ed-f600c677bf86
 Accept: application/json
 
 ###
@@ -6,10 +22,11 @@ POST http://localhost:8080/v1/auth/register
 Content-Type: application/json
 
 {
-  "username": "Test7",
-  "email": "test7@test.local",
-  "password": "test_pass3",
+  "username": "Test2",
+  "email": "test2@test.local",
+  "password": "test_pass2",
   "captcha": "test"
 }
 
 ###
+
