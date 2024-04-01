@@ -10,7 +10,7 @@ import {
 import { GET_PROFILE_SCHEMA, ME_SCHEMA } from "./schemas"
 
 async function profileRoutes(server: FastifyInstance) {
-  server.get("/me", { onRequest: [server.auth], schema: ME_SCHEMA }, me)
+  server.get("/me", { onRequest: [server.auth] }, me)
   server.patch("/me", { onRequest: [server.auth] }, updateProfile)
   server.get("/:handle", { schema: GET_PROFILE_SCHEMA }, getProfile)
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
