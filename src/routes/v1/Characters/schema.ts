@@ -40,73 +40,73 @@ export const GET_CHARACTER_BY_ID_SCHEMA: FastifySchema = {
   }
 }
 
-export const GET_CHARACTER_BY_NAME_SCHEMA: FastifySchema = {
-  description: "Retrieving character details by Name",
-  tags: ["Character"],
-  summary:
-    "Fetches detailed information about a specific character by their unique identifier",
-  params: {
-    type: "object",
-    required: ["name", "ownerHandle"],
-    properties: {
-      name: { type: "string", description: "The name of the character" },
-      ownerHandle: {
-        type: "string",
-        description: "The handler of the owner"
-      }
-    }
-  },
-  response: {
-    200: {
-      type: "object",
-      description: "Character details successfully retrieved",
-      properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        species: { type: "string" },
-        mainCharacter: { type: "boolean" },
-        attributes: {
-          type: "object",
-          properties: {
-            preferences: {
-              type: "object",
-              properties: {
-                likes: { type: "array", items: { type: "string" } },
-                dislikes: { type: "array", items: { type: "string" } }
-              }
-            },
-            custom_fields: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  property: { type: "string" },
-                  value: { type: "string" }
-                }
-              }
-            },
-            gender: { type: "string" },
-            pronouns: { type: "string" }
-          }
-        }
-      }
-    },
-    404: {
-      type: "object",
-      description: "Character not found",
-      properties: {
-        error: { type: "string" }
-      }
-    },
-    400: {
-      type: "object",
-      description: "Invalid request parameters",
-      properties: {
-        error: { type: "string" }
-      }
-    }
-  }
-}
+// export const GET_CHARACTER_BY_NAME_SCHEMA: FastifySchema = {
+//   description: "Retrieving character details by Name",
+//   tags: ["Character"],
+//   summary:
+//     "Fetches detailed information about a specific character by their unique identifier",
+//   params: {
+//     type: "object",
+//     required: ["name", "ownerHandle"],
+//     properties: {
+//       name: { type: "string", description: "The name of the character" },
+//       ownerHandle: {
+//         type: "string",
+//         description: "The handler of the owner"
+//       }
+//     }
+//   },
+//   response: {
+//     200: {
+//       type: "object",
+//       description: "Character details successfully retrieved",
+//       properties: {
+//         id: { type: "string" },
+//         name: { type: "string" },
+//         species: { type: "string" },
+//         mainCharacter: { type: "boolean" },
+//         attributes: {
+//           type: "object",
+//           properties: {
+//             preferences: {
+//               type: "object",
+//               properties: {
+//                 likes: { type: "array", items: { type: "string" } },
+//                 dislikes: { type: "array", items: { type: "string" } }
+//               }
+//             },
+//             custom_fields: {
+//               type: "array",
+//               items: {
+//                 type: "object",
+//                 properties: {
+//                   property: { type: "string" },
+//                   value: { type: "string" }
+//                 }
+//               }
+//             },
+//             gender: { type: "string" },
+//             pronouns: { type: "string" }
+//           }
+//         }
+//       }
+//     },
+//     404: {
+//       type: "object",
+//       description: "Character not found",
+//       properties: {
+//         error: { type: "string" }
+//       }
+//     },
+//     400: {
+//       type: "object",
+//       description: "Invalid request parameters",
+//       properties: {
+//         error: { type: "string" }
+//       }
+//     }
+//   }
+// }
 
 export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
   description: "Create a new character with specified attributes",

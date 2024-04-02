@@ -18,7 +18,7 @@ import {
 import {
   CREATE_CHARACTER_SCHEMA,
   GET_CHARACTER_BY_ID_SCHEMA,
-  GET_CHARACTER_BY_NAME_SCHEMA
+  // GET_CHARACTER_BY_NAME_SCHEMA
 } from "./schema"
 
 export async function characterRoutes(server: FastifyInstance) {
@@ -27,7 +27,7 @@ export async function characterRoutes(server: FastifyInstance) {
   server.get("/id/:id", { schema: GET_CHARACTER_BY_ID_SCHEMA }, getCharacterById)
   server.get(
     "/name/:ownerHandle/:name",
-    { schema: GET_CHARACTER_BY_NAME_SCHEMA },
+   
     getCharacterByName
   )
   server.post(

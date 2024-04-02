@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { Image, User } from "../../../models"
+import { Character, Image, User } from "../../../models"
 import { Comment as Comments } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
 
@@ -58,12 +58,24 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   const profile = await request.server.db.getRepository(User).findOne({
     where: {
       handle: handle
+    },
+  })
+
+  if (!profile) return reply.code(404).send({ error: "Profile not found" })
+
+
+  const characters = await request.server.db.getRepository(Character).find({
+    where: {
+      owner: {
+        id: profile.id
+      }
     }
   })
 
-  if (profile) return reply.code(200).send({ ...profile })
+  return reply.code(200).send({ ...profile, characters })
 
-  return reply.code(404).send({ error: "Profile not found" })
+
+
 }
 
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
