@@ -104,6 +104,9 @@ export default class User {
   @OneToMany(() => Commission, (commission) => commission.user)
   listings: Commission[]
 
+  @OneToMany(() => Character, (character) => character.favoritedBy)
+  favoriteCharacters: Character[]
+
   @Column({ default: "offline" })
   onlineStatus: string
 

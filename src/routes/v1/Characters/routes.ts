@@ -13,7 +13,9 @@ import {
   getComments,
   commentCharacter,
   getCharacterWithOwner,
-  updateCharacter
+  updateCharacter,
+  getFeaturedCharacters,
+  getNewCharacters
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
@@ -23,6 +25,8 @@ import {
 
 export async function characterRoutes(server: FastifyInstance) {
   server.get("/", { onRequest: [server.auth] }, getCharacters)
+  server.get("/featured", getFeaturedCharacters)
+  server.get("/new", getNewCharacters)
   server.get("/:ownerHandle", getOwnersCharacters)
   server.get("/id/:id", { schema: GET_CHARACTER_BY_ID_SCHEMA }, getCharacterById)
   server.get(

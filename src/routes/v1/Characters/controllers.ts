@@ -337,14 +337,31 @@ export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyR
 
 export const getFeaturedCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const data = await request.server.db.getRepository(Character).find({
-    where: {  },
+    where: {
+      visibility: "public",
+    },
     relations: {
       owner: true,
-      attributes: true
-    }
+      refSheets: true
+    },
+    take: 10,
   })
 
   if (!data) return reply.status(404).send("No featured characters found.")
+
+  return reply.code(200).send(data)
+}
+
+export const getNewCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
+  const data = await request.server.db.getRepository(Character).find({
+    take: 10,
+    relations: {
+      owner: true,
+      refSheets: true
+    }
+  })
+
+  if (!data) return reply.status(404).send("No new characters found.")
 
   return reply.code(200).send(data)
 }

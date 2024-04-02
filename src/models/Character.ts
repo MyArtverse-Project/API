@@ -44,6 +44,9 @@ export default class Character {
   @Column({ nullable: true })
   avatarUrl: string
 
+  @OneToMany(() => User, (user) => user.favoriteCharacters)
+  favoritedBy: User[]
+
   @OneToMany(() => RefSheet, (refSheet) => refSheet.character, { eager: true })
   @JoinColumn()
   refSheets: RefSheet[]
