@@ -2,15 +2,16 @@ import type { FastifyInstance } from "fastify"
 import {
   commentProfile,
   getComments,
+  getFavorites,
   getProfile,
   me,
   updateProfile,
   upload
 } from "./controllers"
-import { GET_PROFILE_SCHEMA, ME_SCHEMA } from "./schemas"
 
 async function profileRoutes(server: FastifyInstance) {
   server.get("/me", { onRequest: [server.auth] }, me)
+  server.get("/favorites/:handle", getFavorites)
   server.patch("/me", { onRequest: [server.auth] }, updateProfile)
   server.get("/:handle", getProfile)
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)

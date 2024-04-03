@@ -8,7 +8,8 @@ import {
   OneToMany,
   JoinColumn,
   ManyToOne,
-  ManyToMany
+  ManyToMany,
+  JoinTable
 } from "typeorm"
 import Auth from "./Auth"
 import Relationships from "./Relationships"
@@ -106,8 +107,16 @@ export default class User {
   listings: Commission[]
 
   @ManyToMany(() => Character, (character) => character.favoritedBy)
-  @JoinColumn()
+  @JoinTable()
   favoriteCharacters: Character[]
+
+  @OneToMany(() => Artwork, (artwork) => artwork.owner)
+  @JoinColumn()
+  ownedArtworks: Artwork[]
+
+  @ManyToMany(() => Artwork, (artwork) => artwork)
+  @JoinTable()
+  favoriteArtworks: Artwork[]
 
   @Column({ default: "offline" })
   onlineStatus: string

@@ -379,7 +379,10 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   })
 
   const data = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId }
+    where: { id: user.profileId },
+    relations: {
+      favoriteCharacters: true
+    }
   })
 
   if (!character || !data) {
@@ -392,13 +395,13 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   
   if (character.favoritedBy.some((c) => c.id === data.id)) {
     // Remove from favorites
-    data.favoriteCharacters = data.favoriteCharacters.filter((c) => c.id !== character.id)
-    await request.server.db.getRepository(User).save(data)
+    character.favoritedBy = character.favoritedBy.filter((c) => c.id !== data.id)
+    await request.server.db.getRepository(Character).save(character)
     return reply.code(200).send({ message: "Character unfavorited" })
   }
 
-  data.favoriteCharacters.push(character)
-  await request.server.db.getRepository(User).save(data)
+  character.favoritedBy.push(data)
+  await request.server.db.getRepository(Character).save(character)
 
   return reply.code(200).send({ message: "Character favorited" })
 }

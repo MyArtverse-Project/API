@@ -9,9 +9,11 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const userData = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId },
     relations: {
-      characters: true
+      characters: true,
+      favoriteCharacters: true,
     }
   })
+
 
   if (!userData) {
     return reply.code(404).send({ error: "User not found" })
@@ -59,6 +61,9 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
     where: {
       handle: handle
     },
+    relations: {
+      favoriteCharacters: true
+    }
   })
 
   if (!profile) return reply.code(404).send({ error: "Profile not found" })
@@ -166,4 +171,27 @@ export const upload = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   return reply.code(200).send({ message: "Uploaded", url: result.url })
+}
+
+export const getFavorites = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.params as { handle: string }
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { handle: user.handle },
+  })
+
+  if (!userData) return reply.code(404).send({ error: "User not found" })
+
+  const characters = await request.server.db.getRepository(Character).find({
+    where: {
+      favoritedBy: {
+        id: userData.id
+      },
+    },
+    relations: {
+      owner: true
+    }
+  })
+
+  return reply.code(200).send(characters)
 }

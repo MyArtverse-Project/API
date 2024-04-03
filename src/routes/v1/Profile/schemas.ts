@@ -1,57 +1,57 @@
 import type { FastifySchema } from "fastify"
 
-export const ME_SCHEMA: FastifySchema = {
-  description: "Get the current user's information",
-  tags: ["User"],
-  summary: "Fetches the details of the current user",
-  response: {
-    200: {
-      description: "User Information",
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        handle: { type: "string" },
-        displayName: { type: "string" },
-        bio: { type: "string" },
-        avatarUrl: { type: "string" },
-        bannerUrl: { type: "string" },
-        characters: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: { type: "string" }
-            }
-          }
-        },
-        dateRegistered: { type: "string", format: "date-time" },
-        dateUpdated: { type: "string", format: "date-time" },
-        hasArtistAccess: { type: "boolean" },
-        hasBetaAccess: { type: "boolean" },
-        links: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              url: { type: "string" },
-              label: { type: "string" }
-            }
-          }
-        },
-        pronouns: { type: "string" },
-        nationality: { type: "string" },
-        birthday: { type: "string", format: "date-time" }
-      },
-      404: {
-        description: "User not found",
-        type: "object",
-        properties: {
-          error: { type: "string" }
-        }
-      }
-    }
-  }
-}
+// export const ME_SCHEMA: FastifySchema = {
+//   description: "Get the current user's information",
+//   tags: ["User"],
+//   summary: "Fetches the details of the current user",
+//   response: {
+//     200: {
+//       description: "User Information",
+//       type: "object",
+//       properties: {
+//         id: { type: "string" },
+//         handle: { type: "string" },
+//         displayName: { type: "string" },
+//         bio: { type: "string" },
+//         avatarUrl: { type: "string" },
+//         bannerUrl: { type: "string" },
+//         characters: {
+//           type: "array",
+//           items: {
+//             type: "object",
+//             properties: {
+//               id: { type: "string" }
+//             }
+//           }
+//         },
+//         dateRegistered: { type: "string", format: "date-time" },
+//         dateUpdated: { type: "string", format: "date-time" },
+//         hasArtistAccess: { type: "boolean" },
+//         hasBetaAccess: { type: "boolean" },
+//         links: {
+//           type: "array",
+//           items: {
+//             type: "object",
+//             properties: {
+//               url: { type: "string" },
+//               label: { type: "string" }
+//             }
+//           }
+//         },
+//         pronouns: { type: "string" },
+//         nationality: { type: "string" },
+//         birthday: { type: "string", format: "date-time" }
+//       },
+//       404: {
+//         description: "User not found",
+//         type: "object",
+//         properties: {
+//           error: { type: "string" }
+//         }
+//       }
+//     }
+//   }
+// }
 
 export const GET_PROFILE_SCHEMA: FastifySchema = {
   description: "Get a user's profile information by handle",
