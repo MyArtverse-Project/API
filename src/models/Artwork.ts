@@ -30,4 +30,7 @@ export class Artwork {
   @OneToOne(() => Image)
   @ManyToMany(() => Character, (character) => character.artworks)
   characters: Character[]
+
+  @OneToOne(() => User, (user) => user.artworks)
+  user: User
 }

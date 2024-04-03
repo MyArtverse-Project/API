@@ -33,7 +33,7 @@ export const getOwnersCharacters = async (
     where: { handle: ownerHandle },
     relations: {
       characters: true,
-      mainCharacter: true
+      mainCharacter: true,
     }
   })
   if (!data) return reply.status(404).send("No user found.")
@@ -81,7 +81,8 @@ export const getCharacterByName = async (
       where: { owner: { handle: ownerHandle }, name: name },
       relations: {
         owner: true,
-        attributes: true
+        attributes: true,
+        favoritedBy: true,
       }
     })
 
@@ -365,6 +366,44 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   return reply.code(200).send(data)
 }
+
+export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { id } = request.params as { id: string }
+
+  const character = await request.server.db.getRepository(Character).findOne({
+    where: { id: id },
+    relations: {
+      favoritedBy: true
+    }
+  })
+
+  const data = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId }
+  })
+
+  if (!character || !data) {
+    return reply.code(404).send({ error: "Character not found" })
+  }
+
+  if (!data.favoriteCharacters) {
+    data.favoriteCharacters = []
+  }
+  
+  if (character.favoritedBy.some((c) => c.id === data.id)) {
+    // Remove from favorites
+    data.favoriteCharacters = data.favoriteCharacters.filter((c) => c.id !== character.id)
+    await request.server.db.getRepository(User).save(data)
+    return reply.code(200).send({ message: "Character unfavorited" })
+  }
+
+  data.favoriteCharacters.push(character)
+  await request.server.db.getRepository(User).save(data)
+
+  return reply.code(200).send({ message: "Character favorited" })
+}
+
+
 
 // // WIP
 // export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {

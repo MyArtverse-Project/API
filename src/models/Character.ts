@@ -6,7 +6,8 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  ManyToMany
+  ManyToMany,
+  JoinTable
 } from "typeorm"
 import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
@@ -44,7 +45,8 @@ export default class Character {
   @Column({ nullable: true })
   avatarUrl: string
 
-  @OneToMany(() => User, (user) => user.favoriteCharacters)
+  @ManyToMany(() => User, (user) => user.favoriteCharacters)
+  @JoinTable()
   favoritedBy: User[]
 
   @OneToMany(() => RefSheet, (refSheet) => refSheet.character, { eager: true })
