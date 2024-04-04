@@ -37,7 +37,6 @@ export default class Artwork {
   watermarkUrl: string
 
   @ManyToMany(() => Character, (character) => character.artworks, { nullable: true })
-  @JoinTable()
   charactersFeatured: Character[]
 
   @OneToOne(() => User, (user) => user.artworks, { nullable: true })

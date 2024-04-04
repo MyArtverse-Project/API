@@ -53,12 +53,15 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
         return reply.code(500).send({ error: "Error uploading artwork" })
     }
 
-    if (!character.artworks) {
-        character.artworks = []
-    }
+    artwork.charactersFeatured = [character]
+    await request.server.db.getRepository(Artwork).save(artwork)
 
-    character.artworks.push(artwork)
-    await request.server.db.getRepository(Character).save(character)
+    // if (!character.artworks) {
+    //     character.artworks = []
+    // }
+
+    // character.artworks.push(artwork)
+    // await request.server.db.getRepository(Character).save(character)
 
     return reply.code(200).send({ message: "Artwork uploaded", id: artwork.id })
 }
@@ -67,7 +70,8 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
     const { characterName, ownerHandle } = request.params as { characterName: string, ownerHandle: string }
     const character = await request.server.db.getRepository(Character).findOne({
         relations: {
-            owner: true
+            owner: true,
+            artworks: true,
         },
         where: { name: characterName, owner: { handle: ownerHandle } }
     })
@@ -76,6 +80,8 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
     if (!character) {
         return reply.code(404).send({ error: "Character not found" })
     }
+
+    console.log(character.artworks)
 
     const artwork = await request.server.db.getRepository(Artwork).find({
         relations: {
