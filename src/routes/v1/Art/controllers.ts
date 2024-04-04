@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
-import { Artwork } from "../../../models/Artwork"
+import Artwork from "../../../models/Artwork"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
     const { profileId } = request.user as { profileId: string }
@@ -38,20 +38,55 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
     }
 
 
-
     const artwork = await request.server.db.getRepository(Artwork).save({
-        title,
-        description,
+        title: title,
+        description: description,
         artist: userAsArtist ? user : null,
-        tags
+        tags: tags,
+        owner: user,
+        artworkUrl: image.url,
     })
+
+    
 
     if (!artwork) {
         return reply.code(500).send({ error: "Error uploading artwork" })
+    }
+
+    if (!character.artworks) {
+        character.artworks = []
     }
 
     character.artworks.push(artwork)
     await request.server.db.getRepository(Character).save(character)
 
     return reply.code(200).send({ message: "Artwork uploaded", id: artwork.id })
+}
+
+export const getCharacterArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { characterName, ownerHandle } = request.params as { characterName: string, ownerHandle: string }
+    const character = await request.server.db.getRepository(Character).findOne({
+        relations: {
+            owner: true
+        },
+        where: { name: characterName, owner: { handle: ownerHandle } }
+    })
+
+
+    if (!character) {
+        return reply.code(404).send({ error: "Character not found" })
+    }
+
+    const artwork = await request.server.db.getRepository(Artwork).find({
+        relations: {
+            owner: true,
+        },
+        where: {
+            owner: {
+                id: character.owner.id
+            },
+        }
+    })
+
+    return reply.code(200).send(artwork)
 }

@@ -14,14 +14,15 @@ import AdoptionStatus from "./AdoptionStatus"
 import Migration from "./Migration"
 import User from "./Users"
 import { RefSheet } from "./RefSheet"
-import { Artwork } from "./Artwork"
+import Artwork from "./Artwork"
 
 @Entity()
 export default class Character {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
-  @ManyToMany(() => Artwork, (artwork) => artwork)
+  @ManyToMany(() => Artwork, (artwork) => artwork.charactersFeatured)
+  @JoinTable()
   artworks: Artwork[]
 
   @Column()

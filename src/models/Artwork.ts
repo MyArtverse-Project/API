@@ -17,7 +17,7 @@ import { Image } from "./Image"
 import { Comment } from "./Comments"
 
 @Entity("artwork")
-export class Artwork {
+export default class Artwork {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
@@ -30,11 +30,14 @@ export class Artwork {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @OneToOne(() => Image, { eager: true })
-  @JoinColumn()
-  image: Image
+  @Column({ nullable: true })
+  artworkUrl: string
+
+  @Column({ nullable: true })
+  watermarkUrl: string
 
   @ManyToMany(() => Character, (character) => character.artworks, { nullable: true })
+  @JoinTable()
   charactersFeatured: Character[]
 
   @OneToOne(() => User, (user) => user.artworks, { nullable: true })
@@ -55,7 +58,7 @@ export class Artwork {
   @Column({ nullable: true })
   programUsed: string
 
-  @Column()
+  @Column({ nullable: true })
   title: string
 
   @ManyToMany(() => User, (user) => user.favoriteArtworks)

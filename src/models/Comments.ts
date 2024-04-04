@@ -7,7 +7,7 @@ import {
   UpdateDateColumn
 } from "typeorm"
 import { Character, User } from "."
-import { Artwork } from "./Artwork"
+import Artwork from "./Artwork"
 
 @Entity()
 export class Comment {

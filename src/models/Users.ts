@@ -16,7 +16,7 @@ import Relationships from "./Relationships"
 import AdoptionStatus from "./AdoptionStatus"
 import Character from "./Character"
 import Commission from "./Listings"
-import { Artwork } from "./Artwork"
+import Artwork from "./Artwork"
 
 export enum Role {
   USER = "user",

@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify"
-import { uploadArt } from "./controllers"
+import { getCharacterArtwork, uploadArt } from "./controllers"
 
 async function artRoutes(server: FastifyInstance) {
-    server.post("/upload", { onRequest: [server.auth] }, uploadArt)
+    server.post("/upload/:characterId", { onRequest: [server.auth] }, uploadArt)
+    server.get("/characters/:ownerHandle/:characterName", getCharacterArtwork)
 }
 
 export default artRoutes
