@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { Attributes, Character, User } from "../../../models"
-import { Artwork } from "../../../models/Artwork"
+import { AdoptionStatus, Attributes, Character, Migration, User } from "../../../models"
+import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
 import type { RefSheet as RefSheetType, GetCharacterParams, CreateCharacterBody, EditCharacterBody } from "../../../types/CharacterTypes"
@@ -303,7 +303,7 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
 
   if (!data) return reply.status(404).send("No character found.")
 
-    const refSheet = await request.server.db.getRepository(RefSheet).save({
+  const refSheet = await request.server.db.getRepository(RefSheet).save({
     refSheetName: body.refSheet.refSheetName,
     colors: body.refSheet.colors,
     character: data,
@@ -392,7 +392,7 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   if (!data.favoriteCharacters) {
     data.favoriteCharacters = []
   }
-  
+
   if (character.favoritedBy.some((c) => c.id === data.id)) {
     // Remove from favorites
     character.favoritedBy = character.favoritedBy.filter((c) => c.id !== data.id)
@@ -406,25 +406,115 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   return reply.code(200).send({ message: "Character favorited" })
 }
 
+export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { profileId: string }
+  const { id } = request.params as { id: string }
+
+  const character = await request.server.db.getRepository(Character).findOne({
+    relations: {
+      attributes: true,
+      refSheets: true,
+      migration: true,
+      adoptionStatus: true,
+      owner: true,
+    },
+    where: { id: id }
+  })
 
 
-// // WIP
-// export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
-//   const user = request.user as { id: string; profileId: string }
-//   const { safename } = request.params as { safename: string }
+  if (!character) {
+    return reply.code(404).send({ error: "Character not found" })
+  }
 
-//   // TODO: Delete Images associated with character under the Owner
-//   // TODO: Delete Ref Sheets associated with character under the Owner
-//   // TODO: Delete Comments associated with character
-//   // TODO:
+  if (character.artworks && character.artworks.length > 0) {
+    character.artworks.forEach(async (artwork) => {
+      const art = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artwork.id }
+      })
 
-//   const data = await request.server.db.getRepository(Character).findOne({
-//     where: { safename: safename, owner: { id: user.profileId } }
-//   })
+      if (art?.charactersFeatured) {
+        art.charactersFeatured = art.charactersFeatured.filter((c) => c.id !== character.id)
+        if (art.charactersFeatured.length === 0) {
+          return await request.server.db.getRepository(Artwork).delete({
+            id: art.id
+          })
+        }
 
-//   if (!data) return reply.status(404).send("No character found.")
-//   const result = await request.server.db.getRepository(Character).delete(data)
-//   if (result.affected == 0) return reply.status(500).send("Error deleting character.")
+        return await request.server.db.getRepository(Artwork).save(art)
+      }
+    })
+  }
 
-//   return reply.code(200).send({ message: "Character deleted." })
-// }
+  if (character.refSheets && character.refSheets.length > 0) {
+    character.refSheets.forEach(async (refSheet) => {
+      const ref = await request.server.db.getRepository(RefSheet).findOne({
+        where: { id: refSheet.id }
+      })
+
+      if (ref?.variants) {
+        ref.variants.forEach(async (variant) => {
+          await request.server.db.getRepository(RefSheetVariant).delete({
+            id: variant.id
+          })
+        })
+      }
+
+
+      return await request.server.db.getRepository(RefSheet).delete({
+        id: ref.id
+      })
+    })
+  }
+
+  if (character.attributes) {
+    const tempId = character.attributes.id
+    // @ts-expect-error
+    character.attributes = null;
+    await request.server.db.getRepository(Character).save(character)
+    await request.server.db.getRepository(Attributes).delete({
+      id: tempId
+    })
+  }
+
+  if (character.migration) {
+    await request.server.db.getRepository(Migration).delete({
+      id: character.migration.id
+    })
+  }
+
+  if (character.adoptionStatus) {
+    await request.server.db.getRepository(AdoptionStatus).delete({
+      id: character.adoptionStatus.id
+    })
+  }
+
+  if (character.mainOwner) {
+    await request.server.db.getRepository(User).save({
+      id: character.mainOwner.id,
+      mainCharacter: null
+    })
+  }
+
+  if (character.owner) {
+    const owner = await request.server.db.getRepository(User).findOne({
+      where: { id: character.owner.id },
+      relations: {
+        characters: true
+      }
+    })
+
+    if (!owner) return reply.code(404).send({ error: "Owner not found" })
+
+    await request.server.db.getRepository(User).save({
+      id: owner.id,
+      characters: owner.characters.filter((c) => c.id !== character.id)
+    })
+  }
+
+  await request.server.db.getRepository(Character).delete({
+    id: character.id
+  })
+
+  return reply.code(200).send({ message: "Character deleted" })
+
+}

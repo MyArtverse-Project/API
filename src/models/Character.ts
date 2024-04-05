@@ -55,7 +55,6 @@ export default class Character {
   refSheets: RefSheet[]
 
   @OneToOne(() => Attributes, (attributes) => attributes.character, {
-    cascade: true,
     eager: true
   })
   @JoinColumn()

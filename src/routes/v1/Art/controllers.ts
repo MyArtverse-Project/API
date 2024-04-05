@@ -96,3 +96,21 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
 
     return reply.code(200).send(artwork)
 }
+
+export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { artworkId } = request.params as { artworkId: string }
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        relations: {
+            owner: true,
+            charactersFeatured: true,
+            artist: true,
+        },
+        where: { id: artworkId }
+    })
+
+    if (!artwork) {
+        return reply.code(404).send({ error: "Artwork not found" })
+    }
+
+    return reply.code(200).send(artwork)
+}
