@@ -1,12 +1,12 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { AdoptionStatus, Attributes, Character, Migration, User } from "../../../models"
+import type { EntityManager } from "typeorm"
+import { Attributes, Character, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
-import { uploadToS3 } from "../../../utils"
-import type { RefSheet as RefSheetType, GetCharacterParams, CreateCharacterBody, EditCharacterBody } from "../../../types/CharacterTypes"
-import { RefSheetVariant } from "../../../models/RefSheetVarients"
 import { RefSheet } from "../../../models/RefSheet"
-import { EntityManager } from "typeorm"
+import { RefSheetVariant } from "../../../models/RefSheetVarients"
+import type { CreateCharacterBody, EditCharacterBody, GetCharacterParams, RefSheet as RefSheetType } from "../../../types/CharacterTypes"
+import { uploadToS3 } from "../../../utils"
 
 
 
@@ -438,7 +438,7 @@ export const deleteCharacter = async (request: FastifyRequest, reply: FastifyRep
 async function updateOrDeleteRelatedEntities(character: Character, entityManager: EntityManager) {
   if (character.artworks) {
     for (const artwork of character.artworks) {
-      artwork.charactersFeatured = artwork.charactersFeatured.filter(c => c.id !== character.id);
+      artwork.charactersFeatured = artwork.charactersFeatured.filter((c) => c.id !== character.id);
       if (artwork.charactersFeatured.length === 0) {
         await entityManager.remove(Artwork, artwork);
       } else {
@@ -453,12 +453,13 @@ async function updateOrDeleteRelatedEntities(character: Character, entityManager
       for (const variant of refSheet.variants) {
         await entityManager.remove(variant);
       }
-      
+
       await entityManager.remove(RefSheet, refSheet);
     }
   }
 
   if (character.attributes) {
+    // @ts-expect-error
     await entityManager.update(Character, { id: character.id }, { attributes: null });
     await entityManager.remove(character.attributes);
   }
@@ -483,7 +484,7 @@ async function updateOrDeleteRelatedEntities(character: Character, entityManager
     });
 
     if (owner) {
-      owner.characters = owner.characters.filter(c => c.id !== character.id);
+      owner.characters = owner.characters.filter((c) => c.id !== character.id);
       await entityManager.save(User, owner);
     }
   }

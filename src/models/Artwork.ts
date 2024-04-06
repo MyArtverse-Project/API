@@ -1,20 +1,19 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
-  ManyToMany,
   OneToOne,
-  JoinColumn,
-  JoinTable
+  PrimaryGeneratedColumn,
+  UpdateDateColumn
 } from "typeorm"
-import User from "./Users"
 import Character from "./Character"
-import { Image } from "./Image"
 import { Comment } from "./Comments"
+import User from "./Users"
 
 @Entity("artwork")
 export default class Artwork {
