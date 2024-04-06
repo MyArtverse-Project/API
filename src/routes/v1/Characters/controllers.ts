@@ -6,6 +6,7 @@ import { uploadToS3 } from "../../../utils"
 import type { RefSheet as RefSheetType, GetCharacterParams, CreateCharacterBody, EditCharacterBody } from "../../../types/CharacterTypes"
 import { RefSheetVariant } from "../../../models/RefSheetVarients"
 import { RefSheet } from "../../../models/RefSheet"
+import { EntityManager } from "typeorm"
 
 
 
@@ -418,7 +419,7 @@ export const deleteCharacter = async (request: FastifyRequest, reply: FastifyRep
       adoptionStatus: true,
       owner: true,
     },
-    where: { id: id }
+    where: { id: id, owner: { id: user.profileId } }
   })
 
 
@@ -426,95 +427,64 @@ export const deleteCharacter = async (request: FastifyRequest, reply: FastifyRep
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  if (character.artworks && character.artworks.length > 0) {
-    character.artworks.forEach(async (artwork) => {
-      const art = await request.server.db.getRepository(Artwork).findOne({
-        where: { id: artwork.id }
-      })
-
-      if (art?.charactersFeatured) {
-        art.charactersFeatured = art.charactersFeatured.filter((c) => c.id !== character.id)
-        if (art.charactersFeatured.length === 0) {
-          return await request.server.db.getRepository(Artwork).delete({
-            id: art.id
-          })
-        }
-
-        return await request.server.db.getRepository(Artwork).save(art)
-      }
-    })
-  }
-
-  if (character.refSheets && character.refSheets.length > 0) {
-    character.refSheets.forEach(async (refSheet) => {
-      const ref = await request.server.db.getRepository(RefSheet).findOne({
-        where: { id: refSheet.id }
-      })
-
-      if (ref?.variants) {
-        ref.variants.forEach(async (variant) => {
-          await request.server.db.getRepository(RefSheetVariant).delete({
-            id: variant.id
-          })
-        })
-      }
-
-
-      return await request.server.db.getRepository(RefSheet).delete({
-        id: ref.id
-      })
-    })
-  }
-
-  if (character.attributes) {
-    const tempId = character.attributes.id
-    // @ts-expect-error
-    character.attributes = null;
-    await request.server.db.getRepository(Character).save(character)
-    await request.server.db.getRepository(Attributes).delete({
-      id: tempId
-    })
-  }
-
-  if (character.migration) {
-    await request.server.db.getRepository(Migration).delete({
-      id: character.migration.id
-    })
-  }
-
-  if (character.adoptionStatus) {
-    await request.server.db.getRepository(AdoptionStatus).delete({
-      id: character.adoptionStatus.id
-    })
-  }
-
-  if (character.mainOwner) {
-    await request.server.db.getRepository(User).save({
-      id: character.mainOwner.id,
-      mainCharacter: null
-    })
-  }
-
-  if (character.owner) {
-    const owner = await request.server.db.getRepository(User).findOne({
-      where: { id: character.owner.id },
-      relations: {
-        characters: true
-      }
-    })
-
-    if (!owner) return reply.code(404).send({ error: "Owner not found" })
-
-    await request.server.db.getRepository(User).save({
-      id: owner.id,
-      characters: owner.characters.filter((c) => c.id !== character.id)
-    })
-  }
-
-  await request.server.db.getRepository(Character).delete({
-    id: character.id
+  await request.server.db.transaction(async (manager) => {
+    await updateOrDeleteRelatedEntities(character, manager);
+    await manager.remove(Character, character)
   })
 
   return reply.code(200).send({ message: "Character deleted" })
+}
 
+async function updateOrDeleteRelatedEntities(character: Character, entityManager: EntityManager) {
+  if (character.artworks) {
+    for (const artwork of character.artworks) {
+      artwork.charactersFeatured = artwork.charactersFeatured.filter(c => c.id !== character.id);
+      if (artwork.charactersFeatured.length === 0) {
+        await entityManager.remove(Artwork, artwork);
+      } else {
+        await entityManager.save(Artwork, artwork);
+      }
+    }
+  }
+
+  if (character.refSheets) {
+    for (const refSheet of character.refSheets) {
+      if (!refSheet.variants) continue;
+      for (const variant of refSheet.variants) {
+        await entityManager.remove(variant);
+      }
+      
+      await entityManager.remove(RefSheet, refSheet);
+    }
+  }
+
+  if (character.attributes) {
+    await entityManager.update(Character, { id: character.id }, { attributes: null });
+    await entityManager.remove(character.attributes);
+  }
+
+  if (character.migration) {
+    await entityManager.remove(character.migration);
+  }
+
+  if (character.adoptionStatus) {
+    await entityManager.remove(character.adoptionStatus);
+  }
+
+  if (character.mainOwner) {
+    character.mainOwner.mainCharacter = null;
+    await entityManager.save(User, character.mainOwner);
+  }
+
+  if (character.owner) {
+    const owner = await entityManager.findOne(User, {
+      where: { id: character.owner.id },
+      relations: { characters: true },
+    });
+
+    if (owner) {
+      owner.characters = owner.characters.filter(c => c.id !== character.id);
+      await entityManager.save(User, owner);
+    }
+  }
 }
