@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
+import { Comment } from "../../../models/Comments"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
     const { profileId } = request.user as { profileId: string }
@@ -87,7 +88,8 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
         relations: {
             owner: true,
             charactersFeatured: true,
-            artist: true
+            artist: true,
+            comments: true
         },
         where: {
             charactersFeatured: { id: character.id },
@@ -116,5 +118,44 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
         return reply.code(404).send({ error: "Artwork not found" })
     }
 
-    return reply.code(200).send(artwork)
+    const comments = await request.server.db.getRepository(Comment).find({
+        relations: {
+            artwork: true,
+            author: true
+        },
+        where: { artwork: { id: artworkId } }
+    })
+
+
+    return reply.code(200).send({ ...artwork, comments: comments })
+}
+
+export const commentArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = request.user as { id: string; profileId: string }
+    const { artworkId } = request.params as { artworkId: string }
+    const { content } = request.body as { content: string }
+
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artworkId }
+    })
+
+    const author = await request.server.db.getRepository(User).findOne({
+        where: { id: user.profileId }
+    })
+
+    if (!artwork || !author) {
+        return reply.code(404).send({ error: "Artwork not found" })
+    }
+
+    const comment = await request.server.db.getRepository(Comment).save({
+        artwork: artwork,
+        author: author,
+        content: content,
+    })
+
+    if (!comment) {
+        return reply.code(500).send({ error: "Error adding comment" })
+    }
+
+    return reply.code(200).send({ message: "Comment added" })
 }

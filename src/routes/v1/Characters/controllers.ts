@@ -91,7 +91,15 @@ export const getCharacterByName = async (
       return reply.code(404).send({ error: "Character not found." })
     }
 
-    return reply.code(200).send({ ...data })
+    const comments = await request.server.db.getRepository(Comment).find({
+      where: { character: { id: data.id } },
+      relations: {
+        character: true,
+        author: true
+      }
+    })
+
+    return reply.code(200).send({ ...data, comments: comments })
   } catch (error) {
     return reply.code(500).send({ error: "Internal server" })
   }
@@ -238,15 +246,15 @@ export const updateCharacter = async (request: FastifyRequest, reply: FastifyRep
 
 export const commentCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const { safeName, ownerHandle } = request.params as {
-    safeName: string
+  const { name, ownerHandle } = request.params as {
+    name: string
     ownerHandle: string
   }
 
   const { content } = request.body as { content: string }
 
   const character = await request.server.db.getRepository(Character).findOne({
-    where: { safename: safeName, owner: { handle: ownerHandle } }
+    where: { name: name, owner: { handle: ownerHandle } }
   })
 
   const author = await request.server.db.getRepository(User).findOne({
