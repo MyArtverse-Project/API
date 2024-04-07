@@ -41,6 +41,9 @@ export default class Artwork {
   @OneToOne(() => User, (user) => user.artworks, { nullable: true })
   artist: User | null
 
+  @Column({ nullable: true, default: false })
+  nsfw: boolean 
+
   @Column({ nullable: true })
   artistUrl: string
 

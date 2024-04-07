@@ -59,7 +59,8 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
 
   const profile = await request.server.db.getRepository(User).findOne({
     where: {
-      handle: handle
+      handle: handle,
+      
     },
     relations: {
       favoriteCharacters: true
@@ -77,7 +78,19 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
     }
   })
 
-  return reply.code(200).send({ ...profile, characters })
+  const comments = await request.server.db.getRepository(Comments).find({
+    relations: {
+      user: true,
+      author: true
+    },
+    where: {
+      user: {
+        id: profile.id
+      }
+    }
+  })
+
+  return reply.code(200).send({ ...profile, characters, comments: comments })
 
 
 

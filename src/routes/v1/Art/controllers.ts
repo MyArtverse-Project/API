@@ -86,13 +86,17 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
     const artwork = await request.server.db.getRepository(Artwork).find({
         relations: {
             owner: true,
+            charactersFeatured: true,
+            artist: true
         },
         where: {
+            charactersFeatured: { id: character.id },
             owner: {
                 id: character.owner.id
             },
         }
     })
+
 
     return reply.code(200).send(artwork)
 }
