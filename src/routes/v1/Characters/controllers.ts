@@ -34,14 +34,29 @@ export const getOwnersCharacters = async (
     where: { handle: ownerHandle },
     relations: {
       characters: true,
-      mainCharacter: true,
     }
   })
+
+  const mainCharacter = await request.server.db.getRepository(Character).findOne({
+    where: { owner: { handle: ownerHandle }, mainOwner: true }
+  })
+
+  if (mainCharacter) {
+    const refSheets = await request.server.db.getRepository(RefSheet).find({
+      where: { character: { id: mainCharacter.id } },
+      relations: {
+        variants: true
+      }
+    })
+    mainCharacter.refSheets = refSheets
+  }
+
+
   if (!data) return reply.status(404).send("No user found.")
 
   return reply
     .code(200)
-    .send({ characters: data.characters, mainCharacter: data.mainCharacter ?? null })
+    .send({ characters: data.characters, mainCharacter: mainCharacter ?? null })
 }
 
 export const getCharacterById = async (request: FastifyRequest, reply: FastifyReply) => {

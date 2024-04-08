@@ -7,7 +7,9 @@ import {
   ManyToOne,
   OneToMany,
   ManyToMany,
-  JoinTable
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn
 } from "typeorm"
 import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
@@ -45,6 +47,12 @@ export default class Character {
 
   @Column({ nullable: true })
   avatarUrl: string
+
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
 
   @ManyToMany(() => User, (user) => user.favoriteCharacters)
   @JoinTable()

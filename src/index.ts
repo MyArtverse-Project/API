@@ -131,6 +131,7 @@ const app = async () => {
   })
 
   // Registering Routes
+  server.get("/", () => { message: 'Hello' })
   server.register(profileRoutes, { prefix: "/v1/user" })
   server.register(authRoutes, { prefix: "/v1/auth" })
   server.register(characterRoutes, { prefix: "/v1/character" })

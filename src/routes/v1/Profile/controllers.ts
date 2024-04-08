@@ -91,7 +91,7 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   })
 
   return reply.code(200).send({ ...profile, characters, comments: comments })
-
+  
 }
 
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
