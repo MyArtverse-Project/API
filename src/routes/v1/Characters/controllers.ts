@@ -138,9 +138,11 @@ export const getCharacterWithOwner = async (
       relations: {
         owner: true,
         attributes: true,
-        mainOwner: true
+        mainOwner: true,
+        refSheets: true,
       }
     })
+
 
     const attributes = await request.server.db.getRepository(Attributes).findOne({
       where: { character: { name: name } }
@@ -319,45 +321,106 @@ export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyRep
 }
 
 export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = request.user as { id: string; profileId: string }
-  const body = request.body as { refSheet: RefSheetType, characterId: string }
-  const data = await request.server.db.getRepository(Character).findOne({
-    where: { id: body.characterId, owner: { id: user.profileId } }
-  })
+  const user = request.user as { id: string; profileId: string };
+  const body = request.body as { refSheet: RefSheetType, characterId: string };
 
-  if (!data) return reply.status(404).send("No character found.")
+  const character = await request.server.db.getRepository(Character).findOneBy({
+    id: body.characterId,
+    owner: { id: user.profileId }
+  });
 
-  const refSheet = await request.server.db.getRepository(RefSheet).save({
-    refSheetName: body.refSheet.refSheetName,
-    colors: body.refSheet.colors,
-    character: data,
-    active: true
-  })
+  if (!character) return reply.status(404).send("No character found.");
+  console.log(body.refSheet)
 
-  for (const variant of body.refSheet.variants) {
-    await request.server.db.getRepository(RefSheetVariant).save({
-      name: variant.name,
-      url: variant.url,
-      active: variant.active,
-      nsfw: variant.nsfw,
-      refSheet: refSheet
-    })
+  await request.server.db.transaction(async (entityManager) => {
+    let refSheet = await entityManager.findOneBy(RefSheet, { id: body.refSheet.id });
+
+    if (!refSheet || !body.refSheet.id) {
+      delete body.refSheet.id;
+      refSheet = entityManager.getRepository(RefSheet).create({
+        ...body.refSheet,
+        character: character,
+        active: true,
+      });
+    } else {
+      refSheet.refSheetName = body.refSheet.refSheetName;
+      refSheet.colors = body.refSheet.colors;
+      refSheet.active = true;
+    }
+
+    await entityManager.save(refSheet);
+
+    for (const variant of body.refSheet.variants) {
+      let refSheetVariant;
+      if (variant.id) {
+        refSheetVariant = await entityManager.findOneBy(RefSheetVariant, { id: variant.id });
+        if (refSheetVariant) {
+          Object.assign(refSheetVariant, variant, { refSheet: refSheet });
+          await entityManager.save(refSheetVariant);
+          continue;
+        }
+      }
+
+      refSheetVariant = entityManager.getRepository(RefSheetVariant).create({
+        ...variant,
+        refSheet: refSheet
+      });
+
+      await entityManager.save(refSheetVariant);
+    }
+  });
+
+  return reply.code(200).send({ message: "Ref sheet uploaded successfully" });
+};
+
+export const setRefAsMain = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string };
+  const { id } = request.params as { id: string };
+  
+  const character = await request.server.db.getRepository(Character).findOne({
+    where: { refSheets: { id: id } },
+    relations: {
+      refSheets: true
+    }
+  });
+
+  if (!character) return reply.status(404).send("No character found.");
+
+  const refSheets = await request.server.db.getRepository(RefSheet).find({
+    where: { character: { id: character.id } }
+  });
+
+  for (const refSheet of refSheets) {
+    refSheet.active = refSheet.id === id;
+    await request.server.db.getRepository(RefSheet).save(refSheet);
   }
 
-  const finalRefSheet = await request.server.db.getRepository(RefSheet).findOne({
-    where: { id: refSheet.id },
-    relations: {
-      variants: true
-    }
-  })
-
-  return reply.code(200).send({ message: "Ref sheet uploaded", refSheet: finalRefSheet })
-
-
+  return reply.code(200).send({ message: "Ref sheet set as main" })
 }
 
-export const setArtAsRefSheet = async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send({ message: "Ref sheet set" })
+
+export const deleteRefsheet = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string };
+  const { id } = request.params as { id: string };
+
+  const refSheet = await request.server.db.getRepository(RefSheet).findOne({
+    where: { id: id, character: { owner: { id: user.profileId } } }
+  });
+
+  if (!refSheet) return reply.status(404).send("No ref sheet found.");
+
+  const variants = await request.server.db.getRepository(RefSheetVariant).find({
+    where: { refSheet: { id: refSheet.id } }
+  });
+
+  for (const variant of variants) {
+    await request.server.db.getRepository(RefSheetVariant).remove(variant);
+  }
+
+  await request.server.db.getRepository(RefSheet).remove(refSheet);
+
+  return reply.code(200).send({ message: "Ref sheet deleted" });
+  
 }
 
 export const getFeaturedCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -367,7 +430,8 @@ export const getFeaturedCharacters = async (request: FastifyRequest, reply: Fast
     },
     relations: {
       owner: true,
-      refSheets: true
+      refSheets: true,
+      favoritedBy: true
     },
     take: 10,
   })
@@ -382,7 +446,8 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
     take: 10,
     relations: {
       owner: true,
-      refSheets: true
+      refSheets: true,
+      favoritedBy: true
     }
   })
 

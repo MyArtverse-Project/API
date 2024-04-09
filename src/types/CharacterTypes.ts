@@ -29,6 +29,7 @@ interface GetCharacterParams {
   }
   
   interface RefSheet {
+    id?: string
     refSheetName: string
     colors: string[]
     variants: {
