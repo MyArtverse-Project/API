@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt"
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { Auth, User } from "../../../models"
+import { Auth } from "../../../models"
 import { html } from "../../../utils"
-// import { html } from "@/utils"
-// import { Auth, User } from "@/models"
+import { accessTokenCookieOptions, refreshTokenCookieOptions } from "../../../utils/auth"
+import { createUser, getUserAuthById, getUserByEmail, getUserByUsername } from "./services"
 
 export const refreshToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const { refreshToken } = request.cookies
@@ -18,9 +18,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
       return reply.code(401).send({ error: "Unauthorized" })
     }
 
-    const user = await request.server.db
-      .getRepository(Auth)
-      .findOne({ where: { id: payload.id } })
+    const user = await getUserAuthById(request, payload.id)
 
     if (!user) {
       return reply.code(401).send({ error: "Unauthorized" })
@@ -52,20 +50,21 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   const { email, password } = body
 
   // Check if email exists
-  const user = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { email: email }, relations: { user: true } })
+  const user = await getUserByEmail(request, email)
 
   if (!user) {
+    request.server.log.info(`Failed Login attempt for email (invalid email): ${body.email} from IP: ${request.ip}`)
     return reply.code(400).send({ email: "Invalid email", password: null })
   }
 
   // Check if password is correct
   if (!bcrypt.compareSync(password, user.password)) {
+    request.server.log.info(`Failed Login attempt for email (invalid pass): ${body.email} from IP: ${request.ip}`)
     return reply.code(400).send({ email: null, password: "Invalid password" })
   }
 
   if (!user.verified) {
+    request.server.log.info(`Failed Login attempt for email (no verify): ${body.email} from IP: ${request.ip}`)
     return reply.code(401).send({ error: "You must be verified to login" })
   }
 
@@ -73,22 +72,12 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   const refreshToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "7d" })
 
   // Return the token
+  request.server.log.info(`Sucessful Login attempt for email: ${body.email} from IP: ${request.ip}`)
+
   return reply
     .code(200)
-    .setCookie("accessToken", accessToken, {
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      path: "/",
-      httpOnly: true,
-      secure: "auto",
-      sameSite: "lax"
-    })
-    .setCookie("refreshToken", refreshToken, {
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      path: "/",
-      httpOnly: true,
-      secure: "auto",
-      sameSite: "lax"
-    })
+    .setCookie("accessToken", accessToken, accessTokenCookieOptions)
+    .setCookie("refreshToken", refreshToken, refreshTokenCookieOptions)
     .send({
       accessToken: accessToken,
       refreshToken: refreshToken,
@@ -109,15 +98,9 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
 
   const { email, password, username } = body
 
-  // Check if email is already in use
-  const authCheck = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { email: email } })
-
-  // Check if username is already in use
-  const userCheck = await request.server.db
-    .getRepository(User)
-    .findOne({ where: { handle: username } })
+  // Check if email and password
+  const authCheck = await getUserByEmail(request, email)
+  const userCheck = await getUserByUsername(request, username)
 
   if (authCheck || userCheck) {
     return reply.code(400).send({
@@ -129,22 +112,10 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   // Hash the password
   const hashedPassword = bcrypt.hashSync(password, 10)
 
-  // Insert it onto the database
-  const data = await request.server.db.getRepository(Auth).save({
-    email: email,
-    password: hashedPassword
-  })
+  // Create the user's profile data and auth
+  const data = await createUser(request, username, email, hashedPassword)
 
-  const profileData = await request.server.db.getRepository(User).save({
-    auth: data,
-    handle: username
-  })
-
-  // If there was an error, return a 500
-  if (!data || !profileData) {
-    return reply.code(500).send({ error: "Error creating user" })
-  }
-
+  // TODO: Seperate into function
   try {
     request.server.mailer.sendMail({
       from: process.env.SMTP_EMAIL_FROM,

@@ -1,5 +1,18 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth } from "../models"
+import type { CookieSerializeOptions } from "@fastify/cookie"
+
+export const accessTokenCookieOptions: CookieSerializeOptions = {
+  httpOnly: true,
+  path: "/",
+  sameSite: "strict"
+}
+
+export const refreshTokenCookieOptions: CookieSerializeOptions = {
+  httpOnly: true,
+  path: "/",
+  sameSite: "strict"
+}
 
 interface UserPayload {
   id: string

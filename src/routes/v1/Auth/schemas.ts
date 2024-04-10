@@ -1,3 +1,4 @@
+
 import type { FastifySchema } from "fastify"
 
 export const LOGIN_SCHEMA: FastifySchema = {
