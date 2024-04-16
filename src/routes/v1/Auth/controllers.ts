@@ -76,18 +76,18 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   return reply
     .code(200)
     .setCookie("accessToken", accessToken, {
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      path: "/",
       httpOnly: true,
-      secure: "auto",
-      sameSite: "lax"
+      path: "/",
+      sameSite: "strict",
+      domain: process.env.MA_FRONTEND_DOMAIN,
+      secure: process.env.NODE_ENV === "production"
     })
     .setCookie("refreshToken", refreshToken, {
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      path: "/",
       httpOnly: true,
-      secure: "auto",
-      sameSite: "lax"
+      path: "/",
+      sameSite: "strict",
+      domain: process.env.MA_FRONTEND_DOMAIN,
+      secure: process.env.NODE_ENV === "production"
     })
     .send({
       accessToken: accessToken,

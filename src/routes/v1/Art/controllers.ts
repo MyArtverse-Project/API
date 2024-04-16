@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
+import { Notification } from "../../../models/Notifications"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
     const { profileId } = request.user as { profileId: string }
@@ -82,8 +83,6 @@ export const getCharacterArtwork = async (request: FastifyRequest, reply: Fastif
         return reply.code(404).send({ error: "Character not found" })
     }
 
-    console.log(character.artworks)
-
     const artwork = await request.server.db.getRepository(Artwork).find({
         relations: {
             owner: true,
@@ -136,7 +135,12 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
     const { content } = request.body as { content: string }
 
     const artwork = await request.server.db.getRepository(Artwork).findOne({
-        where: { id: artworkId }
+        where: { id: artworkId },
+        relations: {
+            owner: true,
+            artist: true,
+            comments: true
+        }   
     })
 
     const author = await request.server.db.getRepository(User).findOne({
@@ -156,6 +160,21 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
     if (!comment) {
         return reply.code(500).send({ error: "Error adding comment" })
     }
+
+    // TODO: Temporary, will be based on user settings
+    const notifications = await request.server.db.getRepository(Notification).save({
+        artwork: artwork,
+        comment: comment,
+        sender: author,
+        user: artwork.owner,
+        content: `${author.handle} commented on your artwork`
+    })
+
+    if (!notifications) {
+        console.log("Error adding notification")
+    }
+
+
 
     return reply.code(200).send({ message: "Comment added" })
 }

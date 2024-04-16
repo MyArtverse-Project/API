@@ -11,6 +11,13 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
     relations: {
       characters: true,
       favoriteCharacters: true,
+      notifications: {
+        sender: true,
+        user: true,
+        comment: true,
+        artwork: true
+        
+      }
     }
   })
 
@@ -205,4 +212,21 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
   })
 
   return reply.code(200).send(characters)
+}
+
+export const notifications = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+    relations: {
+      notifications: true
+    }
+  })
+
+  if (!userData) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  return reply.code(200).send(userData.notifications)
 }

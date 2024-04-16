@@ -330,7 +330,6 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
   });
 
   if (!character) return reply.status(404).send("No character found.");
-  console.log(body.refSheet)
 
   await request.server.db.transaction(async (entityManager) => {
     let refSheet = await entityManager.findOneBy(RefSheet, { id: body.refSheet.id });

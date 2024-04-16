@@ -17,6 +17,7 @@ import AdoptionStatus from "./AdoptionStatus"
 import Character from "./Character"
 import Commission from "./Listings"
 import Artwork from "./Artwork"
+import { Notification } from "./Notifications"
 
 export enum Role {
   USER = "user",
@@ -126,6 +127,10 @@ export default class User {
 
   @Column("jsonb", { nullable: true })
   previousAliases: { displayName: string; changeDate: Date }[]
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  @JoinColumn()
+  notifications: Notification[]
 
   @ManyToOne(() => Artwork, (artwork) => artwork)
   artworks: Artwork[]

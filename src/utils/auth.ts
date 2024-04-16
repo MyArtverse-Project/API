@@ -34,7 +34,9 @@ const refreshTokenLogic = async (request: FastifyRequest, reply: FastifyReply) =
     reply.setCookie("accessToken", newAccessToken, {
       httpOnly: true,
       path: "/",
-      sameSite: "strict"
+      sameSite: "strict",
+      domain: "localhost",
+      secure: false
     })
 
     request.user = { ...payload, profileId: auth.user.id }
