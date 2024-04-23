@@ -79,6 +79,6 @@ export default class Character {
   @OneToOne(() => User, (user) => user.mainCharacter, { nullable: true })
   mainOwner: User
 
-  @ManyToOne(() => User, (user) => user.characters)
+  @ManyToOne(() => User, (user) => user.characters, { eager: true })
   owner: User
 }

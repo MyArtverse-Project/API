@@ -170,15 +170,16 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
         content: `${author.handle} commented on your artwork`
     })
 
-
-
-
-
     return reply.code(200).send({ message: "Comment added" })
 }
 
+// TODO: Only call this if user agreed to be featured or user is mutuals
 export const featureCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
     const { artworkId, characterId } = request.params as { artworkId: string, characterId: string }
+
+    if (!artworkId || !characterId) {
+        return reply.code(400).send({ error: "Missing artwork or character id" })
+    }
 
     const artwork = await request.server.db.getRepository(Artwork).findOne({
         where: { id: artworkId },
@@ -199,8 +200,104 @@ export const featureCharacter = async (request: FastifyRequest, reply: FastifyRe
         artwork.charactersFeatured = []
     }
 
+    if (artwork.charactersFeatured.find((c) => c.id === character.id)) {
+        return reply.code(400).send({ error: "Character already featured" })
+    }
+
     artwork.charactersFeatured.push(character)
     await request.server.db.getRepository(Artwork).save(artwork)
 
     return reply.code(200).send({ message: "Character featured" })
+}
+
+export const unfeatureCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { artworkId, characterId } = request.params as { artworkId: string, characterId: string }
+
+    if (!artworkId || !characterId) {
+        return reply.code(400).send({ error: "Missing artwork or character id" })
+    }
+
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artworkId },
+        relations: {
+            charactersFeatured: true
+        }
+    })
+
+    const character = await request.server.db.getRepository(Character).findOne({
+        where: { id: characterId }
+    })
+
+    if (!artwork || !character) {
+        return reply.code(404).send({ error: "Artwork or character not found" })
+    }
+
+    if (!artwork.charactersFeatured) {
+        artwork.charactersFeatured = []
+    }
+
+    if (!artwork.charactersFeatured.find((c) => c.id === character.id)) {
+        return reply.code(400).send({ error: "Character not featured" })
+    }
+
+    artwork.charactersFeatured = artwork.charactersFeatured.filter((c) => c.id !== character.id)
+    await request.server.db.getRepository(Artwork).save(artwork)
+
+    return reply.code(200).send({ message: "Character unfeatured" })
+}
+
+
+
+export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { artworkId } = request.params as { artworkId: string }
+    const { title, description, tags } = request.body as {
+        title: string
+        description: string
+        tags: string[],
+    }
+
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artworkId }
+    })
+
+    if (!artwork) {
+        return reply.code(404).send({ error: "Artwork not found" })
+    }
+
+    artwork.title = title
+    artwork.description = description
+    artwork.tags = tags
+
+    await request.server.db.getRepository(Artwork).save(artwork)
+
+    return reply.code(200).send({ message: "Artwork updated" })
+}
+
+export const deleteArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { artworkId } = request.params as { artworkId: string }
+
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artworkId }
+    })
+
+    if (!artwork) {
+        return reply.code(404).send({ error: "Artwork not found" })
+    }
+
+    artwork.charactersFeatured = []
+    await request.server.db.getRepository(Artwork).save(artwork)
+
+    await request.server.db.getRepository(Notification).delete({
+        artwork: artwork
+    })
+
+    await request.server.db.getRepository(Comment).delete({
+        artwork: artwork
+    })
+
+    await request.server.db.getRepository(Artwork).delete({
+        id: artworkId
+    })
+
+    return reply.code(200).send({ message: "Artwork deleted" })
 }
