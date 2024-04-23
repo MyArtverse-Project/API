@@ -4,7 +4,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
 @Entity()
 export class RefSheetVariant {
   @PrimaryGeneratedColumn("uuid")
-  id: number
+  id: string
 
   @Column()
   name: string

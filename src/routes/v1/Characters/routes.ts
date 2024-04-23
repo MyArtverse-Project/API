@@ -23,7 +23,7 @@ import {
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
-  GET_CHARACTER_BY_ID_SCHEMA,
+  GET_CHARACTER_BY_ID_SCHEMA
   // GET_CHARACTER_BY_NAME_SCHEMA
 } from "./schema"
 
@@ -37,7 +37,7 @@ export async function characterRoutes(server: FastifyInstance) {
   server.get("/id/:id", getCharacterById)
   server.get(
     "/name/:ownerHandle/:name",
-   
+
     getCharacterByName
   )
   server.post(
@@ -53,11 +53,7 @@ export async function characterRoutes(server: FastifyInstance) {
   server.delete("/delete-ref/:id", { onRequest: [server.auth] }, deleteRefsheet)
   server.post("/assign-avatar", { onRequest: [server.auth] }, setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
-  server.post(
-    "/:handle/:name/comment",
-    { onRequest: [server.auth] },
-    commentCharacter
-  )
+  server.post("/:handle/:name/comment", { onRequest: [server.auth] }, commentCharacter)
   server.get("/:handle/:name/comments", getComments)
   server.get("/search", searchCharacters)
 }

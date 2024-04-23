@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
 import { Comment as Comments } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
+import { ILike } from "typeorm"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -16,11 +17,9 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
         user: true,
         comment: true,
         artwork: true
-        
       }
     }
   })
-
 
   if (!userData) {
     return reply.code(404).send({ error: "User not found" })
@@ -66,8 +65,7 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
 
   const profile = await request.server.db.getRepository(User).findOne({
     where: {
-      handle: handle,
-      
+      handle: handle
     },
     relations: {
       favoriteCharacters: true
@@ -75,7 +73,6 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   })
 
   if (!profile) return reply.code(404).send({ error: "Profile not found" })
-
 
   const characters = await request.server.db.getRepository(Character).find({
     where: {
@@ -98,7 +95,6 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   })
 
   return reply.code(200).send({ ...profile, characters, comments: comments })
-  
 }
 
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -195,7 +191,7 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
   const user = request.params as { handle: string }
 
   const userData = await request.server.db.getRepository(User).findOne({
-    where: { handle: user.handle },
+    where: { handle: user.handle }
   })
 
   if (!userData) return reply.code(404).send({ error: "User not found" })
@@ -204,7 +200,7 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
     where: {
       favoritedBy: {
         id: userData.id
-      },
+      }
     },
     relations: {
       owner: true
@@ -229,4 +225,20 @@ export const notifications = async (request: FastifyRequest, reply: FastifyReply
   }
 
   return reply.code(200).send(userData.notifications)
+}
+
+export const search = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { query } = request.query as { query: string }
+
+  const users = await request.server.db.getRepository(User).find({
+    where: {
+      handle: ILike(`%${query}%`)
+    }
+  })
+
+  if (!users) {
+    return reply.code(404).send({ error: "No users found" })
+  }
+
+  return reply.code(200).send(users)
 }

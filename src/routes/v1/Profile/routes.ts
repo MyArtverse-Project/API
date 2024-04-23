@@ -6,6 +6,7 @@ import {
   getProfile,
   me,
   notifications,
+  search,
   updateProfile,
   upload
 } from "./controllers"
@@ -18,7 +19,8 @@ async function profileRoutes(server: FastifyInstance) {
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
   server.get("/:handle/comments", getComments)
   server.post("/upload", { onRequest: [server.auth] }, upload)
-  server.get('/notifications', { onRequest: [server.auth] }, notifications)
+  server.get("/notifications", { onRequest: [server.auth] }, notifications)
+  server.get("/search", search)
 }
 
 export default profileRoutes

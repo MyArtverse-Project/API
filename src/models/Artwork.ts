@@ -42,7 +42,7 @@ export default class Artwork {
   artist: User | null
 
   @Column({ nullable: true, default: false })
-  nsfw: boolean 
+  nsfw: boolean
 
   @Column({ nullable: true })
   artistUrl: string
@@ -53,7 +53,7 @@ export default class Artwork {
   @Column({ type: "varchar", length: 300, nullable: true })
   description: string
 
-  @Column({ default: [], type: 'jsonb' })
+  @Column({ default: [], type: "jsonb" })
   tags: string[]
 
   @Column({ nullable: true })
@@ -65,7 +65,7 @@ export default class Artwork {
   @ManyToMany(() => User, (user) => user.favoriteArtworks)
   @JoinTable()
   favoritedBy: User[]
-  
+
   @ManyToOne(() => User, (user) => user.ownedArtworks)
   @JoinColumn()
   owner: User
