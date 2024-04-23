@@ -7,7 +7,6 @@ import {
   getCharacters,
   getOwnersCharacters,
   setArtAsAvatar,
-  setArtAsRefSheet,
   uploadArtwork,
   uploadRefSheet,
   getComments,
@@ -19,7 +18,8 @@ import {
   favoriteCharacter,
   deleteCharacter,
   setRefAsMain,
-  deleteRefsheet
+  deleteRefsheet,
+  searchCharacters
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
@@ -34,7 +34,7 @@ export async function characterRoutes(server: FastifyInstance) {
   server.delete("/delete/:id", { onRequest: [server.auth] }, deleteCharacter)
   server.post("/favorite/:id", { onRequest: [server.auth] }, favoriteCharacter)
   server.get("/:ownerHandle", getOwnersCharacters)
-  server.get("/id/:id", { schema: GET_CHARACTER_BY_ID_SCHEMA }, getCharacterById)
+  server.get("/id/:id", getCharacterById)
   server.get(
     "/name/:ownerHandle/:name",
    
@@ -59,4 +59,5 @@ export async function characterRoutes(server: FastifyInstance) {
     commentCharacter
   )
   server.get("/:handle/:name/comments", getComments)
+  server.get("/search", searchCharacters)
 }

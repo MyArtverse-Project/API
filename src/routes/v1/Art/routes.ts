@@ -8,6 +8,7 @@ async function artRoutes(server: FastifyInstance) {
     server.get("/:artworkId", getArtwork)
     // server.get('/:artworkId/comments', getArtworkComments)
     server.post('/:artworkId/comment', { onRequest: [server.auth] }, commentArtwork)
+    server.post(`/:artworkId/:characterId`, { onRequest: [server.auth] }, commentArtwork)
 }
 
 export default artRoutes

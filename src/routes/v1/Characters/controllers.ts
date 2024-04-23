@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import type { EntityManager } from "typeorm"
+import { ILike, type EntityManager } from "typeorm"
 import { Attributes, Character, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
@@ -23,6 +23,22 @@ export const getCharacters = async (request: FastifyRequest, reply: FastifyReply
   if (!character) return reply.status(404).send("No characters found.")
 
   return reply.code(200).send(character)
+}
+
+export const searchCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { query } = request.query as { query: string }
+  const characters = await request.server.db.getRepository(Character).find({
+    where: { name: ILike(`%${query}%`) },
+    relations: {
+      attributes: true,
+      refSheets: true,
+    },
+    take: 10
+  })
+
+  if (!characters) return reply.status(404).send("No characters found.")
+
+  return reply.code(200).send(characters)
 }
 
 export const getOwnersCharacters = async (
@@ -244,19 +260,27 @@ export const updateCharacter = async (request: FastifyRequest, reply: FastifyRep
   const data = await request.server.db.getRepository(Character).findOne({
     where: { id: id, owner: { id: user.profileId } },
     relations: {
-      attributes: true
+      attributes: true,
     }
   })
 
   if (!data) return reply.status(404).send("No character found.")
 
-  const finalData = {
+  const attributes = await request.server.db.getRepository(Attributes).findOne({
+    where: { character: { id: data.id } }
+  })
+
+
+  await request.server.db.getRepository(Attributes).save({
+    ...attributes,
+    ...body.attributes
+  })
+
+  await request.server.db.getRepository(Character).save({
     ...data,
     ...body
-  }
-
-  const result = await request.server.db.getRepository(Character).save(finalData)
-  if (!result) return reply.status(500).send("Error updating character.")
+  })
+  
 
   return reply.code(200).send({ message: "Character updated." })
 }
@@ -375,7 +399,7 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
 export const setRefAsMain = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string };
   const { id } = request.params as { id: string };
-  
+
   const character = await request.server.db.getRepository(Character).findOne({
     where: { refSheets: { id: id } },
     relations: {
@@ -419,7 +443,7 @@ export const deleteRefsheet = async (request: FastifyRequest, reply: FastifyRepl
   await request.server.db.getRepository(RefSheet).remove(refSheet);
 
   return reply.code(200).send({ message: "Ref sheet deleted" });
-  
+
 }
 
 export const getFeaturedCharacters = async (request: FastifyRequest, reply: FastifyReply) => {

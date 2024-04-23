@@ -49,7 +49,7 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
         artworkUrl: image.url,
     })
 
-    
+
 
     if (!artwork) {
         return reply.code(500).send({ error: "Error uploading artwork" })
@@ -140,7 +140,7 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
             owner: true,
             artist: true,
             comments: true
-        }   
+        }
     })
 
     const author = await request.server.db.getRepository(User).findOne({
@@ -170,11 +170,37 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
         content: `${author.handle} commented on your artwork`
     })
 
-    if (!notifications) {
-        console.log("Error adding notification")
-    }
+
 
 
 
     return reply.code(200).send({ message: "Comment added" })
+}
+
+export const featureCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { artworkId, characterId } = request.params as { artworkId: string, characterId: string }
+
+    const artwork = await request.server.db.getRepository(Artwork).findOne({
+        where: { id: artworkId },
+        relations: {
+            charactersFeatured: true
+        }
+    })
+
+    const character = await request.server.db.getRepository(Character).findOne({
+        where: { id: characterId }
+    })
+
+    if (!artwork || !character) {
+        return reply.code(404).send({ error: "Artwork or character not found" })
+    }
+
+    if (!artwork.charactersFeatured) {
+        artwork.charactersFeatured = []
+    }
+
+    artwork.charactersFeatured.push(character)
+    await request.server.db.getRepository(Artwork).save(artwork)
+
+    return reply.code(200).send({ message: "Character featured" })
 }
