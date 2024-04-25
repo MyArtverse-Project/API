@@ -66,6 +66,10 @@ export default class Artwork {
   @JoinTable()
   favoritedBy: User[]
 
+  @OneToOne(() => Character, (character) => character, { nullable: true })
+  @JoinColumn()
+  publishedCharacter: Character | null
+
   @ManyToOne(() => User, (user) => user.ownedArtworks)
   @JoinColumn()
   owner: User

@@ -53,6 +53,7 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
   }
 
   artwork.charactersFeatured = [character]
+  artwork.publishedCharacter = character
   await request.server.db.getRepository(Artwork).save(artwork)
 
   // if (!character.artworks) {
@@ -73,11 +74,18 @@ export const getCharacterArtwork = async (
     characterName: string
     ownerHandle: string
   }
-  
+
   const character = await request.server.db.getRepository(Character).findOne({
     relations: {
       owner: true,
-      artworks: true
+      artworks: {
+        owner: true,
+        artist: true,
+        charactersFeatured: true,
+        comments: true,
+        publishedCharacter: true
+
+      },
     },
     where: { name: characterName, owner: { handle: ownerHandle } }
   })
@@ -86,22 +94,24 @@ export const getCharacterArtwork = async (
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  const artwork = await request.server.db.getRepository(Artwork).find({
-    relations: {
-      owner: true,
-      charactersFeatured: true,
-      artist: true,
-      comments: true
-    },
-    where: {
-      charactersFeatured: { id: character.id },
-      owner: {
-        id: character.owner.id
-      }
-    }
-  })
+  console.log(character.artworks)
 
-  return reply.code(200).send(artwork)
+  // const artwork = await request.server.db.getRepository(Artwork).find({
+  //   relations: {
+  //     owner: true,
+  //     charactersFeatured: true,
+  //     artist: true,
+  //     comments: true
+  //   },
+  //   where: {
+  //     charactersFeatured: { id: character.id },
+  //     owner: {
+  //       id: character.owner.id
+  //     }
+  //   }
+  // })
+
+  return reply.code(200).send(character.artworks)
 }
 
 export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -295,6 +305,7 @@ export const deleteArtwork = async (request: FastifyRequest, reply: FastifyReply
   }
 
   artwork.charactersFeatured = []
+  artwork.publishedCharacter = null
   await request.server.db.getRepository(Artwork).save(artwork)
 
   await request.server.db.getRepository(Notification).delete({
@@ -330,6 +341,8 @@ export const assignArtist = async (request: FastifyRequest, reply: FastifyReply)
     return reply.code(404).send({ error: "Artwork or artist not found" })
   }
 
+  artwork.artist = null
+  await request.server.db.getRepository(Artwork).save(artwork)
   artwork.artist = artist
   await request.server.db.getRepository(Artwork).save(artwork)
 

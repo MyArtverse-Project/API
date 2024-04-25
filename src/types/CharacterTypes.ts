@@ -38,6 +38,7 @@ interface RefSheet {
   colors: string[]
   variants: {
     id: string
+    
     name: string
     url: string
     active: boolean

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { html } from "../../../utils"
+import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
 // import { html } from "@/utils"
 // import { Auth, User } from "@/models"
 
@@ -30,13 +31,7 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
 
     return reply
       .code(200)
-      .setCookie("accessToken", accessToken, {
-        domain: process.env.MA_FRONTEND_DOMAIN,
-        path: "/",
-        httpOnly: true,
-        secure: "auto",
-        sameSite: "lax"
-      })
+      .setCookie("accessToken", accessToken, accessTokenOptions)
       .send({ accessToken })
   } catch (error) {
     return reply.code(401).send({ error: "Unauthorized" })
@@ -75,20 +70,8 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   // Return the token
   return reply
     .code(200)
-    .setCookie("accessToken", accessToken, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "strict",
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      secure: process.env.NODE_ENV === "production"
-    })
-    .setCookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "strict",
-      domain: process.env.MA_FRONTEND_DOMAIN,
-      secure: process.env.NODE_ENV === "production"
-    })
+    .setCookie("accessToken", accessToken, accessTokenOptions)
+    .setCookie("refreshToken", refreshToken, refreshTokenOptions)
     .send({
       accessToken: accessToken,
       refreshToken: refreshToken,
