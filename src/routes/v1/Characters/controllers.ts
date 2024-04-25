@@ -318,6 +318,29 @@ export const commentCharacter = async (request: FastifyRequest, reply: FastifyRe
   return reply.code(200).send({ message: "Commented" })
 }
 
+export const getRefsheets = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { handle } = request.params as { handle: string }
+
+  const data = await request.server.db.getRepository(Character).find({
+    relations: {
+      refSheets: {
+        variants: true,
+        character: true
+      },
+      owner: true
+    },
+    where: { owner: { handle: handle } },
+  })
+
+  const refSheets = data.map((c) => c.refSheets).flat()
+
+  if (!data) {
+    return reply.code(404).send({ error: "No ref sheets found" })
+  }
+
+  return reply.code(200).send(refSheets)
+}
+
 export const getComments = async (request: FastifyRequest, reply: FastifyReply) => {
   const { ownerHandle, safeName } = request.params as {
     ownerHandle: string

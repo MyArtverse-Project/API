@@ -19,7 +19,8 @@ import {
   deleteCharacter,
   setRefAsMain,
   deleteRefsheet,
-  searchCharacters
+  searchCharacters,
+  getRefsheets
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
@@ -54,6 +55,7 @@ export async function characterRoutes(server: FastifyInstance) {
   server.post("/assign-avatar", { onRequest: [server.auth] }, setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
   server.post("/:handle/:name/comment", { onRequest: [server.auth] }, commentCharacter)
+  server.get("/:handle/refSheets", getRefsheets)
   server.get("/:handle/:name/comments", getComments)
   server.get("/search", searchCharacters)
 }
