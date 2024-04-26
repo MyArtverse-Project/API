@@ -7,6 +7,7 @@ import {
   me,
   notifications,
   search,
+  setCustomHTML,
   updateProfile,
   upload
 } from "./controllers"
@@ -21,6 +22,7 @@ async function profileRoutes(server: FastifyInstance) {
   server.post("/upload", { onRequest: [server.auth] }, upload)
   server.get("/notifications", { onRequest: [server.auth] }, notifications)
   server.get("/search", search)
+  server.post('/set-html', { onRequest: [server.auth] }, setCustomHTML)
 }
 
 export default profileRoutes

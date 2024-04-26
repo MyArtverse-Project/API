@@ -12,6 +12,8 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
     relations: {
       characters: true,
       favoriteCharacters: true,
+      followers: true,
+      following: true,
       notifications: {
         sender: true,
         user: true,
@@ -68,7 +70,9 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       handle: handle
     },
     relations: {
-      favoriteCharacters: true
+      favoriteCharacters: true,
+      followers: true,
+      following: true
     }
   })
 
@@ -241,4 +245,27 @@ export const search = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   return reply.code(200).send(users)
+}
+
+export const setCustomHTML = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { html } = request.body as { html: string }
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId }
+  })
+
+  if (!userData) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  userData.customHTMLCard = html
+
+  const result = await request.server.db.getRepository(User).save(userData)
+
+  if (!result) {
+    return reply.code(500).send({ error: "Error updating profile" })
+  }
+
+  return reply.code(200).send({ message: "Updated" })
 }

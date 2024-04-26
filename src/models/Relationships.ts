@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne } from "typeorm"
 import User from "./Users"
 
-@Entity("followers")
+@Entity("relationships")
 export default class Relationships {
   @PrimaryGeneratedColumn("uuid")
   id: string

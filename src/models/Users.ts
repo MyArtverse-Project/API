@@ -100,6 +100,9 @@ export default class User {
   @JoinColumn()
   characters: Character[]
 
+  @Column({ nullable: true })
+  customHTMLCard: string
+
   @OneToOne(() => Character, (character) => character.mainOwner)
   @JoinColumn()
   mainCharacter: Character | null

@@ -17,6 +17,7 @@ import verifyToken from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { checkModAbovePermissions } from "./utils/permission"
 import artRoutes from "./routes/v1/Art/routes"
+import relationshipRoutes from "./routes/v1/Relationships/routes"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -137,6 +138,7 @@ const app = async () => {
   server.register(profileRoutes, { prefix: "/v1/user" })
   server.register(authRoutes, { prefix: "/v1/auth" })
   server.register(characterRoutes, { prefix: "/v1/character" })
+  server.register(relationshipRoutes, { prefix: "/v1/relationship" })
   server.register(profileRoutes, { prefix: "/v1/profile" })
   server.register(artRoutes, { prefix: "/v1/art" })
 
