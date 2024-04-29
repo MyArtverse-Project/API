@@ -17,6 +17,7 @@ import Migration from "./Migration"
 import User from "./Users"
 import { RefSheet } from "./RefSheet"
 import Artwork from "./Artwork"
+import { CharacterFolders } from "./CharacterFolders"
 
 @Entity()
 export default class Character {
@@ -29,6 +30,9 @@ export default class Character {
 
   @Column()
   name: string
+
+  @ManyToMany(() => CharacterFolders, (characterFolders) => characterFolders.characters)
+  characterFolders: CharacterFolders[]
 
   @Column({ nullable: true })
   safename: string
@@ -63,7 +67,8 @@ export default class Character {
   refSheets: RefSheet[]
 
   @OneToOne(() => Attributes, (attributes) => attributes.character, {
-    eager: true
+    eager: true,
+    onDelete: "CASCADE"
   })
   @JoinColumn()
   attributes: Attributes

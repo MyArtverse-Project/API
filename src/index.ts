@@ -18,6 +18,7 @@ import connectDatabase from "./utils/database"
 import { checkModAbovePermissions } from "./utils/permission"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
+import StaffRoutes from "./routes/v1/Staff/routes"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -141,6 +142,7 @@ const app = async () => {
   server.register(relationshipRoutes, { prefix: "/v1/relationship" })
   server.register(profileRoutes, { prefix: "/v1/profile" })
   server.register(artRoutes, { prefix: "/v1/art" })
+  server.register(StaffRoutes, { prefix: "/v1/staff" })
 
   // Starting server
   server.listen(

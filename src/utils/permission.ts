@@ -8,7 +8,7 @@ export const checkModAbovePermissions = async (
 ) => {
   const user = request.user as { id: string; profileId: string }
   const data = await request.server.db.getRepository(User).findOne({
-    where: { id: user.id }
+    where: { id: user.profileId }
   })
 
   if (!data) {
@@ -18,7 +18,7 @@ export const checkModAbovePermissions = async (
   const userHasElevatedRoles =
     data.role == Role.MODERATOR || data.role == Role.ADMIN || data.role == Role.DEVELOPER
 
-  if (userHasElevatedRoles) {
-    return reply.code(200).send({ message: "User has the required permissions." })
+  if (!userHasElevatedRoles) {
+    return reply.code(403).send({ error: "User does not have permission." })
   }
 }

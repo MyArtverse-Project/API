@@ -3,6 +3,8 @@ import { Character, Image, User } from "../../../models"
 import { Comment as Comments } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
 import { ILike } from "typeorm"
+import { sendMassNotification } from "../../../utils/notification"
+import { Role } from "../../../models/Users"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -268,4 +270,60 @@ export const setCustomHTML = async (request: FastifyRequest, reply: FastifyReply
   }
 
   return reply.code(200).send({ message: "Updated" })
+}
+
+export const applyArtist = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { name, email, bio, portfolio, imageURLs } = request.body as {
+    name: string
+    email: string
+    bio: string
+    portfolio: string
+    imageURLs: string[]
+  }
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId }
+  })
+
+  // TODO: Check Links for validity
+
+  if (!userData) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  if (userData.artistApplication) {
+    return reply.code(400).send({ error: "User already has an artist application" })
+  }
+
+  if (userData.hasArtistAccess) {
+    return reply.code(400).send({ error: "User already has artist access" })
+  }
+
+  if (!name || !email || !bio || !portfolio || !imageURLs || imageURLs.length !== 3) {
+    return reply.code(400).send({ error: "Missing/Invalid fields" })
+  }
+
+  const moderators = await request.server.db.getRepository(User).find({
+    where: { role: Role.MODERATOR }
+  })
+
+  sendMassNotification(request.server.db, moderators, "New artist application", userData, undefined, undefined)
+
+
+  userData.artistApplication = {
+    name,
+    email,
+    bio,
+    portfolio,
+    images: imageURLs
+  } 
+
+  const result = await request.server.db.getRepository(User).save(userData)
+
+  if (!result) {
+    return reply.code(500).send({ error: "Error applying" })
+  }
+
+  return reply.code(200).send({ message: "Applied" })
 }

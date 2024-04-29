@@ -22,6 +22,5 @@ export default class Attributes {
   custom_fields: { property: string; value: string }[]
 
   @OneToOne(() => Character, (character) => character.attributes)
-  @JoinColumn()
   character: Character
 }

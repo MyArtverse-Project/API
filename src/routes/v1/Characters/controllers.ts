@@ -254,6 +254,11 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ message: "Artwork uploaded", url: image.url })
 }
 
+export const updateCharacterFolder = async (request: FastifyRequest, reply: FastifyReply) => {
+  return reply.code(200).send({ message: "Character folder updated" })
+}
+
+
 export const updateCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
   const { id } = request.params as { id: string }
@@ -601,6 +606,10 @@ async function updateOrDeleteRelatedEntities(
   if (character.attributes) {
     // @ts-expect-error
     await entityManager.update(Character, { id: character.id }, { attributes: null })
+    const attributes = await entityManager.findOne(Attributes, {
+      where: { character: { id: character.id } }
+    })
+    await entityManager.remove(attributes)
     await entityManager.remove(character.attributes)
   }
 

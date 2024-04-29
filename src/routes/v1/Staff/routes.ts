@@ -1,5 +1,5 @@
 import { type FastifyInstance } from "fastify"
-import { promoteUserToArtist } from "./controllers"
+import { getArtistRequests, promoteUserToArtist } from "./controllers"
 
 async function StaffRoutes(server: FastifyInstance) {
   server.put(
@@ -7,6 +7,7 @@ async function StaffRoutes(server: FastifyInstance) {
     { onRequest: [server.auth, server.permissionAboveMod] },
     () => promoteUserToArtist
   )
+  server.get('/artist-requests', { onRequest: [server.auth, server.permissionAboveMod] }, getArtistRequests)
 }
 
 export default StaffRoutes

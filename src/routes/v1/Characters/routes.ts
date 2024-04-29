@@ -20,7 +20,8 @@ import {
   setRefAsMain,
   deleteRefsheet,
   searchCharacters,
-  getRefsheets
+  getRefsheets,
+  updateCharacterFolder
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
@@ -57,5 +58,6 @@ export async function characterRoutes(server: FastifyInstance) {
   server.post("/:handle/:name/comment", { onRequest: [server.auth] }, commentCharacter)
   server.get("/:handle/refSheets", getRefsheets)
   server.get("/:handle/:name/comments", getComments)
+  server.put('/:id/folder/:folderId', { onRequest: [server.auth] }, updateCharacterFolder)
   server.get("/search", searchCharacters)
 }

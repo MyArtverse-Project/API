@@ -18,6 +18,7 @@ import Character from "./Character"
 import Commission from "./Listings"
 import Artwork from "./Artwork"
 import { Notification } from "./Notifications"
+import { CharacterFolders } from "./CharacterFolders"
 
 export enum Role {
   USER = "user",
@@ -100,6 +101,9 @@ export default class User {
   @JoinColumn()
   characters: Character[]
 
+  @OneToMany(() => CharacterFolders, (folder) => folder.user)
+  characterFolders: CharacterFolders[]
+
   @Column({ nullable: true })
   customHTMLCard: string
 
@@ -140,4 +144,14 @@ export default class User {
 
   @Column({ default: Role.USER })
   role: Role
+
+  @Column({ nullable: true, type: "jsonb" })
+  artistApplication: {
+    name: string
+    email: string
+    bio: string
+    portfolio: string
+    images: string[]
+  }
+
 }
