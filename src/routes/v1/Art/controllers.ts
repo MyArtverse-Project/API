@@ -3,6 +3,7 @@ import { Character, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
 import { Notification } from "../../../models/Notifications"
+import { sendNotification } from "../../../utils/notification"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
@@ -137,6 +138,9 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
     where: { artwork: { id: artworkId } }
   })
 
+  artwork.views += 1
+  await request.server.db.getRepository(Artwork).save(artwork)
+
   return reply.code(200).send({ ...artwork, comments: comments })
 }
 
@@ -172,14 +176,14 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
     return reply.code(500).send({ error: "Error adding comment" })
   }
 
-  // TODO: Temporary, will be based on user settings
-  const notifications = await request.server.db.getRepository(Notification).save({
-    artwork: artwork,
-    comment: comment,
-    sender: author,
-    user: artwork.owner,
-    content: `${author.handle} commented on your artwork`
-  })
+  await sendNotification(
+    request.server.db,
+    author,
+    `${author.handle} commented on your artwork`,
+    artwork.owner,
+    artwork,
+    comment
+  )
 
   return reply.code(200).send({ message: "Comment added" })
 }

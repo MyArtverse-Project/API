@@ -73,4 +73,8 @@ export default class Artwork {
   @ManyToOne(() => User, (user) => user.ownedArtworks)
   @JoinColumn()
   owner: User
+
+  // Statistics
+  @Column({ default: 0 })
+  views: number
 }

@@ -86,4 +86,9 @@ export default class Character {
 
   @ManyToOne(() => User, (user) => user.characters, { eager: true })
   owner: User
+
+  // Stats
+
+  @Column({ default: 0 })
+  views: number
 }

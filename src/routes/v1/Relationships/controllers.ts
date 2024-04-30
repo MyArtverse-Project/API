@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Relationships, User } from "../../../models"
+import { send } from "process"
+import { sendNotification } from "../../../utils/notification"
 
 export const root = async (request: FastifyRequest, reply: FastifyReply) => {
   return { hello: "world" }
@@ -16,8 +18,25 @@ export const follow = async (request: FastifyRequest, reply: FastifyReply) => {
         following: true
       }
     }
-
   })
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+    relations: {
+      followers: true,
+      following: true
+    }
+  })                          
+  
+  await sendNotification(
+    request.server.db,
+    userData as User,
+    "New Follower",
+    
+    profile as User,
+    
+  )
+
   if (!profile) return reply.code(404).send({ error: "Profile not found" })
   if (profile.id === user.profileId) return reply.code(400).send({ error: "Cannot follow yourself" })
   if (profile.followers.find((follower) => follower.follower.id === user.profileId)) {

@@ -93,6 +93,9 @@ export const getCharacterById = async (request: FastifyRequest, reply: FastifyRe
       return reply.code(404).send({ error: "Character not found." })
     }
 
+    data.views += 1
+    await request.server.db.getRepository(Character).save(data)
+
     return reply.code(200).send({ ...data })
   } catch (error) {
     return reply.code(500).send({ error: "Internal server error." })
@@ -132,6 +135,9 @@ export const getCharacterByName = async (
       }
     })
 
+    data.views += 1
+    await request.server.db.getRepository(Character).save(data)
+
     return reply.code(200).send({ ...data, comments: comments })
   } catch (error) {
     return reply.code(500).send({ error: "Internal server" })
@@ -168,6 +174,9 @@ export const getCharacterWithOwner = async (
     if (!data) {
       return reply.code(404).send({ error: "Character not found." })
     }
+
+    data.views += 1
+    await request.server.db.getRepository(Character).save(data)
 
     const finalData = { ...data, attributes } as Record<string, unknown>
     // Remove owner data

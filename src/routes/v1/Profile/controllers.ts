@@ -14,8 +14,15 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
     relations: {
       characters: true,
       favoriteCharacters: true,
-      followers: true,
-      following: true,
+      followers: {
+        follower: true,
+        following: true
+
+      },
+      following: {
+        follower: true,
+        following: true
+      },
       notifications: {
         sender: true,
         user: true,
@@ -73,7 +80,10 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
     },
     relations: {
       favoriteCharacters: true,
-      followers: true,
+      followers: {
+        follower: true,
+        following: true
+      },
       following: true
     }
   })
@@ -99,6 +109,9 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       }
     }
   })
+
+  profile.views += 1
+  await request.server.db.getRepository(User).save(profile)
 
   return reply.code(200).send({ ...profile, characters, comments: comments })
 }
@@ -317,7 +330,7 @@ export const applyArtist = async (request: FastifyRequest, reply: FastifyReply) 
     bio,
     portfolio,
     images: imageURLs
-  } 
+  }
 
   const result = await request.server.db.getRepository(User).save(userData)
 

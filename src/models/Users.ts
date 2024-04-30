@@ -9,7 +9,8 @@ import {
   JoinColumn,
   ManyToOne,
   ManyToMany,
-  JoinTable
+  JoinTable,
+  type ObjectId
 } from "typeorm"
 import Auth from "./Auth"
 import Relationships from "./Relationships"
@@ -25,6 +26,12 @@ export enum Role {
   MODERATOR = "moderator",
   ADMIN = "admin",
   DEVELOPER = "developer"
+}
+
+export enum CommissionStatus {
+  OPEN = "open",
+  CLOSED = "closed",
+  LIMITED = "limited",
 }
 
 @Entity("users")
@@ -153,5 +160,27 @@ export default class User {
     portfolio: string
     images: string[]
   }
+
+  // Artist Information
+
+  @Column({ nullable: true })
+  commissionStatus: CommissionStatus
+
+  @Column({ nullable: true })
+  requestStatus: CommissionStatus
+
+  @Column({ nullable: true })
+  artTradeStatus: CommissionStatus
+
+  @Column("jsonb", { nullable: true })
+  blacklist: ObjectId[]
+
+  // Statistics
+
+  @Column({ default: 0 })
+  views: number
+
+
+
 
 }
