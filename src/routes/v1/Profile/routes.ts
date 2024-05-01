@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify"
 import {
   applyArtist,
   commentProfile,
+  getArtistsWithOpenCommissions,
   getComments,
   getFavorites,
   getProfile,
@@ -25,6 +26,7 @@ async function profileRoutes(server: FastifyInstance) {
   server.get("/search", search)
   server.post('/set-html', { onRequest: [server.auth] }, setCustomHTML)
   server.post('/apply/artist', { onRequest: [server.auth] }, applyArtist)
+  server.get("/artists/open", getArtistsWithOpenCommissions)
 }
 
 export default profileRoutes

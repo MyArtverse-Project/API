@@ -4,7 +4,7 @@ import { Comment as Comments } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
 import { ILike } from "typeorm"
 import { sendMassNotification } from "../../../utils/notification"
-import { Role } from "../../../models/Users"
+import { CommissionStatus, Role } from "../../../models/Users"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -339,4 +339,22 @@ export const applyArtist = async (request: FastifyRequest, reply: FastifyReply) 
   }
 
   return reply.code(200).send({ message: "Applied" })
+}
+
+
+export const getArtistsWithOpenCommissions = async (request: FastifyRequest, reply: FastifyReply) => {
+  const users = await request.server.db.getRepository(User).find({
+    where: { commissionStatus: CommissionStatus.OPEN },
+    relations: {
+      followers: true,
+      following: true
+    }
+  })
+
+
+  if (!users) {
+    return reply.code(404).send({ error: "No users found" })
+  }
+
+  return reply.code(200).send(users)
 }
