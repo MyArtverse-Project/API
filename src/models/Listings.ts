@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  OneToMany
 } from "typeorm"
 import User from "./Users"
+import { Image } from "./Image"
 
 @Entity("commissions")
 export default class Commission {
@@ -21,6 +23,12 @@ export default class Commission {
 
   @Column({ type: "decimal" })
   price: number
+
+  @Column()
+  listingBannerUrl: string
+
+  @Column('jsonb')
+  examples: string[]
 
   @CreateDateColumn({ type: "timestamp" })
   createdAt: Date

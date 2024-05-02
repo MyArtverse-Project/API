@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { Character, Image, User } from "../../../models"
+import { Character, Commission, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import { Comment } from "../../../models/Comments"
 import { Notification } from "../../../models/Notifications"
@@ -351,4 +351,49 @@ export const assignArtist = async (request: FastifyRequest, reply: FastifyReply)
   await request.server.db.getRepository(Artwork).save(artwork)
 
   return reply.code(200).send({ message: "Artist assigned" })
+}
+
+export const createListing = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
+  const { title, description, price, listingBannerUrl, examples } = request.body as {
+    title: string
+    description: string
+    price: number
+    listingBannerUrl: string
+    examples: string[]
+  }
+
+  const user = await request.server.db.getRepository(User).findOne({
+    where: { id: profileId }
+  })
+
+  if (!user) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+
+  const listing = await request.server.db.getRepository(Commission).save({
+    title: title,
+    description: description,
+    price: price,
+    listingBannerUrl: listingBannerUrl,
+    examples: examples,
+    user: user
+  })
+
+  if (!listing) {
+    return reply.code(500).send({ error: "Error creating listing" })
+  }
+
+  return reply.code(200).send({ message: "Listing created", id: listing.id })
+}
+
+export const getListings = async (request: FastifyRequest, reply: FastifyReply) => {
+  const listings = await request.server.db.getRepository(Commission).find({
+    relations: {
+      user: true
+    }
+  })
+
+  return reply.code(200).send(listings)
 }
