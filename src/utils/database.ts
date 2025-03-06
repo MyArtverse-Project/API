@@ -13,7 +13,12 @@ const connectDatabase = async (): Promise<DataSource> => {
     database: process.env.DB_NAME,
     entities: ["src/models/*.ts"],
     synchronize: true,
-    logging: false
+    logging: false,
+    extra: {
+      ssl: {
+        rejectUnauthorized: false
+      }
+    }
   })
   await connection
     .initialize()
