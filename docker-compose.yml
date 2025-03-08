@@ -2,12 +2,15 @@ version: "3.8"
 services:
   mailslurper:
     image: marcopas/docker-mailslurper
+    container_name: mailslurper
     ports:
-      - "8080:8080"
+      - "9091:8080"
       - "8085:8085"
       - "2500:2500"
+    restart: unless-stopped
     depends_on:
       - db
+
   db:
     image: postgres:latest
     environment:
@@ -15,19 +18,19 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=myartverse
     ports:
-      - 5432:5432
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "5432:5432"
+
   minio:
     image: quay.io/minio/minio
     ports:
       - "9000:9000"
-      - "9090:9090"
+      - "9092:9090"
     volumes:
       - ~/minio/data:/data
     environment:
       - MINIO_ROOT_USER=MYARTVERSE
       - MINIO_ROOT_PASSWORD=PASSWORD
     command: server /data --console-address ":9090"
+
 volumes:
   postgres_data:

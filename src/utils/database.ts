@@ -14,11 +14,7 @@ const connectDatabase = async (): Promise<DataSource> => {
     entities: ["src/models/*.ts"],
     synchronize: true,
     logging: false,
-    extra: {
-      ssl: {
-        rejectUnauthorized: false
-      }
-    }
+    
   })
   await connection
     .initialize()
