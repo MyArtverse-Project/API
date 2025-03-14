@@ -57,7 +57,7 @@ const refreshTokenLogic = async (request: FastifyRequest, reply: FastifyReply) =
   }
 }
 
-const verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
+const   verifyToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const accessToken = request.cookies.accessToken
   if (!accessToken) {
     return await refreshTokenLogic(request, reply)

@@ -118,6 +118,53 @@ export const FORGOT_PASSWORD_SCHEMA: FastifySchema = {
   }
 }
 
+export const RECOVER_PASSWORD_SCHEMA: FastifySchema = {
+  description: "Recover user's password",
+  tags: ["Auth"],
+  summary: "Recover user's password using UUID link",
+  body: {
+    type: "object",
+    required: ["newPassword"],
+    properties: {
+      newPassword: { type: "string" },
+      uuid: { type: "string" }
+    }
+  },
+  response: {
+    200: {
+      type: "object",
+      description: "Password successfully changed",
+      properties: {
+        message: { type: "string" }
+      }
+    }
+  }
+}
+
+export const VALIDATE_SCHEMA: FastifySchema = {
+  description: "Validate user's uuid",
+  tags: ["Auth"],
+  summary: "Validate user's uuid",
+  body: {
+    type: "object",
+    required: ["uuid"],
+    properties: {
+      uuid: { type: "string" },
+      
+    }
+  },
+  response: {
+    200: {
+      type: "object",
+      description: "UUID validated",
+      properties: {
+        message: { type: "string" }
+      }
+    }
+  }
+}
+
+
 export const CHANGE_PASSWORD_SCHEMA: FastifySchema = {
   description: "Change user's password",
   tags: ["Auth"],

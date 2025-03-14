@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
-import { html } from "../../../utils"
+import { welcome, forgotPassword as forgot } from "../../../utils"
 import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
 // import { html } from "@/utils"
 // import { Auth, User } from "@/models"
@@ -56,7 +56,8 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   // Check if password is correct
-  if (!bcrypt.compareSync(password, user.password)) {
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+  if (!isPasswordValid) {
     return reply.code(400).send({ email: null, password: "Invalid password" })
   }
 
@@ -110,7 +111,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   }
 
   // Hash the password
-  const hashedPassword = bcrypt.hashSync(password, 10)
+  const hashedPassword = await bcrypt.hash(password, 10)
 
   // Insert it onto the database
   const data = await request.server.db.getRepository(Auth).save({
@@ -132,7 +133,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     request.server.mailer.sendMail({
       from: process.env.SMTP_EMAIL_FROM,
       to: email,
-      html: html(
+      html: welcome(
         `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/verify/${data.verificationUUID}`
       ),
       subject: "Welcome to MyArtverse",
@@ -154,9 +155,78 @@ export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
     .send({ message: "Logged out" })
 }
 
-export const forgotPassword = async () => {
-  // TODO: Send Email with reset link
-  return { hello: "world" }
+export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+  // TODO: Make it so it sends an email with a link to reset the password
+  const body = request.body as { email: string }
+  if (!body.email) {
+    return reply.code(400).send({ error: "Email is required" })
+  }
+
+  const { email } = body
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { email: email } })
+
+  if (!user) {
+    return reply.code(400).send({ error: "User not found" })
+  }
+
+  // Generate a password reset UUID
+  // Generate new UUID
+  const uuid = await request.server.db.query("SELECT uuid_generate_v4()")
+  user.forgotPasswordUUID = uuid[0].uuid_generate_v4
+  await request.server.db.getRepository(Auth).save(user)
+
+  try {
+    request.server.mailer.sendMail({
+      from: process.env.SMTP_EMAIL_FROM,
+      to: email,
+      html: forgot(
+        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/recover/${user.forgotPasswordUUID}`
+      ),
+      subject: "Reset Password",
+      text: `You have requested to reset your password. Please click the link below to reset your password: `
+    })
+  } catch (error) {
+    return reply.code(500).send({ error: "Error sending email" })
+  }
+  return reply.code(200).send({ message: "Password reset email sent" })
+}
+
+export const recoverPassword = async (request: FastifyRequest, reply: FastifyReply) => {
+  const body = request.body as { newPassword: string; uuid: string }
+  if (!body.newPassword || !body.uuid) {
+    return reply.code(400).send({ error: "New password and UUID are required" })
+  }
+
+  const { newPassword, uuid } = body
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { forgotPasswordUUID: uuid } })
+  if (!user) {
+    return reply.code(400).send({ error: "User not found" })
+  }
+
+  const hashedPassword = bcrypt.hashSync(newPassword, 10)
+  user.password = hashedPassword
+  await request.server.db.getRepository(Auth).save(user)
+  return reply.code(200).send({ message: "Password changed" })
+}
+
+export const validate = async (request: FastifyRequest, reply: FastifyReply) => {
+  const body = request.body as { uuid: string }
+  if (!body.uuid) {
+    return reply.code(400).send({ error: "UUID are required" })
+  }
+
+  const { uuid } = body
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { forgotPasswordUUID: uuid } })
+  if (!user) {
+    return reply.code(400).send({ error: "User not found" })
+  }
+  return reply.code(200).send({ message: "User found" })
 }
 
 export const changePassword = async (request: FastifyRequest, reply: FastifyReply) => {

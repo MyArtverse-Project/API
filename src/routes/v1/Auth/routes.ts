@@ -7,14 +7,18 @@ import {
   refreshToken,
   register,
   whoami,
-  verify
+  verify,
+  recoverPassword,
+  validate
 } from "./controllers"
 import {
   CHANGE_PASSWORD_SCHEMA,
   FORGOT_PASSWORD_SCHEMA,
   LOGIN_SCHEMA,
+  RECOVER_PASSWORD_SCHEMA,
   REFRESH_TOKEN_SCHEMA,
   REGISTER_SCHEMA,
+  VALIDATE_SCHEMA,
   VERIFY_SCHEMA,
   WHOAMI_SCHEMA
 } from "./schemas"
@@ -23,7 +27,9 @@ async function authRoutes(server: FastifyInstance) {
   server.post("/login", { schema: LOGIN_SCHEMA }, login)
   server.post("/register", { schema: REGISTER_SCHEMA }, register)
   server.post("/logout", { onRequest: [server.auth] }, logout)
-  server.post("/forgot-password", { schema: FORGOT_PASSWORD_SCHEMA }, forgotPassword)
+  server.post("/forgot", { schema: FORGOT_PASSWORD_SCHEMA }, forgotPassword)
+  server.post("/recover", { schema: RECOVER_PASSWORD_SCHEMA }, recoverPassword)
+  server.post("/validate", { schema: VALIDATE_SCHEMA }, validate)
   server.post(
     "/change-password",
     { onRequest: [server.auth], schema: CHANGE_PASSWORD_SCHEMA },

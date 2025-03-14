@@ -21,4 +21,7 @@ export default class Auth {
   @OneToOne(() => User, (user) => user.auth)
   @JoinColumn()
   user: User
+
+  @Column("uuid", { default: () => "uuid_generate_v4()" })
+  forgotPasswordUUID: string
 }
