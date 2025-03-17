@@ -149,8 +149,7 @@ export const VALIDATE_SCHEMA: FastifySchema = {
     type: "object",
     required: ["uuid"],
     properties: {
-      uuid: { type: "string" },
-      
+      uuid: { type: "string" }
     }
   },
   response: {
@@ -163,7 +162,6 @@ export const VALIDATE_SCHEMA: FastifySchema = {
     }
   }
 }
-
 
 export const CHANGE_PASSWORD_SCHEMA: FastifySchema = {
   description: "Change user's password",
@@ -220,7 +218,40 @@ export const WHOAMI_SCHEMA: FastifySchema = {
       properties: {
         id: { type: "string" },
         handle: { type: "string" },
-        pronouns: { type: "string", nullable: true }
+        displayName: { type: "string" },
+        bio: { type: "string" },
+        avatarUrl: { type: "string" },
+        bannerUrl: { type: "string" },
+        dateRegistered: { type: "string", format: "date-time" },
+        dateUpdated: { type: "string", format: "date-time" },
+        hasArtistAccess: { type: "boolean" },
+        hasBetaAccess: { type: "boolean" },
+        links: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              url: { type: "string" },
+              label: { type: "string" }
+            }
+          }
+        },
+        pronouns: { type: "string" },
+        nationality: { type: "string" },
+        birthday: { type: "string", format: "date-time" },
+        characters: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              species: { type: "string" },
+              bio: { type: "string", nullable: true },
+              avatarURL: { type: "string", nullable: true }
+            }
+          }
+        }
       }
     },
     401: {

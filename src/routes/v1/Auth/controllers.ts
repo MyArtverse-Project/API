@@ -278,7 +278,11 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string }
   const data = await request.server.db.getRepository(Auth).findOne({
     where: { id: user.id },
-    relations: { user: true }
+    relations: {
+      user: {
+        characters: true
+      }
+    }
   })
 
   if (!data) {
@@ -321,7 +325,6 @@ export const getOauthLink = async (request: FastifyRequest, reply: FastifyReply)
     return reply.code(400).send({ error: "Invalid provider" })
   }
 
-  
   // Generate the authorization URL
   const uri = await oauth2.generateAuthorizationUri(request, reply)
 
