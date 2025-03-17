@@ -19,6 +19,9 @@ import { checkModAbovePermissions } from "./utils/permission"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
 import StaffRoutes from "./routes/v1/Staff/routes"
+import { oauthProviders } from "./config/oauth"
+import fastifyOauth2 from "@fastify/oauth2"
+import fastifySession from "@fastify/session"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -44,6 +47,15 @@ const app = async () => {
   const connection = await connectDatabase()
   const server = fastify({ logger: true })
 
+  // cookie
+  server.register(fastifyCookie, {
+    secret: process.env.MA_COOKIE_SECRET
+  } as FastifyCookieOptions)
+
+  server.register(fastifySession, {
+    secret: process.env.MA_SESSION_SECRET as string
+  })
+
   // S3
   const s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT as string,
@@ -64,6 +76,13 @@ const app = async () => {
   // Auth Decorator
   server.decorate("auth", verifyToken)
 
+  // Register all OAuth providers
+  oauthProviders.forEach(({ name, config }) => {
+    // @ts-expect-error
+    server.register(fastifyOauth2, config)
+    console.log(`OAuth provider registered: ${name}`)
+  })
+
   // Permission Dectorator
   server.decorate("permissionAboveMod", checkModAbovePermissions)
 
@@ -83,18 +102,13 @@ const app = async () => {
     cookie: { cookieName: "accessToken", signed: false }
   })
 
-  // Cookie
-  server.register(fastifyCookie, {
-    secret: process.env.MA_COOKIE_SECRET
-  } as FastifyCookieOptions)
-
   // CORS
   server.register(fastifyCors, {
     origin:
       `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}` ||
       "http://localhost:3000",
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   })
 
   // Multer

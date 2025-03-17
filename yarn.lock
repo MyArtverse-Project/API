@@ -676,7 +676,7 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-3.1.1.tgz#af3aea7f1e52ec916d8b5c9dcc0f09d4c060a3fc"
   integrity sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==
 
-"@fastify/cookie@^11.0.2":
+"@fastify/cookie@^11.0.1", "@fastify/cookie@^11.0.2":
   version "11.0.2"
   resolved "https://registry.yarnpkg.com/@fastify/cookie/-/cookie-11.0.2.tgz#fa772c652e51f9252addd788289aa16627ebe5f1"
   integrity sha512-GWdwdGlgJxyvNv+QcKiGNevSspMQXncjMZ1J8IvuDQk0jvkzgWWZFNC2En3s+nHndZBGV8IbLwOI/sxCZw/mzA==
@@ -743,6 +743,15 @@
     fastify-plugin "^5.0.0"
     secure-json-parse "^3.0.0"
 
+"@fastify/oauth2@^8.1.2":
+  version "8.1.2"
+  resolved "https://registry.yarnpkg.com/@fastify/oauth2/-/oauth2-8.1.2.tgz#5c92cf48a794e1970bba5fe3f25a7391a2c8b75d"
+  integrity sha512-XZWFRWTZE2fkZ2pjuHNGtpFn1tOFgcJbU0205kHbfd16dn9xRc/6HmG0gHtN/g/BNkEL3EsQ54+pYEdh8dnBgA==
+  dependencies:
+    "@fastify/cookie" "^11.0.1"
+    fastify-plugin "^5.0.0"
+    simple-oauth2 "^5.0.0"
+
 "@fastify/proxy-addr@^5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@fastify/proxy-addr/-/proxy-addr-5.0.0.tgz#e9d1c7a49b8380d9f92a879fdc623ac47ee27de3"
@@ -761,6 +770,14 @@
     fast-decode-uri-component "^1.0.1"
     http-errors "^2.0.0"
     mime "^3"
+
+"@fastify/session@^11.1.0":
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/@fastify/session/-/session-11.1.0.tgz#723f62adebe2ca44e250c0d1dcd72f7c223e2f6f"
+  integrity sha512-OxAX79PtVyTKxfmHT8e0jDFliw/2EmhOxe1Mj35jhL20j8CEpj5Li2zOVi5PqHc5Y+7N2w0tOmtM8mB6NjAIGw==
+  dependencies:
+    fastify-plugin "^5.0.1"
+    safe-stable-stringify "^2.4.3"
 
 "@fastify/static@^8.0.0":
   version "8.1.1"
@@ -795,6 +812,44 @@
     openapi-types "^12.1.3"
     rfdc "^1.3.1"
     yaml "^2.4.2"
+
+"@hapi/boom@^10.0.1":
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/@hapi/boom/-/boom-10.0.1.tgz#ebb14688275ae150aa6af788dbe482e6a6062685"
+  integrity sha512-ERcCZaEjdH3OgSJlyjVk8pHIFeus91CjKP3v+MpgBNp5IvGzP2l/bRiD78nqYcKPaZdbKkK5vDBVPd2ohHBlsA==
+  dependencies:
+    "@hapi/hoek" "^11.0.2"
+
+"@hapi/bourne@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@hapi/bourne/-/bourne-3.0.0.tgz#f11fdf7dda62fe8e336fa7c6642d9041f30356d7"
+  integrity sha512-Waj1cwPXJDucOib4a3bAISsKJVb15MKi9IvmTI/7ssVEm6sywXGjVJDhl6/umt1pK1ZS7PacXU3A1PmFKHEZ2w==
+
+"@hapi/hoek@^11.0.2", "@hapi/hoek@^11.0.4":
+  version "11.0.7"
+  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-11.0.7.tgz#56a920793e0a42d10e530da9a64cc0d3919c4002"
+  integrity sha512-HV5undWkKzcB4RZUusqOpcgxOaq6VOAH7zhhIr2g3G8NF/MlFO75SjOr2NfuSx0Mh40+1FqCkagKLJRykUWoFQ==
+
+"@hapi/hoek@^9.0.0", "@hapi/hoek@^9.3.0":
+  version "9.3.0"
+  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
+  integrity sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==
+
+"@hapi/topo@^5.1.0":
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/@hapi/topo/-/topo-5.1.0.tgz#dc448e332c6c6e37a4dc02fd84ba8d44b9afb012"
+  integrity sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==
+  dependencies:
+    "@hapi/hoek" "^9.0.0"
+
+"@hapi/wreck@^18.0.0":
+  version "18.1.0"
+  resolved "https://registry.yarnpkg.com/@hapi/wreck/-/wreck-18.1.0.tgz#68e631fc7568ebefc6252d5b86cb804466c8dbe6"
+  integrity sha512-0z6ZRCmFEfV/MQqkQomJ7sl/hyxvcZM7LtuVqN3vdAO4vM9eBbowl0kaqQj9EJJQab+3Uuh1GxbGIBFy4NfJ4w==
+  dependencies:
+    "@hapi/boom" "^10.0.1"
+    "@hapi/bourne" "^3.0.0"
+    "@hapi/hoek" "^11.0.2"
 
 "@humanfs/core@^0.19.1":
   version "0.19.1"
@@ -1024,6 +1079,23 @@
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
+
+"@sideway/address@^4.1.5":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@sideway/address/-/address-4.1.5.tgz#4bc149a0076623ced99ca8208ba780d65a99b9d5"
+  integrity sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==
+  dependencies:
+    "@hapi/hoek" "^9.0.0"
+
+"@sideway/formula@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@sideway/formula/-/formula-3.0.1.tgz#80fcbcbaf7ce031e0ef2dd29b1bfc7c3f583611f"
+  integrity sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg==
+
+"@sideway/pinpoint@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@sideway/pinpoint/-/pinpoint-2.0.0.tgz#cff8ffadc372ad29fd3f78277aeb29e632cc70df"
+  integrity sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==
 
 "@sigstore/bundle@^2.2.0":
   version "2.2.0"
@@ -2903,7 +2975,7 @@ fastfall@^1.5.0:
   dependencies:
     reusify "^1.0.0"
 
-fastify-plugin@^5.0.0:
+fastify-plugin@^5.0.0, fastify-plugin@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-5.0.1.tgz#82d44e6fe34d1420bb5a4f7bee434d501e41939f"
   integrity sha512-HCxs+YnRaWzCl+cWRYFnHmeRFyR5GVnJTAaCJQiYzQSDwK9MgJdyAsuL3nh0EWRCYMgQ5MeziymvmAhUHYHDUQ==
@@ -3494,6 +3566,17 @@ jackspeak@^4.0.1:
   integrity sha512-9DDdhb5j6cpeitCbvLO7n7J4IxnbM6hoF6O1g4HQ5TfhvvKN8ywDM7668ZhMHRqVmxqhps/F6syWK2KcPxYlkw==
   dependencies:
     "@isaacs/cliui" "^8.0.2"
+
+joi@^17.6.4:
+  version "17.13.3"
+  resolved "https://registry.yarnpkg.com/joi/-/joi-17.13.3.tgz#0f5cc1169c999b30d344366d384b12d92558bcec"
+  integrity sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==
+  dependencies:
+    "@hapi/hoek" "^9.3.0"
+    "@hapi/topo" "^5.1.0"
+    "@sideway/address" "^4.1.5"
+    "@sideway/formula" "^3.0.1"
+    "@sideway/pinpoint" "^2.0.0"
 
 joycon@^3.1.1:
   version "3.1.1"
@@ -4635,6 +4718,11 @@ safe-stable-stringify@^2.3.1:
   resolved "https://registry.yarnpkg.com/safe-stable-stringify/-/safe-stable-stringify-2.4.3.tgz#138c84b6f6edb3db5f8ef3ef7115b8f55ccbf886"
   integrity sha512-e2bDA2WJT0wxseVd4lsDP4+3ONX6HpMXQa1ZhFQ7SU+GjvORCmShbCMltrtIDfkYhVHrOcPtj+KhmDBdPdZD1g==
 
+safe-stable-stringify@^2.4.3:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/safe-stable-stringify/-/safe-stable-stringify-2.5.0.tgz#4ca2f8e385f2831c432a719b108a3bf7af42a1dd"
+  integrity sha512-b3rppTKm9T+PsVCBEOUR46GWI7fdOs00VKZ1+9c1EWDaDMvjQc6tUwuFyIprgGgTcWoVHSKrU8H31ZHA2e0RHA==
+
 "safer-buffer@>= 2.1.2 < 3.0.0", safer-buffer@^2.1.0:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
@@ -4730,6 +4818,16 @@ sigstore@^2.2.0:
     "@sigstore/sign" "^2.2.3"
     "@sigstore/tuf" "^2.3.1"
     "@sigstore/verify" "^1.1.0"
+
+simple-oauth2@^5.0.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/simple-oauth2/-/simple-oauth2-5.1.0.tgz#1398fe2b8f4b4066298d63c155501b31b42238f2"
+  integrity sha512-gWDa38Ccm4MwlG5U7AlcJxPv3lvr80dU7ARJWrGdgvOKyzSj1gr3GBPN1rABTedAYvC/LsGYoFuFxwDBPtGEbw==
+  dependencies:
+    "@hapi/hoek" "^11.0.4"
+    "@hapi/wreck" "^18.0.0"
+    debug "^4.3.4"
+    joi "^17.6.4"
 
 slice-ansi@^5.0.0:
   version "5.0.0"

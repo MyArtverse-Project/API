@@ -15,8 +15,12 @@ export default class Auth {
   @Column()
   email: string
 
-  @Column()
-  password: string
+  @Column("text", { nullable: true })
+  password: string | null;
+  
+
+  @Column("boolean", { default: true })
+  allowPasswordLogin: boolean
 
   @OneToOne(() => User, (user) => user.auth)
   @JoinColumn()

@@ -9,7 +9,9 @@ import {
   whoami,
   verify,
   recoverPassword,
-  validate
+  validate,
+  loginWithOAuth,
+  getOauthLink
 } from "./controllers"
 import {
   CHANGE_PASSWORD_SCHEMA,
@@ -38,6 +40,8 @@ async function authRoutes(server: FastifyInstance) {
   server.post("/refresh-token", { schema: REFRESH_TOKEN_SCHEMA }, refreshToken)
   server.get("/whoami", { onRequest: [server.auth], schema: WHOAMI_SCHEMA }, whoami)
   server.post("/verify/:uuid", { schema: VERIFY_SCHEMA }, verify)
+  server.get('/:provider/callback', {}, loginWithOAuth)
+  server.get('/:provider/link', {}, getOauthLink)
 }
 
 export default authRoutes
