@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from "bcrypt"
-import type { FastifyReply, FastifyRequest } from "fastify"
+import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"
 import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
+import { OAuth2Namespace } from "@fastify/oauth2"
+import { providers } from "../../../config/oauth"
 // import { html } from "@/utils"
 // import { Auth, User } from "@/models"
 
@@ -53,6 +55,14 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
 
   if (!user) {
     return reply.code(400).send({ email: "Invalid email", password: null })
+  }
+
+  if (!user?.allowPasswordLogin) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
+  }
+
+  if (!user.password) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
   }
 
   // Check if password is correct
@@ -156,7 +166,6 @@ export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
 }
 
 export const forgotPassword = async (request: FastifyRequest, reply: FastifyReply) => {
-  // TODO: Make it so it sends an email with a link to reset the password
   const body = request.body as { email: string }
   if (!body.email) {
     return reply.code(400).send({ error: "Email is required" })
@@ -170,9 +179,10 @@ export const forgotPassword = async (request: FastifyRequest, reply: FastifyRepl
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
+  if (!user.allowPasswordLogin) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
+  }
 
-  // Generate a password reset UUID
-  // Generate new UUID
   const uuid = await request.server.db.query("SELECT uuid_generate_v4()")
   user.forgotPasswordUUID = uuid[0].uuid_generate_v4
   await request.server.db.getRepository(Auth).save(user)
@@ -207,6 +217,10 @@ export const recoverPassword = async (request: FastifyRequest, reply: FastifyRep
     return reply.code(400).send({ error: "User not found" })
   }
 
+  if (!user.allowPasswordLogin) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
+  }
+
   const hashedPassword = bcrypt.hashSync(newPassword, 10)
   user.password = hashedPassword
   await request.server.db.getRepository(Auth).save(user)
@@ -226,6 +240,11 @@ export const validate = async (request: FastifyRequest, reply: FastifyReply) => 
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
   }
+
+  if (!user.allowPasswordLogin) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
+  }
+
   return reply.code(200).send({ message: "User found" })
 }
 
@@ -242,6 +261,10 @@ export const changePassword = async (request: FastifyRequest, reply: FastifyRepl
 
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
+  }
+
+  if (!user.allowPasswordLogin) {
+    return reply.code(403).send({ error: "You must login with OAuth" })
   }
 
   const hashedPassword = bcrypt.hashSync(newPassword, 10)
@@ -283,4 +306,125 @@ export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   await request.server.db.getRepository(Auth).save(user)
 
   return reply.code(200).send({ message: "User verified" })
+}
+
+export const getOauthLink = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { provider } = request.params as { provider: string }
+
+  // @ts-expect-error
+  const oauth2 = request.server[`${provider}OAuth`] as OAuth2Namespace
+
+  if (!oauth2) {
+    return reply.code(500).send({ error: `OAuth provider ${provider} not configured` })
+  }
+  if (!provider || !providers.includes(provider)) {
+    return reply.code(400).send({ error: "Invalid provider" })
+  }
+
+  
+  // Generate the authorization URL
+  const uri = await oauth2.generateAuthorizationUri(request, reply)
+
+  return reply.redirect(uri)
+}
+
+export const loginWithOAuth = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { provider } = request.params as { provider: string }
+  if (!provider) {
+    return reply.code(400).send({ error: "Provider is required" })
+  }
+
+  if (!providers.includes(provider)) {
+    return reply.code(400).send({ error: "Invalid provider" })
+  }
+
+  try {
+    // @ts-expect-error
+    const oauth2 = request.server[`${provider}OAuth`] as OAuth2Namespace
+    if (!oauth2) {
+      return reply.code(500).send({ error: `OAuth provider ${provider} not configured` })
+    }
+
+    const { token: tokenResponse } =
+      await oauth2.getAccessTokenFromAuthorizationCodeFlow(request)
+    if (!tokenResponse || !tokenResponse.access_token) {
+      return reply.code(400).send({ error: "Failed to obtain access token" })
+    }
+
+    const oauthAcessToken = tokenResponse.access_token
+
+    let userInfo
+    if (provider === "google") {
+      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${oauthAcessToken}` }
+      })
+      userInfo = await res.json()
+    } else if (provider === "facebook") {
+      const res = await fetch(
+        `https://graph.facebook.com/me?fields=id,name,email&access_token=${oauthAcessToken}`
+      )
+      userInfo = await res.json()
+    } else if (provider === "twitter") {
+      const res = await fetch("https://api.twitter.com/2/users/me", {
+        headers: { Authorization: `Bearer ${oauthAcessToken}` }
+      })
+      userInfo = await res.json()
+    }
+
+    if (!userInfo) {
+      return reply.code(400).send({ error: "Failed to retrieve user info" })
+    }
+
+    console.log(userInfo)
+
+    let auth = await request.server.db.getRepository(Auth).findOne({
+      where: { email: userInfo.email }
+    })
+
+    if (auth?.allowPasswordLogin) {
+      return reply.code(403).send({ error: "You must login with your password" })
+    }
+
+    if (!auth) {
+      auth = await request.server.db.getRepository(Auth).save({
+        email: userInfo.email,
+        password: null,
+        allowPasswordLogin: false,
+        verified: true
+      })
+
+      const randomUsername = "user_" + Math.floor(Math.random() * 10000)
+
+      const profileData = await request.server.db.getRepository(User).save({
+        auth: auth,
+        handle: randomUsername
+      })
+
+      // If there was an error, return a 500
+      if (!auth || !profileData) {
+        return reply.code(500).send({ error: "Error creating user" })
+      }
+    }
+
+    const profileData = await request.server.db.getRepository(User).findOne({
+      where: { auth: { id: auth.id } }
+    })
+
+    if (!profileData) {
+      return reply.code(500).send({ error: "Error finding user profile" })
+    }
+
+    const accessToken = request.server.jwt.sign({ id: auth.id }, { expiresIn: "10m" })
+    const refreshToken = request.server.jwt.sign({ id: auth.id }, { expiresIn: "7d" })
+
+    return reply
+      .setCookie("accessToken", accessToken, accessTokenOptions)
+      .setCookie("refreshToken", refreshToken, refreshTokenOptions)
+      .redirect(
+        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/@${profileData.handle}`
+      )
+  } catch (error) {
+    console.error(`OAuth Error (${provider}):`, error)
+    return reply.code(500).send({ error: "OAuth authentication failed" })
+  }
 }
