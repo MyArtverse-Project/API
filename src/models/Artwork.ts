@@ -14,6 +14,7 @@ import {
 import Character from "./Character"
 import { Comment } from "./Comments"
 import User from "./Users"
+import { Folder } from "./Folder"
 
 @Entity("artwork")
 export default class Artwork {
@@ -73,6 +74,9 @@ export default class Artwork {
   @ManyToOne(() => User, (user) => user.ownedArtworks)
   @JoinColumn()
   owner: User
+
+  @ManyToOne(() => Folder, (folder) => folder.artworks, { onDelete: "CASCADE" })
+  folder: Folder;
 
   // Statistics
   @Column({ default: 0 })

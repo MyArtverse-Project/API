@@ -263,7 +263,7 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ message: "Artwork uploaded", url: image.url })
 }
 
-export const updateCharacterFolder = async (request: FastifyRequest, reply: FastifyReply) => {
+export const updateCharacterFolder = async (_request: FastifyRequest, reply: FastifyReply) => {
   return reply.code(200).send({ message: "Character folder updated" })
 }
 
@@ -435,7 +435,7 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
 }
 
 export const setRefAsMain = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = request.user as { id: string; profileId: string }
+  // const user = request.user as { id: string; profileId: string }
   const { id } = request.params as { id: string }
 
   const character = await request.server.db.getRepository(Character).findOne({

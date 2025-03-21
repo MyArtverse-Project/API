@@ -5,10 +5,8 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany
 } from "typeorm"
 import User from "./Users"
-import { Image } from "./Image"
 
 @Entity("commissions")
 export default class Commission {

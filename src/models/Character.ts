@@ -18,6 +18,7 @@ import User from "./Users"
 import { RefSheet } from "./RefSheet"
 import Artwork from "./Artwork"
 import { CharacterFolders } from "./CharacterFolders"
+import { Folder } from "./Folder"
 
 @Entity()
 export default class Character {
@@ -86,6 +87,9 @@ export default class Character {
 
   @ManyToOne(() => User, (user) => user.characters, { eager: true })
   owner: User
+
+  @ManyToOne(() => Folder, (folder) => folder.characters, { onDelete: "CASCADE" })
+  folder: Folder;
 
   // Stats
 

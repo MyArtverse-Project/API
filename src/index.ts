@@ -22,6 +22,7 @@ import StaffRoutes from "./routes/v1/Staff/routes"
 import { oauthProviders } from "./config/oauth"
 import fastifyOauth2 from "@fastify/oauth2"
 import fastifySession from "@fastify/session"
+import folderRoutes from "./routes/v1/Folder/routes"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -156,6 +157,7 @@ const app = async () => {
   server.register(characterRoutes, { prefix: "/v1/character" })
   server.register(relationshipRoutes, { prefix: "/v1/relationship" })
   server.register(profileRoutes, { prefix: "/v1/profile" })
+  server.register(folderRoutes, { prefix: "/v1/folders" })
   server.register(artRoutes, { prefix: "/v1/art" })
   server.register(StaffRoutes, { prefix: "/v1/staff" })
 

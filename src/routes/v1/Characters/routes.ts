@@ -25,7 +25,6 @@ import {
 } from "./controllers"
 import {
   CREATE_CHARACTER_SCHEMA,
-  GET_CHARACTER_BY_ID_SCHEMA
   // GET_CHARACTER_BY_NAME_SCHEMA
 } from "./schema"
 

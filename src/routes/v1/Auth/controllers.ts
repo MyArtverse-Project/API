@@ -11,6 +11,7 @@ import { providers } from "../../../config/oauth"
 
 export const refreshToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const { refreshToken } = request.cookies
+  console.log(request.cookies)
   if (!refreshToken) {
     return reply.code(401).send({ error: "Unauthorized" })
   }

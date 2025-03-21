@@ -12,6 +12,15 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const userData = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId },
     relations: {
+      folders: {
+        characters: true,
+        artworks: true,
+        children: {
+          characters: true,
+          artworks: true,
+          
+        }
+      },
       characters: true,
       favoriteCharacters: true,
       followers: {

@@ -20,6 +20,7 @@ import Commission from "./Listings"
 import Artwork from "./Artwork"
 import { Notification } from "./Notifications"
 import { CharacterFolders } from "./CharacterFolders"
+import { Folder } from "./Folder"
 
 export enum Role {
   USER = "user",
@@ -31,7 +32,7 @@ export enum Role {
 export enum CommissionStatus {
   OPEN = "open",
   CLOSED = "closed",
-  LIMITED = "limited",
+  LIMITED = "limited"
 }
 
 @Entity("users")
@@ -175,12 +176,11 @@ export default class User {
   @Column("jsonb", { nullable: true })
   blacklist: ObjectId[]
 
+  @OneToMany(() => Folder, (folder) => folder.owner)
+  folders: Folder[]
+
   // Statistics
 
   @Column({ default: 0 })
   views: number
-
-
-
-
 }

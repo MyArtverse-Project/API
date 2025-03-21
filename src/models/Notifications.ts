@@ -5,7 +5,6 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  OneToMany
 } from "typeorm"
 import User from "./Users"
 import Artwork from "./Artwork"

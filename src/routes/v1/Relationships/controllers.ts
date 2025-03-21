@@ -1,9 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Relationships, User } from "../../../models"
-import { send } from "process"
 import { sendNotification } from "../../../utils/notification"
 
-export const root = async (request: FastifyRequest, reply: FastifyReply) => {
+export const root = async (_request: FastifyRequest, _reply: FastifyReply) => {
   return { hello: "world" }
 }
 
