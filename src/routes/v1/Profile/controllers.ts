@@ -88,6 +88,14 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       handle: handle
     },
     relations: {
+      folders: {
+        characters: true,
+        artworks: true,
+        children: {
+          characters: true,
+          artworks: true
+        }
+      },
       favoriteCharacters: true,
       followers: {
         follower: true,

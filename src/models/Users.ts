@@ -21,6 +21,7 @@ import Artwork from "./Artwork"
 import { Notification } from "./Notifications"
 import { CharacterFolders } from "./CharacterFolders"
 import { Folder } from "./Folder"
+import Dashboard from "./Dashboard"
 
 export enum Role {
   USER = "user",
@@ -178,6 +179,10 @@ export default class User {
 
   @OneToMany(() => Folder, (folder) => folder.owner)
   folders: Folder[]
+
+  @OneToMany(() => Dashboard, (dashboard) => dashboard.user)
+  dashboards: Dashboard[];
+
 
   // Statistics
 
