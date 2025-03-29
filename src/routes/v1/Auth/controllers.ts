@@ -281,7 +281,8 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
     where: { id: user.id },
     relations: {
       user: {
-        characters: true
+        characters: true,
+        notifications: true,
       }
     }
   })

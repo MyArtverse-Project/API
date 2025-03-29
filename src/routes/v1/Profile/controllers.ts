@@ -1,9 +1,9 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
-import { Comment, Comment as Comments } from "../../../models/Comments"
+import { Comment } from "../../../models"
 import { uploadToS3 } from "../../../utils"
 import { DataSource, ILike, IsNull } from "typeorm"
-import { sendMassNotification } from "../../../utils/notification"
+import { sendMassNotification, sendNotification } from "../../../utils/notification"
 import { CommissionStatus, Role } from "../../../models/Users"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -88,6 +88,7 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       handle: handle
     },
     relations: {
+      notifications: true,
       folders: {
         characters: true,
         artworks: true,
@@ -165,7 +166,7 @@ export const commentProfile = async (request: FastifyRequest, reply: FastifyRepl
     }
   }
 
-  const comment = await request.server.db.getRepository(Comments).save({
+  const comment = await request.server.db.getRepository(Comment).save({
     content: content,
     author: author,
     user: profile,
@@ -175,6 +176,8 @@ export const commentProfile = async (request: FastifyRequest, reply: FastifyRepl
   if (!comment) {
     return reply.code(500).send({ error: "Error commenting" })
   }
+
+  await sendNotification(request.server.db, profile, "New comment on your profile", author, undefined, comment)
 
   return reply.code(200).send({ message: "Commented" })
 }
@@ -401,7 +404,7 @@ export const getArtistsWithOpenCommissions = async (request: FastifyRequest, rep
 }
 
 const recursivelyGetReplies = async (commentId: string, db: DataSource) => {
-  const replies = await db.getRepository(Comments).find({
+  const replies = await db.getRepository(Comment).find({
     where: { parentComment: { id: commentId } },
     relations: {
       author: true,

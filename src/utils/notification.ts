@@ -1,7 +1,7 @@
 import type { DataSource } from "typeorm"
 import { type Artwork, type User } from "../models"
-import type { Comment } from "../models/Comments"
-import { Notification } from "../models/Notifications"
+import type Comment from "../models/Comments"
+import Notification from "../models/Notifications"
 
 export const sendNotification = async (client: DataSource, user: User, content: string, sender?: User, artwork?: Artwork, comment?: Comment) => {
     const notification = await client.getRepository(Notification).save({

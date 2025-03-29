@@ -251,7 +251,20 @@ export const WHOAMI_SCHEMA: FastifySchema = {
               avatarURL: { type: "string", nullable: true }
             }
           }
-        }
+        },
+        notifications: {
+          type: "array",
+          properties: {
+            id: { type: "string", format: "uuid" },
+            content: { type: "string" },
+            read: { type: "boolean" },
+            user: { type: "string", format: "uuid" },
+            sender: { type: "string", format: "uuid", nullable: true },
+            artwork: { type: "string", format: "uuid", nullable: true },
+            comment: { type: "string", format: "uuid", nullable: true },
+            createdAt: { type: "string", format: "date-time" }
+          }
+        },
       }
     },
     401: {
