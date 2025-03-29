@@ -5,13 +5,14 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from "typeorm"
 import User from "./Users"
 import Artwork from "./Artwork"
-import { Comment } from "./Comments"
+import Comment from "./Comments"
 
 @Entity("notifications")
-export class Notification {
+export default class Notification {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
@@ -21,7 +22,7 @@ export class Notification {
   @Column({ type: "boolean", default: false })
   read: boolean
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToOne(() => User, (user) => user.notifications, { onDelete: "CASCADE" })
   @JoinColumn()
   user: User
 
@@ -29,7 +30,7 @@ export class Notification {
   @JoinColumn()
   sender: User
 
-  @ManyToOne(() => Artwork, { nullable: true })
+  @ManyToOne(() => Artwork, { nullable: true, onDelete: "CASCADE" })
   @JoinColumn()
   artwork: Artwork
 
@@ -37,6 +38,6 @@ export class Notification {
   @JoinColumn()
   comment: Comment
 
-  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   createdAt: Date
 }

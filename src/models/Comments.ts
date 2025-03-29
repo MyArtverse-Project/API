@@ -11,7 +11,7 @@ import { Character, User } from "."
 import Artwork from "./Artwork"
 
 @Entity()
-export class Comment {
+export default class Comment {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

@@ -9,10 +9,10 @@ import {
   UpdateDateColumn
 } from "typeorm"
 import Character from "./Character"
-import { RefSheetVariant } from "./RefSheetVarients"
+import RefSheetVariant from "./RefSheetVarients"
 
 @Entity("refSheets")
-export class RefSheet {
+export default class RefSheet {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

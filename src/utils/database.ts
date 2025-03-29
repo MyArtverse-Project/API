@@ -1,5 +1,22 @@
 import { DataSource } from "typeorm"
-
+import {
+  AdoptionStatus,
+  Artwork,
+  Attributes,
+  Auth,
+  Character,
+  Comment,
+  Dashboard,
+  Folder,
+  Image,
+  Commission,
+  Migration,
+  Notification,
+  RefSheet,
+  RefSheetVariant,
+  Relationships,
+  User
+} from '../models'
 /**
  * Connects to the database
  */
@@ -11,8 +28,26 @@ const connectDatabase = async (): Promise<DataSource> => {
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    entities: process.env.NODE_ENV === "development" ? ["src/models/*.ts"] : ["dist/models/*.js"],
+    entities: [
+      AdoptionStatus,
+      Artwork,
+      Attributes,
+      Auth,
+      Character,
+      Comment,
+      Dashboard,
+      Folder,
+      Image,
+      Commission,
+      Migration,
+      Notification,
+      RefSheet,
+      RefSheetVariant,
+      Relationships,
+      User
+    ],
     synchronize: true,
+
     logging: false,
   })
   await connection

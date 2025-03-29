@@ -7,7 +7,7 @@ import {
 } from "typeorm"
 
 @Entity("images")
-export class Image {
+export default class Image {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

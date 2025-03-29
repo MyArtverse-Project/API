@@ -15,10 +15,9 @@ import Attributes from "./Attributes"
 import AdoptionStatus from "./AdoptionStatus"
 import Migration from "./Migration"
 import User from "./Users"
-import { RefSheet } from "./RefSheet"
+import RefSheet from "./RefSheet"
 import Artwork from "./Artwork"
-import { CharacterFolders } from "./CharacterFolders"
-import { Folder } from "./Folder"
+import Folder from "./Folder"
 
 @Entity()
 export default class Character {
@@ -31,9 +30,6 @@ export default class Character {
 
   @Column()
   name: string
-
-  @ManyToMany(() => CharacterFolders, (characterFolders) => characterFolders.characters)
-  characterFolders: CharacterFolders[]
 
   @Column({ nullable: true })
   safename: string

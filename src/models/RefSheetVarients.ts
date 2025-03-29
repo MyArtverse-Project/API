@@ -1,8 +1,8 @@
-import { RefSheet } from "./RefSheet"
+import RefSheet from "./RefSheet"
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
 
 @Entity()
-export class RefSheetVariant {
+export default class RefSheetVariant {
   @PrimaryGeneratedColumn("uuid")
   id: string
 

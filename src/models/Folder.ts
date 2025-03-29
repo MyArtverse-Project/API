@@ -4,7 +4,7 @@ import Character from "./Character";
 import Artwork from "./Artwork";
 
 @Entity()
-export class Folder {
+export default class Folder {
     @PrimaryGeneratedColumn("uuid")
     id: string
 

@@ -12,9 +12,9 @@ import {
   UpdateDateColumn
 } from "typeorm"
 import Character from "./Character"
-import { Comment } from "./Comments"
+import Comment from "./Comments"
 import User from "./Users"
-import { Folder } from "./Folder"
+import Folder from "./Folder"
 
 @Entity("artwork")
 export default class Artwork {

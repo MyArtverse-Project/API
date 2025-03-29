@@ -18,9 +18,8 @@ import AdoptionStatus from "./AdoptionStatus"
 import Character from "./Character"
 import Commission from "./Listings"
 import Artwork from "./Artwork"
-import { Notification } from "./Notifications"
-import { CharacterFolders } from "./CharacterFolders"
-import { Folder } from "./Folder"
+import Notification from "./Notifications"
+import Folder from "./Folder"
 import Dashboard from "./Dashboard"
 
 export enum Role {
@@ -109,9 +108,6 @@ export default class User {
   @OneToMany(() => Character, (character) => character.owner)
   @JoinColumn()
   characters: Character[]
-
-  @OneToMany(() => CharacterFolders, (folder) => folder.user)
-  characterFolders: CharacterFolders[]
 
   @Column({ nullable: true })
   customHTMLCard: string
