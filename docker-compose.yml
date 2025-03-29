@@ -16,7 +16,7 @@ services:
     container_name: my_postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: myartverse
     ports:
       - "5432:5432"
