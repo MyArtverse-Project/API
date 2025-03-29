@@ -167,7 +167,7 @@ const app = async () => {
   server.listen(
     {
       port: Number(process.env.MA_PORT) || 8080,
-      host: process.env.MA_HOST || "localhost"
+      host: process.env.MA_INTERFACE || "localhost"
     },
     (err, address) => {
       if (err) {

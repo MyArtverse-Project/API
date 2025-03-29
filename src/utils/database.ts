@@ -11,10 +11,9 @@ const connectDatabase = async (): Promise<DataSource> => {
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    entities: ["src/models/*.ts"],
+    entities: process.env.NODE_ENV === "development" ? ["src/models/*.ts"] : ["dist/models/*.js"],
     synchronize: true,
     logging: false,
-    
   })
   await connection
     .initialize()

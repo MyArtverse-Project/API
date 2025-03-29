@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"

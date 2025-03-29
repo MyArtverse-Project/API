@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
-import { Comment as Comments } from "../../../models/Comments"
+import { Comment, Comment as Comments } from "../../../models/Comments"
 import { uploadToS3 } from "../../../utils"
-import { ILike } from "typeorm"
+import { DataSource, ILike, IsNull } from "typeorm"
 import { sendMassNotification } from "../../../utils/notification"
 import { CommissionStatus, Role } from "../../../models/Users"
 
@@ -18,7 +18,7 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
         children: {
           characters: true,
           artworks: true,
-          
+
         }
       },
       characters: true,
@@ -115,17 +115,18 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
     }
   })
 
-  const comments = await request.server.db.getRepository(Comments).find({
+  const comments = await request.server.db.getRepository(Comment).find({
+    where: { user: { handle }, parentComment: IsNull() },
     relations: {
-      user: true,
-      author: true
+      author: true,
+      user: true
     },
-    where: {
-      user: {
-        id: profile.id
-      }
-    }
+    order: { createdAt: "DESC" }
   })
+
+  for (const comment of comments) {
+    comment.replies = await recursivelyGetReplies(comment.id, request.server.db)
+  }
 
   profile.views += 1
   await request.server.db.getRepository(User).save(profile)
@@ -136,7 +137,11 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
   const { handle } = request.params as { handle: string }
-  const { content } = request.body as { content: string }
+  const { content, parentCommentId } = request.body as { content: string, parentCommentId?: string }
+
+  if (!content) {
+    return reply.code(400).send({ error: "No content provided" })
+  }
 
   const profile = await request.server.db.getRepository(User).findOne({
     where: { handle: handle }
@@ -150,10 +155,21 @@ export const commentProfile = async (request: FastifyRequest, reply: FastifyRepl
     return reply.code(404).send({ error: "Profile not found" })
   }
 
+  if (parentCommentId) {
+    const parentComment = await request.server.db.getRepository(Comment).findOne({
+      where: { id: parentCommentId },
+    });
+
+    if (!parentComment) {
+      return reply.code(404).send({ error: "Parent comment not found" })
+    }
+  }
+
   const comment = await request.server.db.getRepository(Comments).save({
     content: content,
     author: author,
-    user: profile
+    user: profile,
+    parentComment: parentCommentId ? { id: parentCommentId } : undefined,
   })
 
   if (!comment) {
@@ -164,17 +180,25 @@ export const commentProfile = async (request: FastifyRequest, reply: FastifyRepl
 }
 
 export const getComments = async (request: FastifyRequest, reply: FastifyReply) => {
-  const user = request.params as { handle: string }
-  const comments = await request.server.db.getRepository(Comments).find({
-    where: { user: { handle: user.handle } },
+  const { handle } = request.params as { handle: string }
+
+  const comments = await request.server.db.getRepository(Comment).find({
+    where: { user: { handle }, parentComment: IsNull() },
     relations: {
       author: true,
       user: true
-    }
+    },
+    order: { createdAt: "DESC" }
   })
 
-  if (!comments) {
+
+  if (!comments.length) {
     return reply.code(404).send({ error: "No comments found" })
+  }
+
+  // Recursively fetch replies for each top-level comment
+  for (const comment of comments) {
+    comment.replies = await recursivelyGetReplies(comment.id, request.server.db)
   }
 
   return reply.code(200).send(comments)
@@ -375,3 +399,19 @@ export const getArtistsWithOpenCommissions = async (request: FastifyRequest, rep
 
   return reply.code(200).send(users)
 }
+
+const recursivelyGetReplies = async (commentId: string, db: DataSource) => {
+  const replies = await db.getRepository(Comments).find({
+    where: { parentComment: { id: commentId } },
+    relations: {
+      author: true,
+    },
+    order: { createdAt: "ASC" }
+  })
+
+  for (const reply of replies) {
+    reply.replies = await recursivelyGetReplies(reply.id, db)
+  }
+  return replies
+}
+

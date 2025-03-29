@@ -72,20 +72,20 @@ export const getFolderByHandle = async (request: FastifyRequest, reply: FastifyR
     reply.send(folders);
 }
 
-const getFolderRecursively = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { folderId } = request.params as { folderId: string };
-    const folderRepo = request.server.db.getRepository(Folder);
+// const getFolderRecursively = async (request: FastifyRequest, reply: FastifyReply) => {
+//     const { folderId } = request.params as { folderId: string };
+//     const folderRepo = request.server.db.getRepository(Folder);
 
-    const folder = await folderRepo.findOne({
-        where: { id: folderId },
-        relations: ["children", "characters", "artworks"],
-    });
+//     const folder = await folderRepo.findOne({
+//         where: { id: folderId },
+//         relations: ["children", "characters", "artworks"],
+//     });
 
-    if (!folder) return reply.status(404).send({ error: "Folder not found" });
+//     if (!folder) return reply.status(404).send({ error: "Folder not found" });
 
-    const nestedFolder = await getNestedFolders(folder, folderRepo);
-    reply.send(nestedFolder);
-}
+//     const nestedFolder = await getNestedFolders(folder, folderRepo);
+//     reply.send(nestedFolder);
+// }
 
 const getNestedFolders = async (folder: Folder, folderRepo: any) => {
     const children = await folderRepo.find({ where: { parent: folder }, relations: ["children"] });

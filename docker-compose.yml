@@ -1,5 +1,28 @@
 version: "3.8"
 services:
+  app:
+    build: .
+    container_name: my_app
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    container_name: my_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: myartverse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
   mailslurper:
     image: marcopas/docker-mailslurper
     container_name: mailslurper
@@ -9,17 +32,7 @@ services:
       - "2500:2500"
     restart: unless-stopped
     depends_on:
-      - db
-
-  db:
-    image: postgres:latest
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=myartverse
-    ports:
-      - "5432:5432"
-
+      - postgres
   minio:
     image: quay.io/minio/minio
     ports:
