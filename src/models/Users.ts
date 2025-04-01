@@ -179,6 +179,9 @@ export default class User {
   @OneToMany(() => Dashboard, (dashboard) => dashboard.user)
   dashboards: Dashboard[];
 
+  @Column("jsonb", { default: [], nullable: true })
+  recentSearches: string[]
+
 
   // Statistics
 

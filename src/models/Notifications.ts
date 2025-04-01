@@ -10,6 +10,7 @@ import {
 import User from "./Users"
 import Artwork from "./Artwork"
 import Comment from "./Comments"
+import Character from "./Character"
 
 @Entity("notifications")
 export default class Notification {
@@ -37,6 +38,10 @@ export default class Notification {
   @ManyToOne(() => Comment, { nullable: true })
   @JoinColumn()
   comment: Comment
+
+  @ManyToOne(() => Character, { nullable: true, onDelete: "CASCADE" })
+  @JoinColumn()
+  character: Character
 
   @CreateDateColumn()
   createdAt: Date

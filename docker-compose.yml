@@ -1,15 +1,15 @@
 version: "3.8"
 services:
-  app:
-    build: .
-    container_name: my_app
-    depends_on:
-      - postgres
-    env_file:
-      - .env
-    ports:
-      - "8081:8081"
-    restart: unless-stopped
+  # app:
+  #   build: .
+  #   container_name: my_app
+  #   depends_on:
+  #     - postgres
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "8081:8081"
+  #   restart: unless-stopped
 
   postgres:
     image: postgres:latest

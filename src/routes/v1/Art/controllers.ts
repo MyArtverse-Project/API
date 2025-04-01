@@ -1,8 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Commission, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
-import { Comment } from "../../../models/Comments"
-import { Notification } from "../../../models/Notifications"
+import Comment from "../../../models/Comments"
+import Notification from "../../../models/Notifications"
 import { sendNotification } from "../../../utils/notification"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -179,7 +179,7 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
   await sendNotification(
     request.server.db,
     author,
-    `${author.handle} commented on your artwork`,
+    `%user% commented on your artwork`,
     artwork.owner,
     artwork,
     comment

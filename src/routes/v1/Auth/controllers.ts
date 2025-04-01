@@ -282,7 +282,12 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
     relations: {
       user: {
         characters: true,
-        notifications: true,
+        notifications: {
+          sender: true,
+          artwork: true,
+          comment: true,
+          character: true
+        },
       }
     }
   })

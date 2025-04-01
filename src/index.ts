@@ -8,28 +8,30 @@ import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
 import * as dotenv from "dotenv"
 import fastify from "fastify"
-import nodemailer, { type SentMessageInfo } from "nodemailer"
-import type { DataSource } from "typeorm"
+import nodemailer, { SentMessageInfo } from "nodemailer"
 import authRoutes from "./routes/v1/Auth/routes"
 import { characterRoutes } from "./routes/v1/Characters/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
-import verifyToken from "./utils/auth"
+import { authMiddleware, optionalAuthMiddleware } from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { checkModAbovePermissions } from "./utils/permission"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
 import StaffRoutes from "./routes/v1/Staff/routes"
 import { oauthProviders } from "./config/oauth"
-import fastifyOauth2 from "@fastify/oauth2"
+import fastifyOauth2, { OAuth2Namespace } from "@fastify/oauth2"
 import fastifySession from "@fastify/session"
 import folderRoutes from "./routes/v1/Folder/routes"
 import dashboardRoutes from "./routes/v1/Dashboard/routes"
+import { DataSource } from "typeorm"
+import { generalRoutes } from "./routes/v1/General/routes"
 
 declare module "fastify" {
   interface FastifyInstance {
     db: DataSource
     auth: any
     permissionAboveMod: any
+    optionalAuth: any
     mailer: nodemailer.Transporter<SentMessageInfo>
     s3: S3Client
   }
@@ -39,6 +41,11 @@ declare module "fastify" {
       id: string
       profileId: string
     }
+  }
+
+  interface FastifyInstance {
+    facebookOAuth2: OAuth2Namespace;
+    googleOAuth: OAuth2Namespace;
   }
 }
 
@@ -76,7 +83,8 @@ const app = async () => {
   // server.decorateRequest('db', connection);
 
   // Auth Decorator
-  server.decorate("auth", verifyToken)
+  server.decorate("auth", authMiddleware)
+  server.decorate("optionalAuth", optionalAuthMiddleware)
 
   // Register all OAuth providers
   oauthProviders.forEach(({ name, config }) => {
@@ -161,6 +169,7 @@ const app = async () => {
   server.register(folderRoutes, { prefix: "/v1/folders" })
   server.register(dashboardRoutes, { prefix: "/v1/dashboard" })
   server.register(artRoutes, { prefix: "/v1/art" })
+  server.register(generalRoutes, { prefix: "/v1" })
   server.register(StaffRoutes, { prefix: "/v1/staff" })
 
   // Starting server

@@ -177,7 +177,7 @@ export const commentProfile = async (request: FastifyRequest, reply: FastifyRepl
     return reply.code(500).send({ error: "Error commenting" })
   }
 
-  await sendNotification(request.server.db, profile, "New comment on your profile", author, undefined, comment)
+  await sendNotification(request.server.db, profile, "%user% commented on your profile", author, undefined, comment)
 
   return reply.code(200).send({ message: "Commented" })
 }
