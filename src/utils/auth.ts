@@ -1,5 +1,22 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth } from "../models"
+import { CookieSerializeOptions } from "@fastify/cookie"
+
+export const accessTokenOptions: CookieSerializeOptions = {
+  httpOnly: true,
+  path: "/",
+  sameSite: "none",
+  domain: "localhost",
+  secure: true
+}
+
+export const refreshTokenOptions: CookieSerializeOptions = {
+  httpOnly: true,
+  path: "/",
+  sameSite: "none",
+  domain: "localhost",
+  secure: true
+}
 
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
   const accessToken = request.cookies.accessToken
@@ -63,13 +80,7 @@ async function refreshTokenLogic(request: FastifyRequest, reply: FastifyReply, f
     if (!auth) return force401 ? reply.code(401).send({ error: "Unauthorized" }) : null
 
     const newAccessToken = request.server.jwt.sign({ id: payload.id })
-    reply.setCookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      path: "/",
-      sameSite: "none",
-      domain: "localhost",
-      secure: true
-    })
+    reply.setCookie("accessToken", newAccessToken, accessTokenOptions)
 
     request.user = { id: payload.id, profileId: auth.user.id }
     return true

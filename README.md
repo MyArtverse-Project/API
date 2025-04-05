@@ -29,31 +29,38 @@ Backend for MyArtverse, will be merged into the actual project once MVP is compl
 1. Enable "Restrict beyond user policy", paste the configuration below and click "Create"
 
    ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "AWS": ["*"]
-         },
-         "Action": [
-           "s3:GetBucketLocation",
-           "s3:ListBucket",
-           "s3:ListBucketMultipartUploads"
-         ],
-         "Resource": ["arn:aws:s3:::myartverse"]
-       },
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "AWS": ["*"]
-         },
-         "Action": ["s3:GetObject", "s3:ListMultipartUploadParts"],
-         "Resource": ["arn:aws:s3:::myartverse/*"]
-       }
-     ]
-   }
+{
+ "Version": "2012-10-17",
+ "Statement": [
+  {
+   "Effect": "Allow",
+   "Action": [
+    "s3:GetBucketLocation",
+    "s3:ListBucket",
+    "s3:ListBucketMultipartUploads",
+    "s3:PutObject",
+    "s3:DeleteObject",
+    "s3:AbortMultipartUpload"
+   ],
+   "Resource": [
+    "arn:aws:s3:::myartverse"
+   ]
+  },
+  {
+   "Effect": "Allow",
+   "Action": [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:DeleteObject",
+    "s3:ListMultipartUploadParts"
+   ],
+   "Resource": [
+    "arn:aws:s3:::myartverse/*"
+   ]
+  }
+ ]
+}
+
    ```
 
 1. Then, create a bucket under Administrator > Buckets, and give it any name you give it
