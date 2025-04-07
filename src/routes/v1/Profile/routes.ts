@@ -17,7 +17,7 @@ import {
 async function profileRoutes(server: FastifyInstance) {
   server.get("/me", { onRequest: [server.auth] }, me)
   server.get("/favorites/:handle", getFavorites)
-  server.patch("/me", { onRequest: [server.auth] }, updateProfile)
+  server.put("/me", { onRequest: [server.auth] }, updateProfile)
   server.get("/:handle", getProfile)
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
   server.get("/:handle/comments", getComments)
