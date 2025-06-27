@@ -34,7 +34,7 @@ services:
     depends_on:
       - postgres
   minio:
-    image: quay.io/minio/minio
+    image: minio/minio:latest
     ports:
       - "9000:9000"
       - "9092:9090"
