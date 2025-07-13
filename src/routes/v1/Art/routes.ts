@@ -6,6 +6,7 @@ import {
   featureCharacter,
   getArtwork,
   getCharacterArtwork,
+  getSelfArtworks,
   unfeatureCharacter,
   updateArtwork,
   uploadArt
@@ -30,6 +31,7 @@ async function artRoutes(server: FastifyInstance) {
   server.put(`/:artworkId`, { onRequest: [server.auth] }, updateArtwork)
   server.delete(`/:artworkId`, { onRequest: [server.auth] }, deleteArtwork)
   server.post(`/:artworkId/assign/:artistId`, { onRequest: [server.auth] }, assignArtist)
+  server.get("/gallery", { onRequest: [server.auth] }, getSelfArtworks)
 }
 
 export default artRoutes
