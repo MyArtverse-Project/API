@@ -51,10 +51,10 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const updateProfile = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const { avatarLink, birthday, displayName, pronouns } = request.body as {
+  const { avatarLink, handle, displayName, pronouns } = request.body as {
     displayName: string
+    handle: string
     pronouns: string
-    birthday: Date
     avatarLink: string
   }
 
@@ -68,7 +68,7 @@ export const updateProfile = async (request: FastifyRequest, reply: FastifyReply
 
   userData.displayName = displayName || userData.displayName
   userData.pronouns = pronouns || userData.pronouns
-  userData.birthday = birthday || userData.birthday
+  userData.handle = handle || userData.handle
   userData.avatarUrl = avatarLink || userData.avatarUrl
 
   const result = await request.server.db.getRepository(User).save(userData)

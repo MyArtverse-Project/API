@@ -246,6 +246,7 @@ export const WHOAMI_SCHEMA: FastifySchema = {
             properties: {
               id: { type: "string" },
               name: { type: "string" },
+              slug: { type: "string" },
               species: { type: "string" },
               bio: { type: "string", nullable: true },
               avatarURL: { type: "string", nullable: true }

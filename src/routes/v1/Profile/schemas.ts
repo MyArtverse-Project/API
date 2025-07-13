@@ -53,6 +53,38 @@ import type { FastifySchema } from "fastify"
 //   }
 // }
 
+export const UPDATE_PROFILE_SCHEMA: FastifySchema = {
+  description: "Update the current user's profile information",
+  tags: ["User"],
+  summary: "Updates the current user's profile",
+  body: {
+    type: "object",
+    properties: {
+      displayName: { type: "string" },
+      handle: { type: "string" },
+      pronouns: { type: "string" },
+      avatarLink: { type: "string" }
+    },
+    required: ["displayName", "handle", "pronouns", "avatarLink"]
+  },
+  response: {
+    200: {
+      description: "Profile updated successfully",
+      type: "object",
+      properties: {
+        message: { type: "string" }
+      }
+    },
+    404: {
+      description: "User not found",
+      type: "object",
+      properties: {
+        error: { type: "string" }
+      }
+    }
+  }
+}
+
 export const GET_PROFILE_SCHEMA: FastifySchema = {
   description: "Get a user's profile information by handle",
   tags: ["User"],
