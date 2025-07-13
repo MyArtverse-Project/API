@@ -17,6 +17,7 @@ import {
   Relationships,
   User
 } from '../models'
+import CharacterDashboard from "../models/CharacterDashboard"
 /**
  * Connects to the database
  */
@@ -34,6 +35,7 @@ const connectDatabase = async (): Promise<DataSource> => {
       Attributes,
       Auth,
       Character,
+      CharacterDashboard,
       Comment,
       Dashboard,
       Folder,

@@ -1,5 +1,5 @@
 import { type FastifyInstance } from "fastify"
-import { getUserPanels, resetPanels, setHTMLPanel, setPanel } from "./controllers"
+import { getCharacterPanels, getUserPanels, resetCharacterPanels, resetPanels, setCharacterHTMLPanel, setCharacterPanel, setHTMLPanel, setPanel } from "./controllers"
 import {
   GET_USER_DASHBOARD_PANELS_SCHEMA,
   SET_HTML_PANEL_SCHEMA,
@@ -19,6 +19,10 @@ async function dashboardRoutes(server: FastifyInstance) {
   )
   server.post("/panels", { onRequest: [server.auth], schema: SET_PANEL_SCHEMA }, setPanel)
   server.post("/panels/reset", { onRequest: [server.auth] }, resetPanels)
+  server.get("/cpanels/:characterName", getCharacterPanels)
+  server.put("/cpanels/:characterName/html", { onRequest: [server.auth] }, setCharacterHTMLPanel)
+  server.post("/cpanels/:characterName", { onRequest: [server.auth] }, setCharacterPanel)
+  server.post("/cpanels/:characterName/reset", { onRequest: [server.auth] }, resetCharacterPanels)
 }
 
 export default dashboardRoutes

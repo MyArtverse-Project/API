@@ -18,6 +18,7 @@ import User from "./Users"
 import RefSheet from "./RefSheet"
 import Artwork from "./Artwork"
 import Folder from "./Folder"
+import Dashboard from "./CharacterDashboard"
 
 @Entity()
 export default class Character {
@@ -42,6 +43,9 @@ export default class Character {
 
   @Column({ nullable: true })
   species: string
+
+  @Column({ nullable: true })
+  slug: string
 
   @Column({ default: false })
   isHybrid: boolean
@@ -86,6 +90,9 @@ export default class Character {
 
   @ManyToOne(() => Folder, (folder) => folder.characters, { onDelete: "CASCADE" })
   folder: Folder;
+
+  @OneToMany(() => Dashboard, (dashboard) => dashboard.character, { cascade: true })
+  dashboards: Dashboard[];
 
   // Stats
 

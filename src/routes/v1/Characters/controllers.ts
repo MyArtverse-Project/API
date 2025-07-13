@@ -1,10 +1,8 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { ILike, type EntityManager } from "typeorm"
-import { Attributes, Character, User } from "../../../models"
+import { Attributes, Character, Comment, RefSheet, RefSheetVariant, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
-import { Comment } from "../../../models/Comments"
-import { RefSheet } from "../../../models/RefSheet"
-import { RefSheetVariant } from "../../../models/RefSheetVarients"
+
 import type {
   CreateCharacterBody,
   EditCharacterBody,
@@ -67,7 +65,7 @@ export const getOwnersCharacters = async (
         variants: true
       }
     })
-    mainCharacter.refSheets = refSheets
+    mainCharacter.refSheets = refSheets as RefSheet[]
   }
 
   if (!data) return reply.status(404).send("No user found.")
@@ -115,11 +113,12 @@ export const getCharacterByName = async (
 
   try {
     const data = await request.server.db.getRepository(Character).findOne({
-      where: { owner: { handle: ownerHandle }, name: name },
+      where: { owner: { handle: ownerHandle }, slug: name },
       relations: {
         owner: true,
         attributes: true,
-        favoritedBy: true
+        favoritedBy: true,
+        dashboards: true
       }
     })
 
@@ -158,7 +157,7 @@ export const getCharacterWithOwner = async (
 
   try {
     const data = await request.server.db.getRepository(Character).findOne({
-      where: { owner: { id: profileId }, name: name },
+      where: { owner: { id: profileId }, slug: name },
       relations: {
         owner: true,
         attributes: true,
@@ -168,7 +167,7 @@ export const getCharacterWithOwner = async (
     })
 
     const attributes = await request.server.db.getRepository(Attributes).findOne({
-      where: { character: { name: name } }
+      where: { character: { slug: name } }
     })
 
     if (!data) {
@@ -213,6 +212,7 @@ export const createCharacter = async (request: FastifyRequest, reply: FastifyRep
   const newCharacter = await request.server.db.getRepository(Character).save({
     name: name,
     safeName: safeName,
+    slug: safeName,
     visibility: visiblility,
     nickname: nickname,
     avatarUrl: characterAvatar,
@@ -308,7 +308,7 @@ export const commentCharacter = async (request: FastifyRequest, reply: FastifyRe
   const { content } = request.body as { content: string }
 
   const character = await request.server.db.getRepository(Character).findOne({
-    where: { name: name, owner: { handle: ownerHandle } }
+    where: { slug: name, owner: { handle: ownerHandle } }
   })
 
   const author = await request.server.db.getRepository(User).findOne({

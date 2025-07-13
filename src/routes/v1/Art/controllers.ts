@@ -88,7 +88,7 @@ export const getCharacterArtwork = async (
 
       },
     },
-    where: { name: characterName, owner: { handle: ownerHandle } }
+    where: { slug: characterName, owner: { handle: ownerHandle } }
   })
 
   if (!character) {
@@ -397,3 +397,22 @@ export const getListings = async (request: FastifyRequest, reply: FastifyReply) 
 
   return reply.code(200).send(listings)
 }
+
+export const getSelfArtworks = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
+  const artworks = await request.server.db.getRepository(Artwork).find({
+    where: [
+      { artist: { id: profileId } },
+      { owner: { id: profileId } }
+    ],
+    relations: {
+      owner: true,
+      artist: true,
+      charactersFeatured: true,
+      comments: true,
+      publishedCharacter: true
+    },
+  })
+  return reply.code(200).send(artworks)
+}
+
