@@ -10,6 +10,7 @@ import {
 } from "typeorm"
 import Character from "./Character"
 import RefSheetVariant from "./RefSheetVarients"
+import User from "./Users"
 
 @Entity("refSheets")
 export default class RefSheet {
@@ -17,13 +18,23 @@ export default class RefSheet {
   id: string
 
   @Column()
-  refSheetName: string
+  name: string
 
-  @Column({ type: "jsonb" })
-  colors: string[]
+  @Column({ type: "text", nullable: true })
+  description: string
 
   @Column()
   active: boolean
+
+  @Column({ default: false })
+  primary: boolean
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn()
+  artistUser: User
+
+  @Column({ type: "text", nullable: true })
+  artistExternal: string
 
   @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet, { eager: true })
   @JoinColumn()

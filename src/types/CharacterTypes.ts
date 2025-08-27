@@ -34,15 +34,15 @@ interface EditCharacterBody {
 
 interface RefSheet {
   id?: string
-  refSheetName: string
-  colors: string[]
+  name: string
+  description: string
   variants: {
-    id: string
-    
-    name: string
-    url: string
-    active: boolean
-    nsfw: boolean
+    title: string
+    artist: string
+    description: string
+    image: string
+    primary: boolean
+    colors: string[]
   }[]
 }
 

@@ -1,5 +1,6 @@
 import RefSheet from "./RefSheet"
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm"
+import User from "./Users"
 
 @Entity()
 export default class RefSheetVariant {
@@ -7,10 +8,13 @@ export default class RefSheetVariant {
   id: string
 
   @Column()
-  name: string
+  title: string
 
-  @Column()
+  @Column({ default: false })
   nsfw: boolean
+
+  @Column({ type: "jsonb" })
+  colors: string[]
 
   @Column()
   url: string

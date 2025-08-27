@@ -42,10 +42,10 @@ services:
     environment:
       - SERVICES=s3
       - DEBUG=1
-      - DATA_DIR=/tmp/localstack/data
+      - DATA_DIR=/var/localstack/data
     volumes:
-      - "localstack_data:/tmp/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack_data:/var/localstack/data"
+
     restart: unless-stopped
 
 volumes:

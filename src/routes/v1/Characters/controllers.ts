@@ -382,57 +382,104 @@ export const setArtAsAvatar = async (_request: FastifyRequest, reply: FastifyRep
 
 export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
-  const body = request.body as { refSheet: RefSheetType; characterId: string }
+  const body = request.body as {
+    characterId: string,
+    refSheet: {
+      id?: string
+      name: string
+      description: string
+      artist: string
+      primary: boolean
+      variants: {
+        id?: string
+        title: string
+        image: string
+        primary: boolean
+        colors: string[]
+      }[]
+    }
+  }
+
+  console.log(body)
 
   const character = await request.server.db.getRepository(Character).findOneBy({
     id: body.characterId,
-    owner: { id: user.profileId }
+    owner: { id: user.profileId },
   })
 
   if (!character) return reply.status(404).send("No character found.")
 
-  await request.server.db.transaction(async (entityManager) => {
-    let refSheet = await entityManager.findOneBy(RefSheet, { id: body.refSheet.id })
+  if (!body.refSheet.name?.trim()) {
+    return reply.code(400).send({ error: "Ref sheet name is required." })
+  }
 
-    if (!refSheet || !body.refSheet.id) {
-      delete body.refSheet.id
-      refSheet = entityManager.getRepository(RefSheet).create({
-        ...body.refSheet,
-        character: character,
-        active: true
+  const artistUser = await request.server.db.getRepository(User).findOne({
+    where: { handle: body.refSheet.artist }
+  })
+
+  if (!artistUser) {
+    
+  }
+
+
+  await request.server.db.transaction(async (entityManager) => {
+    const refSheetRepo = entityManager.getRepository(RefSheet)
+    const variantRepo = entityManager.getRepository(RefSheetVariant)
+
+    let refSheet: RefSheet | null = null
+    if (body.refSheet.id) {
+      refSheet = await refSheetRepo.findOne({ where: { id: body.refSheet.id } })
+    }
+
+    if (!refSheet) {
+      refSheet = refSheetRepo.create({
+        character,
+        active: true,
+        name: body.refSheet.name,
+        variants: body.refSheet.variants
       })
     } else {
-      refSheet.refSheetName = body.refSheet.refSheetName
-      refSheet.colors = body.refSheet.colors
+      refSheet.name = body.refSheet.name
       refSheet.active = true
     }
 
-    await entityManager.save(refSheet)
+    await refSheetRepo.save(refSheet)
+
+    const variantIds = body.refSheet.variants.filter(v => v.id).map(v => v.id!)
+
+    const existingVariants = variantIds.length
+      ? await variantRepo.findByIds(variantIds)
+      : []
 
     for (const variant of body.refSheet.variants) {
-      let refSheetVariant
       if (variant.id) {
-        refSheetVariant = await entityManager.findOneBy(RefSheetVariant, {
-          id: variant.id
-        })
-        if (refSheetVariant) {
-          Object.assign(refSheetVariant, variant, { refSheet: refSheet })
-          await entityManager.save(refSheetVariant)
+        const existing = existingVariants.find(v => v.id === variant.id)
+        if (existing) {
+          Object.assign(existing, variant, { refSheet })
+          await variantRepo.save(existing)
           continue
         }
       }
 
-      refSheetVariant = entityManager.getRepository(RefSheetVariant).create({
-        ...variant,
-        refSheet: refSheet
+      // @ts-expect-error
+      const newVariant = variantRepo.create({
+        title: variant.title,
+        url: variant.image,
+        artistExternal: "",
+        artistUser: null,
+        nsfw: false, // TODO: Utilize this
+        main: variant.primary,
+        colors: variant.colors,
+        refSheet: refSheet,
       })
 
-      await entityManager.save(refSheetVariant)
+      await variantRepo.save(newVariant)
     }
   })
 
   return reply.code(200).send({ message: "Ref sheet uploaded successfully" })
 }
+
 
 export const setRefAsMain = async (request: FastifyRequest, reply: FastifyReply) => {
   // const user = request.user as { id: string; profileId: string }
