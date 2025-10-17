@@ -4,6 +4,7 @@ services:
   #   container_name: my_app
   #   depends_on:
   #     - postgres
+  #     - minio
   #   env_file:
   #     - .env
   #   ports:
@@ -23,6 +24,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:latest
+    container_name: my_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+
   mailslurper:
     image: marcopas/docker-mailslurper
     container_name: mailslurper
@@ -33,21 +48,8 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-
-  localstack:
-    image: localstack/localstack:latest
-    container_name: localstack
-    ports:
-      - "4566:4566"
-    environment:
-      - SERVICES=s3
-      - DEBUG=1
-      - DATA_DIR=/var/localstack/data
-    volumes:
-      - "localstack_data:/var/localstack/data"
-
-    restart: unless-stopped
+      - minio
 
 volumes:
   postgres_data:
-  localstack_data:
+  minio_data:
