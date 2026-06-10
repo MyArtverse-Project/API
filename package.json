@@ -1,0 +1,24 @@
+{
+  "name": "myartverse-api",
+  "version": "0.0.1",
+  "description": "The API behind MyArtverse.",
+  "main": "./dist/src/index.js",
+  "repository": "git@github.com:MyArtverse-Project/API.git",
+  "author": "dumbspacedog <moz@furverse.io>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "prisma": "^7.8.0",
+    "swagger-jsdoc": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "prisma-openapi": "^1.6.0",
+    "typescript": "^6.0.3"
+  },
+  "scripts": {
+    "start": "node ./dist/src/index.js",
+    "compile": "tsc --build . --verbose",
+    "build": "tsc --build . --verbose"
+  }
+}
