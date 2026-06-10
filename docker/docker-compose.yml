@@ -1,0 +1,71 @@
+services:
+  myartverse-api-server:
+    container_name: api
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      cache_from:
+        - myartverse-api:latest
+      tags:
+        - myartverse-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - APP_PORT=3000
+      - APP_POSTGRESQL_URI=postgresql://user:pass@10.253.0.3/myartverse
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+    networks:
+      int:
+        ipv4_address: 10.253.0.2
+    restart: on-failure
+    entrypoint: ["/myartverse-api/docker/entrypoint.sh"]
+
+  myartverse-local-db:
+    container_name: postgres
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=myartverse
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+      - 5432:5432
+    networks:
+      int:
+        ipv4_address: 10.253.0.3
+
+  myartverse-db-minio:
+    container_name: minio
+    image: minio/minio:latest
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - int
+
+volumes:
+  db-data:
+  minio_data:
+
+networks:
+  int:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.253.0.0/16
