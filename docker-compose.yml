@@ -12,7 +12,11 @@ services:
   #   restart: unless-stopped
 
   postgres:
+<<<<<<< HEAD
     image: postgres:18
+=======
+    image: postgres:16-alpine
+>>>>>>> beea7c5 (Small fixes)
     container_name: my_postgres
     environment:
       POSTGRES_USER: postgres
