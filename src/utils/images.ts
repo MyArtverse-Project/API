@@ -1,5 +1,6 @@
 import { PutObjectCommand, type S3Client } from "@aws-sdk/client-s3"
 import type { BusboyFileStream } from "@fastify/busboy"
+import { randomUUID } from "crypto"
 import * as fs from "fs"
 import os from "os"
 import path from "path"
@@ -12,34 +13,39 @@ export const uploadToS3 = async (
   mimetype: string,
   userID: string
 ) => {
-  // Create a temporary file to store the file
-  const tempFilePath = path.join(os.tmpdir(), key)
-  await pipeline(file, fs.createWriteStream(tempFilePath))
+  const bucket = process.env.S3_BUCKET
+  if (!bucket) {
+    throw new Error("S3_BUCKET is not configured")
+  }
 
-  // Get Size for Content-Length
-  const { size: length } = fs.statSync(tempFilePath)
-  const fileStream = fs.createReadStream(tempFilePath)
-
-  const command = new PutObjectCommand({
-    Bucket: process.env.S3_BUCKET as string,
-    Key: `${userID}/${key}`,
-    Body: fileStream,
-    ContentType: mimetype,
-    ContentLength: length
-  })
+  const ext = path.extname(key)
+  const tempFilePath = path.join(os.tmpdir(), `${randomUUID()}${ext}`)
+  let fileStream: fs.ReadStream | undefined
 
   try {
+    await pipeline(file, fs.createWriteStream(tempFilePath))
+
+    const { size: length } = fs.statSync(tempFilePath)
+    fileStream = fs.createReadStream(tempFilePath)
+
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: `${userID}/${key}`,
+      Body: fileStream,
+      ContentType: mimetype,
+      ContentLength: length
+    })
+
     const result = await client.send(command)
-    // Delete the temp file
-    fs.unlinkSync(tempFilePath)
 
     return {
       ...result,
-      url: `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET}/${userID}/${key}`
+      url: `${process.env.S3_ENDPOINT}/${bucket}/${userID}/${key}`
     }
-  } catch (error) {
-    // Delete the temp file
-    fs.unlinkSync(tempFilePath)
-    throw error
+  } finally {
+    fileStream?.destroy()
+    if (fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath)
+    }
   }
 }
