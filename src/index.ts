@@ -14,6 +14,7 @@ import { characterRoutes } from "./routes/v1/Characters/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import { authMiddleware, optionalAuthMiddleware } from "./utils/auth"
 import connectDatabase from "./utils/database"
+import { ensureS3Bucket } from "./utils/images"
 import { checkModAbovePermissions } from "./utils/permission"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
@@ -77,6 +78,7 @@ const app = async () => {
   })
 
   server.decorate("s3", s3)
+  await ensureS3Bucket(s3)
 
   // DB + Fastify
   server.decorate("db", connection)

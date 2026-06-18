@@ -234,13 +234,8 @@ export const upload = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(500).send({ error: "Error uploading" })
   }
 
-  const userData = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId }
-  })
-
   const image = await request.server.db.getRepository(Image).save({
-    url: result.url,
-    user: userData
+    url: result.url
   })
 
   if (!image) {

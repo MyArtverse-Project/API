@@ -249,7 +249,7 @@ export const WHOAMI_SCHEMA: FastifySchema = {
               slug: { type: "string" },
               species: { type: "string" },
               bio: { type: "string", nullable: true },
-              avatarURL: { type: "string", nullable: true }
+              avatarUrl: { type: "string", nullable: true }
             }
           }
         },
