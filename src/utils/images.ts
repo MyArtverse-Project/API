@@ -55,6 +55,17 @@ export const ensureS3Bucket = async (client: S3Client) => {
   }
 }
 
+const mimeToExtension = (mimetype: string) => {
+  const map: Record<string, string> = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+  }
+  return map[mimetype] ?? ".bin"
+}
+
 export const uploadToS3 = async (
   client: S3Client,
   file: BusboyFileStream,
@@ -67,7 +78,8 @@ export const uploadToS3 = async (
     throw new Error("S3_BUCKET is not configured")
   }
 
-  const ext = path.extname(key)
+  const ext = path.extname(key) || mimeToExtension(mimetype)
+  const storageKey = `${userID}/${randomUUID()}${ext}`
   const tempFilePath = path.join(os.tmpdir(), `${randomUUID()}${ext}`)
   let fileStream: fs.ReadStream | undefined
 
@@ -79,7 +91,7 @@ export const uploadToS3 = async (
 
     const command = new PutObjectCommand({
       Bucket: bucket,
-      Key: `${userID}/${key}`,
+      Key: storageKey,
       Body: fileStream,
       ContentType: mimetype,
       ContentLength: length,
@@ -90,7 +102,7 @@ export const uploadToS3 = async (
 
     return {
       ...result,
-      url: `${process.env.S3_ENDPOINT}/${bucket}/${userID}/${key}`
+      url: `${process.env.S3_ENDPOINT}/${bucket}/${storageKey}`
     }
   } finally {
     fileStream?.destroy()
