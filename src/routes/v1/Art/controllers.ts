@@ -275,24 +275,43 @@ export const unfeatureCharacter = async (
 }
 
 export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
   const { artworkId } = request.params as { artworkId: string }
-  const { title, description, tags } = request.body as {
-    title: string
-    description: string
-    tags: string[]
+  const { title, description, tags, nsfw, imageUrl } = request.body as {
+    title?: string
+    description?: string
+    tags?: string[]
+    nsfw?: boolean
+    imageUrl?: string
   }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
-    where: { id: artworkId }
+    where: { id: artworkId },
+    relations: { owner: true },
   })
 
   if (!artwork) {
     return reply.code(404).send({ error: "Artwork not found" })
   }
 
-  artwork.title = title
-  artwork.description = description
-  artwork.tags = tags
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
+  }
+
+  if (title !== undefined) artwork.title = title
+  if (description !== undefined) artwork.description = description
+  if (tags !== undefined) artwork.tags = tags
+  if (nsfw !== undefined) artwork.nsfw = nsfw
+
+  if (imageUrl) {
+    const image = await request.server.db.getRepository(Image).findOne({
+      where: { url: imageUrl },
+    })
+
+    if (image) {
+      artwork.artworkUrl = image.url
+    }
+  }
 
   await request.server.db.getRepository(Artwork).save(artwork)
 
@@ -300,14 +319,20 @@ export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply
 }
 
 export const deleteArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
   const { artworkId } = request.params as { artworkId: string }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
-    where: { id: artworkId }
+    where: { id: artworkId },
+    relations: { owner: true },
   })
 
   if (!artwork) {
     return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   artwork.charactersFeatured = []
