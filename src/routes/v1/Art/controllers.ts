@@ -8,12 +8,13 @@ import { sendNotification } from "../../../utils/notification"
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
   const { characterId } = request.params as { characterId: string }
-  const { title, description, imageUrl, userAsArtist, tags } = request.body as {
+  const { title, description, imageUrl, userAsArtist, tags, nsfw } = request.body as {
     title: string
     description: string
     imageUrl: string
     userAsArtist: boolean
     tags: string[]
+    nsfw?: boolean
   }
 
   const character = await request.server.db.getRepository(Character).findOne({
@@ -45,6 +46,7 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
     description: description,
     artist: userAsArtist ? user : null,
     tags: tags,
+    nsfw: nsfw ?? false,
     owner: user,
     artworkUrl: image.url
   })

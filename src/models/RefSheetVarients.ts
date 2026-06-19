@@ -13,6 +13,12 @@ export default class RefSheetVariant {
   @Column({ default: false })
   nsfw: boolean
 
+  @Column({ type: "text", nullable: true })
+  description: string
+
+  @Column({ type: "text", nullable: true })
+  artistExternal: string
+
   @Column({ type: "jsonb" })
   colors: string[]
 

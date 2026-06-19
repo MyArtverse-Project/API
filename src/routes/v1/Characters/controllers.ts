@@ -411,8 +411,11 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
       variants: {
         id?: string
         title: string
+        description?: string
+        artist?: string
         image: string
         primary: boolean
+        nsfw?: boolean
         colors: string[]
       }[]
     }
@@ -454,10 +457,14 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
         character,
         active: true,
         name: body.refSheet.name,
+        description: body.refSheet.description ?? "",
+        primary: body.refSheet.primary ?? false,
         variants: body.refSheet.variants
       })
     } else {
       refSheet.name = body.refSheet.name
+      refSheet.description = body.refSheet.description ?? refSheet.description
+      refSheet.primary = body.refSheet.primary ?? refSheet.primary
       refSheet.active = true
     }
 
@@ -473,19 +480,28 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
       if (variant.id) {
         const existing = existingVariants.find(v => v.id === variant.id)
         if (existing) {
-          Object.assign(existing, variant, { refSheet })
+          Object.assign(existing, {
+            title: variant.title,
+            description: variant.description ?? existing.description,
+            url: variant.image,
+            artistExternal: variant.artist ?? existing.artistExternal,
+            main: variant.primary,
+            nsfw: variant.nsfw ?? existing.nsfw,
+            colors: variant.colors,
+            refSheet,
+          })
           await variantRepo.save(existing)
           continue
         }
       }
 
-      // @ts-expect-error
       const newVariant = variantRepo.create({
         title: variant.title,
+        description: variant.description ?? "",
         url: variant.image,
-        artistExternal: "",
+        artistExternal: variant.artist ?? "",
         artistUser: null,
-        nsfw: false, // TODO: Utilize this
+        nsfw: variant.nsfw ?? false,
         main: variant.primary,
         colors: variant.colors,
         refSheet: refSheet,
