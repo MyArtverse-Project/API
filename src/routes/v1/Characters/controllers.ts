@@ -285,15 +285,33 @@ export const updateCharacter = async (request: FastifyRequest, reply: FastifyRep
     where: { character: { id: data.id } }
   })
 
+  const { attributes: bodyAttributes, mainCharacter, ...characterUpdates } = body
+
   await request.server.db.getRepository(Attributes).save({
     ...attributes,
-    ...body.attributes
+    ...bodyAttributes
   })
 
   await request.server.db.getRepository(Character).save({
     ...data,
-    ...body
+    ...characterUpdates
   })
+
+  if (mainCharacter !== undefined) {
+    const owner = await request.server.db.getRepository(User).findOne({
+      where: { id: user.profileId },
+      relations: { mainCharacter: true }
+    })
+
+    if (owner) {
+      if (mainCharacter) {
+        owner.mainCharacter = data
+      } else if (owner.mainCharacter?.id === data.id) {
+        owner.mainCharacter = null
+      }
+      await request.server.db.getRepository(User).save(owner)
+    }
+  }
 
   return reply.code(200).send({ message: "Character updated." })
 }
