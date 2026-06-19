@@ -80,6 +80,42 @@ export const updateProfile = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ message: "Updated" })
 }
 
+export const updateContentPreferences = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const user = request.user as { id: string; profileId: string }
+  const { showNsfw, nsfwDisplayMode } = request.body as {
+    showNsfw?: boolean
+    nsfwDisplayMode?: "blur" | "show"
+  }
+
+  const userData = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+  })
+
+  if (!userData) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  const current = userData.contentPreferences ?? {
+    showNsfw: false,
+    nsfwDisplayMode: "blur" as const,
+  }
+
+  if (typeof showNsfw === "boolean") {
+    current.showNsfw = showNsfw
+  }
+  if (nsfwDisplayMode === "blur" || nsfwDisplayMode === "show") {
+    current.nsfwDisplayMode = nsfwDisplayMode
+  }
+
+  userData.contentPreferences = current
+  await request.server.db.getRepository(User).save(userData)
+
+  return reply.code(200).send({ contentPreferences: current })
+}
+
 export const getProfile = async (request: FastifyRequest, reply: FastifyReply) => {
   const { handle } = request.params as { handle: string }
 

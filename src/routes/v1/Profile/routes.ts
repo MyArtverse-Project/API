@@ -11,6 +11,7 @@ import {
   search,
   setCustomHTML,
   updateProfile,
+  updateContentPreferences,
   upload
 } from "./controllers"
 
@@ -18,6 +19,11 @@ async function profileRoutes(server: FastifyInstance) {
   server.get("/me", { onRequest: [server.auth] }, me)
   server.get("/favorites/:handle", getFavorites)
   server.put("/me", { onRequest: [server.auth] }, updateProfile)
+  server.patch(
+    "/content-preferences",
+    { onRequest: [server.auth] },
+    updateContentPreferences
+  )
   server.get("/:handle", getProfile)
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
   server.get("/:handle/comments", getComments)

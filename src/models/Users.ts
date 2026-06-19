@@ -182,6 +182,14 @@ export default class User {
   @Column("jsonb", { default: [], nullable: true })
   recentSearches: string[]
 
+  @Column("jsonb", {
+    default: { showNsfw: false, nsfwDisplayMode: "blur" },
+    nullable: true,
+  })
+  contentPreferences: {
+    showNsfw: boolean
+    nsfwDisplayMode: "blur" | "show"
+  }
 
   // Statistics
 
