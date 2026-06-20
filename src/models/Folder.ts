@@ -29,6 +29,12 @@ export default class Folder {
     @ManyToOne(() => User, (user) => user.folders, { onDelete: "CASCADE" })
     owner: User;
 
+    @ManyToOne(() => Character, (character) => character.galleryFolders, { nullable: true, onDelete: "CASCADE" })
+    character: Character | null;
+
+    @RelationId((folder: Folder) => folder.character)
+    characterId: string | null;
+
     @OneToMany(() => Character, (character) => character.folder)
     characters: Character[];
 

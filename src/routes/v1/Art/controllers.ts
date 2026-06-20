@@ -3,6 +3,7 @@ import { Character, Commission, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import Comment from "../../../models/Comments"
 import Notification from "../../../models/Notifications"
+import Folder from "../../../models/Folder"
 import { sendNotification } from "../../../utils/notification"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -86,8 +87,8 @@ export const getCharacterArtwork = async (
         artist: true,
         charactersFeatured: true,
         comments: true,
-        publishedCharacter: true
-
+        publishedCharacter: true,
+        folder: true,
       },
     },
     where: { slug: characterName, owner: { handle: ownerHandle } }
@@ -316,6 +317,72 @@ export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply
   await request.server.db.getRepository(Artwork).save(artwork)
 
   return reply.code(200).send({ message: "Artwork updated" })
+}
+
+export const assignArtworkToFolder = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const { profileId } = request.user as { profileId: string }
+  const { artworkId, folderId } = request.params as {
+    artworkId: string
+    folderId: string
+  }
+
+  const artworkRepo = request.server.db.getRepository(Artwork)
+  const folderRepo = request.server.db.getRepository(Folder)
+
+  const artwork = await artworkRepo.findOne({
+    where: { id: artworkId },
+    relations: {
+      owner: true,
+      publishedCharacter: true,
+      charactersFeatured: true,
+    },
+  })
+
+  if (!artwork) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
+  }
+
+  const characterId =
+    artwork.publishedCharacter?.id ?? artwork.charactersFeatured?.[0]?.id
+
+  if (!characterId) {
+    return reply.code(400).send({ error: "Artwork is not linked to a character" })
+  }
+
+  if (folderId === "root") {
+    artwork.folder = null
+    await artworkRepo.save(artwork)
+    return reply.code(200).send({ message: "Artwork removed from folder" })
+  }
+
+  const folder = await folderRepo.findOne({
+    where: { id: folderId },
+    relations: { character: true, owner: true },
+  })
+
+  if (!folder) {
+    return reply.code(404).send({ error: "Folder not found" })
+  }
+
+  if (folder.contentType !== "art" || !folder.character || folder.character.id !== characterId) {
+    return reply.code(400).send({ error: "Folder does not belong to this character gallery" })
+  }
+
+  if (folder.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
+  }
+
+  artwork.folder = folder
+  await artworkRepo.save(artwork)
+
+  return reply.code(200).send({ message: "Artwork folder updated" })
 }
 
 export const deleteArtwork = async (request: FastifyRequest, reply: FastifyReply) => {

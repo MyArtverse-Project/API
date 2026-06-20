@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { ILike, type EntityManager } from "typeorm"
 import { Attributes, Character, Comment, RefSheet, RefSheetVariant, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
+import Folder from "../../../models/Folder"
 
 import type {
   CreateCharacterBody,
@@ -50,8 +51,10 @@ export const getOwnersCharacters = async (
   const data = await request.server.db.getRepository(User).findOne({
     where: { handle: ownerHandle },
     relations: {
-      characters: true
-    }
+      characters: {
+        folder: true,
+      },
+    },
   })
 
   const mainCharacter = await request.server.db.getRepository(Character).findOne({
@@ -263,7 +266,44 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
   return reply.code(200).send({ message: "Artwork uploaded", url: image.url })
 }
 
-export const updateCharacterFolder = async (_request: FastifyRequest, reply: FastifyReply) => {
+export const updateCharacterFolder = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
+  const { id, folderId } = request.params as { id: string; folderId: string }
+
+  const characterRepo = request.server.db.getRepository(Character)
+  const folderRepo = request.server.db.getRepository(Folder)
+
+  const character = await characterRepo.findOne({
+    where: { id, owner: { id: profileId } },
+    relations: { folder: true },
+  })
+
+  if (!character) {
+    return reply.code(404).send({ error: "Character not found" })
+  }
+
+  if (folderId === "root") {
+    character.folder = null
+    await characterRepo.save(character)
+    return reply.code(200).send({ message: "Character removed from folder" })
+  }
+
+  const folder = await folderRepo.findOne({
+    where: {
+      id: folderId,
+      owner: { id: profileId },
+      contentType: "characters",
+    },
+    relations: { character: true },
+  })
+
+  if (!folder || folder.character) {
+    return reply.code(404).send({ error: "Folder not found" })
+  }
+
+  character.folder = folder
+  await characterRepo.save(character)
+
   return reply.code(200).send({ message: "Character folder updated" })
 }
 

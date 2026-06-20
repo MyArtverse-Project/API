@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import {
   assignArtist,
+  assignArtworkToFolder,
   commentArtwork,
   deleteArtwork,
   featureCharacter,
@@ -15,6 +16,12 @@ import {
 async function artRoutes(server: FastifyInstance) {
   server.post("/upload/:characterId", { onRequest: [server.auth] }, uploadArt)
   server.get("/characters/:ownerHandle/:characterName", getCharacterArtwork)
+  server.get("/gallery", { onRequest: [server.auth] }, getSelfArtworks)
+  server.put(
+    "/:artworkId/folder/:folderId",
+    { onRequest: [server.auth] },
+    assignArtworkToFolder
+  )
   server.get("/:artworkId", getArtwork)
   // server.get('/:artworkId/comments', getArtworkComments)
   server.post("/:artworkId/comment", { onRequest: [server.auth] }, commentArtwork)
@@ -31,7 +38,6 @@ async function artRoutes(server: FastifyInstance) {
   server.put(`/:artworkId`, { onRequest: [server.auth] }, updateArtwork)
   server.delete(`/:artworkId`, { onRequest: [server.auth] }, deleteArtwork)
   server.post(`/:artworkId/assign/:artistId`, { onRequest: [server.auth] }, assignArtist)
-  server.get("/gallery", { onRequest: [server.auth] }, getSelfArtworks)
 }
 
 export default artRoutes
