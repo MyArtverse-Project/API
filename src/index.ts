@@ -16,7 +16,7 @@ import { authMiddleware, optionalAuthMiddleware } from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { ensureS3Bucket } from "./utils/images"
 import { checkModAbovePermissions } from "./utils/permission"
-import { getFrontendOrigin } from "./utils/config"
+import { getCorsOrigins } from "./utils/config"
 import { createS3Client } from "./utils/s3"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
@@ -104,7 +104,7 @@ const app = async () => {
 
   // CORS
   server.register(fastifyCors, {
-    origin: getFrontendOrigin(),
+    origin: getCorsOrigins(),
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   })

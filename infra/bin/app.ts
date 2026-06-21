@@ -11,6 +11,9 @@ const cdnSubdomain = app.node.tryGetContext("cdnSubdomain") as string
 const vpcCidr = app.node.tryGetContext("vpcCidr") as string
 const region = app.node.tryGetContext("region") as string
 const hostedZoneId = app.node.tryGetContext("hostedZoneId") as string | undefined
+const apiHostname = app.node.tryGetContext("apiHostname") as string | undefined
+const certificateArn = app.node.tryGetContext("certificateArn") as string | undefined
+const cookieDomain = app.node.tryGetContext("cookieDomain") as string | undefined
 
 new MyArtverseStack(app, "MyArtverseStack", {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region },
@@ -20,5 +23,8 @@ new MyArtverseStack(app, "MyArtverseStack", {
   cdnSubdomain,
   vpcCidr,
   hostedZoneId: hostedZoneId || undefined,
+  apiHostname: apiHostname || undefined,
+  certificateArn: certificateArn || undefined,
+  cookieDomain: cookieDomain || undefined,
   description: "MyArtverse API — VPC, EC2, RDS, S3, CloudFront, ALB",
 })

@@ -1,16 +1,16 @@
 # MyArtverse AWS Infrastructure
 
-CDK stack for the **myartverse.app** API with the **Vercel** frontend at **dev.myartverse.dev**.
+CDK stack for the **myartverse.app** API with the **Vercel** frontend at **dev.myartverse.app**.
 
 ## Architecture
 
 | Service | URL |
 |---------|-----|
-| Frontend (Vercel) | `https://dev.myartverse.dev` |
+| Frontend (Vercel) | `https://dev.myartverse.app` |
 | API (ALB + EC2) | `https://api.myartverse.app` |
 | CDN (uploads) | `https://cdn.myartverse.app` |
 
-CORS allows `https://dev.myartverse.dev`. Auth cookies are scoped to `.myartverse.app` (the API domain) and sent on cross-origin requests to `api.myartverse.app` when the frontend uses `credentials: 'include'`.
+CORS allows `https://dev.myartverse.app`. Auth cookies are scoped to `.myartverse.app` (the API domain) and sent on cross-origin requests to `api.myartverse.app` when the frontend uses `credentials: 'include'`.
 
 ## What gets created
 
@@ -108,7 +108,7 @@ Register these in provider consoles:
 
 - Google redirect: `https://api.myartverse.app/v1/auth/google/callback`
 - Facebook redirect: `https://api.myartverse.app/v1/auth/facebook/callback`
-- Google authorized JavaScript origin (if needed): `https://dev.myartverse.dev`
+- Google authorized JavaScript origin (if needed): `https://dev.myartverse.app`
 - Verify `myartverse.app` in Resend for `noreply@myartverse.app`
 
 ## Vercel frontend

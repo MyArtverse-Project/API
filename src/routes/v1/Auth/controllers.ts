@@ -4,7 +4,7 @@ import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"
 import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
-import { getFrontendOrigin } from "../../../utils/config"
+import { getApiBaseUrl, getFrontendOrigin } from "../../../utils/config"
 import { OAuth2Namespace } from "@fastify/oauth2"
 import { providers } from "../../../config/oauth"
 // import { html } from "@/utils"
@@ -92,18 +92,45 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     })
 }
 
+const verifyUserByUuid = async (
+  request: FastifyRequest,
+  uuid: string
+): Promise<{ ok: true } | { ok: false; status: 400 | 404; error: string }> => {
+  if (!uuid || uuid.length !== 36) {
+    return { ok: false, status: 400, error: "Valid UUID is required" }
+  }
+
+  const user = await request.server.db
+    .getRepository(Auth)
+    .findOne({ where: { verificationUUID: uuid } })
+
+  if (!user) {
+    return { ok: false, status: 404, error: "User not found" }
+  }
+
+  if (!user.verified) {
+    user.verified = true
+    await request.server.db.getRepository(Auth).save(user)
+  }
+
+  return { ok: true }
+}
+
 export const register = async (request: FastifyRequest, reply: FastifyReply) => {
   const body = request.body as {
     email: string
     password: string
-    username: string
+    username?: string
+    handle?: string
   }
 
-  if (!body.email || !body.password || !body.username) {
+  const username = body.username ?? body.handle
+
+  if (!body.email || !body.password || !username) {
     return reply.code(400).send({ error: "Username, Email and password are required" })
   }
 
-  const { email, password, username } = body
+  const { email, password } = body
 
   // Check if email is already in use
   const authCheck = await request.server.db
@@ -141,21 +168,29 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     return reply.code(500).send({ error: "Error creating user" })
   }
 
+  const verifyUrl = `${getApiBaseUrl()}/v1/auth/verify/${data.verificationUUID}`
+  let emailSent = true
+
   try {
     await request.server.mailer.sendMail({
       to: email,
-      html: welcome(
-        `${getFrontendOrigin()}/verify/${data.verificationUUID}`
-      ),
+      html: welcome(verifyUrl),
       subject: "Welcome to MyArtverse",
-      text: `Welcome to MyArtverse, ${username}! Your account has been created. Please verify your email by clicking the link in this email.`,
+      text: `Welcome to MyArtverse, ${username}! Verify your email: ${verifyUrl}`,
     })
   } catch (error) {
-    throw new Error(`Error sending email: ${error}`)
+    request.log.error({ err: error, email }, "Failed to send verification email")
+    emailSent = false
   }
 
-  // Return the token
-  return reply.code(201).send({ email, username })
+  return reply.code(201).send({
+    email,
+    username,
+    emailSent,
+    message: emailSent
+      ? "Account created. Check your email to verify before logging in."
+      : "Account created, but the verification email could not be sent. Try logging in later or contact support.",
+  })
 }
 
 export const logout = async (_request: FastifyRequest, reply: FastifyReply) => {
@@ -301,22 +336,27 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {
   const { uuid } = request.params as { uuid: string }
-  if (!uuid || uuid.length !== 36) {
-    return reply.code(400).send({ error: "Valid UUID is required" })
+  const result = await verifyUserByUuid(request, uuid)
+
+  if (!result.ok) {
+    return reply.code(result.status).send({ error: result.error })
   }
-
-  const user = await request.server.db
-    .getRepository(Auth)
-    .findOne({ where: { verificationUUID: uuid } })
-
-  if (!user) {
-    return reply.code(404).send({ error: "User not found" })
-  }
-
-  user.verified = true
-  await request.server.db.getRepository(Auth).save(user)
 
   return reply.code(200).send({ message: "User verified" })
+}
+
+export const verifyEmailLink = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { uuid } = request.params as { uuid: string }
+  const loginUrl = `${getFrontendOrigin()}/login`
+  const result = await verifyUserByUuid(request, uuid)
+
+  if (!result.ok) {
+    const error =
+      result.status === 400 ? "invalid_verification_link" : "verification_link_expired"
+    return reply.redirect(`${loginUrl}?error=${error}`)
+  }
+
+  return reply.redirect(`${loginUrl}?verified=1`)
 }
 
 export const getOauthLink = async (request: FastifyRequest, reply: FastifyReply) => {

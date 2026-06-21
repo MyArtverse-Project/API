@@ -22,16 +22,26 @@ export interface MyArtverseStackProps extends cdk.StackProps {
   cdnSubdomain: string
   vpcCidr: string
   hostedZoneId?: string
+  /** Full API hostname, e.g. api.myartverse.app (overrides apiSubdomain.domainName) */
+  apiHostname?: string
+  /** Existing ACM cert ARN in the stack region (for HTTPS without Route 53) */
+  certificateArn?: string
+  /** Cookie domain, e.g. .myartverse.app */
+  cookieDomain?: string
 }
 
 export class MyArtverseStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: MyArtverseStackProps) {
     super(scope, id, props)
 
-    const apiDomain = `${props.apiSubdomain}.${props.domainName}`
+    const apiDomain = props.apiHostname ?? `${props.apiSubdomain}.${props.domainName}`
     const cdnDomain = `${props.cdnSubdomain}.${props.domainName}`
     const frontendUrl = `https://${props.frontendDomain}`
-    const cookieDomain = `.${props.domainName}`
+    const cookieDomain =
+      props.cookieDomain ??
+      (props.apiHostname?.includes(".")
+        ? `.${props.apiHostname.split(".").slice(-2).join(".")}`
+        : `.${props.domainName}`)
 
     // ── VPC (10.252.254.0/25) ──────────────────────────────────────────────
     const vpc = new ec2.Vpc(this, "Vpc", {
@@ -217,7 +227,7 @@ export class MyArtverseStack extends cdk.Stack {
       "RDS_JSON=$(aws secretsmanager get-secret-value --region $REGION --secret-id $RDS_SECRET_ARN --query SecretString --output text)",
       "APP_JSON=$(aws secretsmanager get-secret-value --region $REGION --secret-id $APP_SECRET_ARN --query SecretString --output text)",
       "",
-      `jq -n --argjson rds "$RDS_JSON" --argjson app "$APP_JSON" \\
+      `jq -nr --argjson rds "$RDS_JSON" --argjson app "$APP_JSON" \\
         --arg bucket "$S3_BUCKET" --arg cdn "$CDN_URL" --arg api "$API_URL" \\
         --arg frontend "${frontendUrl}" --arg domain "${cookieDomain}" \\
         --arg frontendDomain "${props.frontendDomain}" \\
@@ -316,7 +326,15 @@ export class MyArtverseStack extends cdk.Stack {
             })
           ),
         })
-      : undefined
+      : props.certificateArn
+        ? acm.Certificate.fromCertificateArn(
+            this,
+            "ApiCert",
+            props.certificateArn
+          )
+        : undefined
+
+    const useHttps = Boolean(apiCert)
 
     const targetGroup = new elbv2.ApplicationTargetGroup(this, "ApiTargetGroup", {
       vpc,
@@ -387,8 +405,9 @@ export class MyArtverseStack extends cdk.Stack {
     // ── Outputs ────────────────────────────────────────────────────────────
     new cdk.CfnOutput(this, "FrontendUrl", { value: frontendUrl })
     new cdk.CfnOutput(this, "ApiUrl", {
-      value: apiCert ? `https://${apiDomain}` : `http://${alb.loadBalancerDnsName}`,
+      value: useHttps ? `https://${apiDomain}` : `http://${alb.loadBalancerDnsName}`,
     })
+    new cdk.CfnOutput(this, "CookieDomain", { value: cookieDomain })
     new cdk.CfnOutput(this, "CdnUrl", { value: `https://${cdnDomain}` })
     new cdk.CfnOutput(this, "AlbDnsName", { value: alb.loadBalancerDnsName })
     new cdk.CfnOutput(this, "EcrRepositoryUri", {

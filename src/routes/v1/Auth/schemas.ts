@@ -47,10 +47,11 @@ export const REGISTER_SCHEMA: FastifySchema = {
   summary: "Registering a user, taking a email, username and password",
   body: {
     type: "object",
-    required: ["email", "username", "password"],
+    required: ["email", "password"],
     properties: {
       email: { type: "string" },
       username: { type: "string" },
+      handle: { type: "string" },
       password: { type: "string" }
     }
   },
@@ -60,7 +61,9 @@ export const REGISTER_SCHEMA: FastifySchema = {
       description: "Successfuly Registered",
       properties: {
         email: { type: "string" },
-        username: { type: "string" }
+        username: { type: "string" },
+        emailSent: { type: "boolean" },
+        message: { type: "string" }
       }
     },
     400: {
