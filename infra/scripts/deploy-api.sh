@@ -44,6 +44,19 @@ CDN_URL=$(stack_output CdnUrl)
 COOKIE_DOMAIN=$(stack_output CookieDomain)
 COOKIE_DOMAIN="${COOKIE_DOMAIN:-.myartverse.app}"
 
+# Use the CloudFront distribution domain until custom CDN DNS (cdn.myartverse.app) is live.
+CF_DIST_ID=$(stack_output CloudFrontDistributionId)
+if [[ -n "$CF_DIST_ID" && "$CF_DIST_ID" != "None" ]]; then
+  CF_DOMAIN=$(aws cloudfront get-distribution \
+    --id "$CF_DIST_ID" \
+    --region "$REGION" \
+    --query "Distribution.DomainName" \
+    --output text 2>/dev/null || true)
+  if [[ -n "$CF_DOMAIN" && "$CF_DOMAIN" != "None" ]]; then
+    CDN_URL="${CDN_URL_OVERRIDE:-https://${CF_DOMAIN}}"
+  fi
+fi
+
 REFRESH_ENV_B64=$(base64 < "$(dirname "$0")/refresh-env.sh" | tr -d '\n')
 
 echo "==> Refreshing .env and restarting API on EC2 ($INSTANCE_ID)..."

@@ -258,13 +258,19 @@ export const upload = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(400).send({ error: "No file uploaded" })
   }
 
-  const result = await uploadToS3(
-    request.server.s3,
-    file,
-    filename,
-    mimetype,
-    user.profileId
-  )
+  let result
+  try {
+    result = await uploadToS3(
+      request.server.s3,
+      file,
+      filename,
+      mimetype,
+      user.profileId
+    )
+  } catch (error) {
+    request.log.error({ err: error }, "S3 upload failed")
+    return reply.code(500).send({ error: "Error uploading file to storage" })
+  }
 
   if (!result) {
     return reply.code(500).send({ error: "Error uploading" })
