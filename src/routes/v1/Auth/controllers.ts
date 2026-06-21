@@ -4,6 +4,7 @@ import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"
 import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
+import { getFrontendOrigin } from "../../../utils/config"
 import { OAuth2Namespace } from "@fastify/oauth2"
 import { providers } from "../../../config/oauth"
 // import { html } from "@/utils"
@@ -141,14 +142,13 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
   }
 
   try {
-    request.server.mailer.sendMail({
-      from: process.env.SMTP_EMAIL_FROM,
+    await request.server.mailer.sendMail({
       to: email,
       html: welcome(
-        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/verify/${data.verificationUUID}`
+        `${getFrontendOrigin()}/verify/${data.verificationUUID}`
       ),
       subject: "Welcome to MyArtverse",
-      text: `Welcome to MyArtverse, ${username}!, Your account has been created. Please verify your email by clicking the link below: `
+      text: `Welcome to MyArtverse, ${username}! Your account has been created. Please verify your email by clicking the link in this email.`,
     })
   } catch (error) {
     throw new Error(`Error sending email: ${error}`)
@@ -189,16 +189,16 @@ export const forgotPassword = async (request: FastifyRequest, reply: FastifyRepl
   await request.server.db.getRepository(Auth).save(user)
 
   try {
-    request.server.mailer.sendMail({
-      from: process.env.SMTP_EMAIL_FROM,
+    await request.server.mailer.sendMail({
       to: email,
       html: forgot(
-        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/recover/${user.forgotPasswordUUID}`
+        `${getFrontendOrigin()}/recover/${user.forgotPasswordUUID}`
       ),
       subject: "Reset Password",
-      text: `You have requested to reset your password. Please click the link below to reset your password: `
+      text: "You have requested to reset your password. Please click the link in this email to reset your password.",
     })
   } catch (error) {
+    request.log.error({ err: error, email }, "Failed to send password reset email")
     return reply.code(500).send({ error: "Error sending email" })
   }
   return reply.code(200).send({ message: "Password reset email sent" })
@@ -431,7 +431,7 @@ export const loginWithOAuth = async (request: FastifyRequest, reply: FastifyRepl
       .setCookie("accessToken", accessToken, accessTokenOptions)
       .setCookie("refreshToken", refreshToken, refreshTokenOptions)
       .redirect(
-        `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}/@${profileData.handle}`
+        `${getFrontendOrigin()}/@${profileData.handle}`
       )
   } catch (error) {
     console.error(`OAuth Error (${provider}):`, error)

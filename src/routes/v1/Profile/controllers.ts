@@ -297,8 +297,11 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
       }
     },
     relations: {
-      owner: true
-    }
+      owner: true,
+      refSheets: {
+        variants: true,
+      },
+    },
   })
 
   return reply.code(200).send(characters)

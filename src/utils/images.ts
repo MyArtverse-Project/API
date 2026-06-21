@@ -11,8 +11,13 @@ import * as fs from "fs"
 import os from "os"
 import path from "path"
 import { pipeline } from "stream/promises"
+import { isLocalS3 } from "./config"
 
 export const ensureS3Bucket = async (client: S3Client) => {
+  if (!isLocalS3()) {
+    return
+  }
+
   const bucket = process.env.S3_BUCKET
   if (!bucket) {
     console.warn("S3_BUCKET is not configured, skipping bucket setup")
@@ -95,14 +100,18 @@ export const uploadToS3 = async (
       Body: fileStream,
       ContentType: mimetype,
       ContentLength: length,
-      ACL: "public-read"
+      ...(isLocalS3() ? { ACL: "public-read" } : {})
     })
 
     const result = await client.send(command)
 
+    const publicBase =
+      process.env.S3_PUBLIC_URL?.replace(/\/$/, "") ??
+      `${process.env.S3_ENDPOINT}/${bucket}`
+
     return {
       ...result,
-      url: `${process.env.S3_ENDPOINT}/${bucket}/${storageKey}`
+      url: `${publicBase}/${storageKey}`
     }
   } finally {
     fileStream?.destroy()

@@ -8,14 +8,16 @@ import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
 import * as dotenv from "dotenv"
 import fastify from "fastify"
-import nodemailer, { SentMessageInfo } from "nodemailer"
 import authRoutes from "./routes/v1/Auth/routes"
+import { createMailer, type Mailer } from "./utils/mailer"
 import { characterRoutes } from "./routes/v1/Characters/routes"
 import profileRoutes from "./routes/v1/Profile/routes"
 import { authMiddleware, optionalAuthMiddleware } from "./utils/auth"
 import connectDatabase from "./utils/database"
 import { ensureS3Bucket } from "./utils/images"
 import { checkModAbovePermissions } from "./utils/permission"
+import { getFrontendOrigin } from "./utils/config"
+import { createS3Client } from "./utils/s3"
 import artRoutes from "./routes/v1/Art/routes"
 import relationshipRoutes from "./routes/v1/Relationships/routes"
 import StaffRoutes from "./routes/v1/Staff/routes"
@@ -33,7 +35,7 @@ declare module "fastify" {
     auth: any
     permissionAboveMod: any
     optionalAuth: any
-    mailer: nodemailer.Transporter<SentMessageInfo>
+    mailer: Mailer
     s3: S3Client
   }
 
@@ -67,15 +69,7 @@ const app = async () => {
   })
 
   // S3
-  const s3 = new S3Client({
-    endpoint: process.env.S3_ENDPOINT as string,
-    region: process.env.AWS_DEFAULT_REGION as string,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-    },
-    forcePathStyle: true,
-  })
+  const s3 = createS3Client()
 
   server.decorate("s3", s3)
   await ensureS3Bucket(s3)
@@ -98,15 +92,9 @@ const app = async () => {
   // Permission Dectorator
   server.decorate("permissionAboveMod", checkModAbovePermissions)
 
-  // Initialize Nodemailer
-  const mailer = nodemailer.createTransport({
-    host: process.env.SMTP_EMAIL_HOST,
-    port: Number(process.env.SMTP_EMAIL_PORT),
-    secure: process.env.NODE_ENV === "production" ? true : false
-  })
-
-  // Mailer Decorator
-  server.decorate("mailer", mailer).addHook("onClose", () => mailer.close())
+  // Initialize Resend mailer
+  const mailer = createMailer()
+  server.decorate("mailer", mailer)
 
   // JWT
   server.register(fastifyJwt, {
@@ -116,9 +104,7 @@ const app = async () => {
 
   // CORS
   server.register(fastifyCors, {
-    origin:
-      `${process.env.MA_FRONTEND_HTTP}${process.env.MA_FRONTEND_DOMAIN}:${process.env.MA_FRONTEND_PORT}` ||
-      "http://localhost:3000",
+    origin: getFrontendOrigin(),
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   })

@@ -53,22 +53,28 @@ export const getOwnersCharacters = async (
     relations: {
       characters: {
         folder: true,
+        refSheets: {
+          variants: true,
+        },
       },
     },
   })
 
   const mainCharacter = await request.server.db.getRepository(Character).findOne({
-    where: { owner: { handle: ownerHandle }, mainOwner: true }
+    where: { owner: { handle: ownerHandle }, mainOwner: true },
+    relations: {
+      refSheets: {
+        variants: true,
+      },
+    },
   })
 
   if (mainCharacter) {
-    const refSheets = await request.server.db.getRepository(RefSheet).find({
-      where: { character: { id: mainCharacter.id } },
-      relations: {
-        variants: true
+    data?.characters?.forEach((character) => {
+      if (character.id === mainCharacter.id) {
+        character.refSheets = mainCharacter.refSheets
       }
     })
-    mainCharacter.refSheets = refSheets as RefSheet[]
   }
 
   if (!data) return reply.status(404).send("No user found.")
@@ -613,8 +619,10 @@ export const getFeaturedCharacters = async (
     },
     relations: {
       owner: true,
-      refSheets: true,
-      favoritedBy: true
+      refSheets: {
+        variants: true,
+      },
+      favoritedBy: true,
     },
     take: 10
   })
@@ -629,9 +637,11 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
     take: 10,
     relations: {
       owner: true,
-      refSheets: true,
-      favoritedBy: true
-    }
+      refSheets: {
+        variants: true,
+      },
+      favoritedBy: true,
+    },
   })
 
   if (!data) return reply.status(404).send("No new characters found.")

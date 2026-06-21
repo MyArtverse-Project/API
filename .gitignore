@@ -6,3 +6,6 @@ node_modules
 dist
 .tap
 /.vscode
+infra/node_modules
+infra/cdk.out
+infra/dist

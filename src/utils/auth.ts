@@ -1,12 +1,13 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { Auth } from "../models"
 import { CookieSerializeOptions } from "@fastify/cookie"
+import { getCookieDomain } from "./config"
 
 export const accessTokenOptions: CookieSerializeOptions = {
   httpOnly: true,
   path: "/",
   sameSite: "none",
-  domain: "localhost",
+  domain: getCookieDomain(),
   secure: true
 }
 
@@ -14,7 +15,7 @@ export const refreshTokenOptions: CookieSerializeOptions = {
   httpOnly: true,
   path: "/",
   sameSite: "none",
-  domain: "localhost",
+  domain: getCookieDomain(),
   secure: true
 }
 
