@@ -119,11 +119,25 @@ All API requests from the frontend must use `credentials: 'include'` so auth coo
 aws ssm start-session --target <Ec2InstanceId>
 ```
 
-## Tear down
+## Tear down / pause
 
 ```bash
-cd infra
-npx cdk destroy
+chmod +x infra/scripts/teardown.sh
+
+# Stop EC2 + RDS (saves ~$30/mo; NAT + ALB still run ~$55/mo)
+./infra/scripts/teardown.sh pause
+
+# Start again
+./infra/scripts/teardown.sh resume
+
+# Full delete (RDS → final snapshot; S3 + ECR retained)
+./infra/scripts/teardown.sh destroy
 ```
 
-RDS snapshot and S3 bucket are retained by default.
+Or destroy directly with CDK:
+
+```bash
+cd infra && npx cdk destroy MyArtverseStack --force
+```
+
+RDS creates a final snapshot on destroy. S3 bucket and ECR repo are **retained** — delete manually if you want zero trace.
