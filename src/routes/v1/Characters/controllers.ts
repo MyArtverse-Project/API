@@ -8,7 +8,6 @@ import type {
   CreateCharacterBody,
   EditCharacterBody,
   GetCharacterParams,
-  RefSheet as RefSheetType
 } from "../../../types/CharacterTypes"
 import { uploadToS3 } from "../../../utils"
 
@@ -546,7 +545,6 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
         description: variant.description ?? "",
         url: variant.image,
         artistExternal: variant.artist ?? "",
-        artistUser: null,
         nsfw: variant.nsfw ?? false,
         main: variant.primary,
         colors: variant.colors,

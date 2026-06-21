@@ -8,7 +8,7 @@
 #
 set -euo pipefail
 
-REGION="${AWS_REGION:-us-east-1}"
+REGION="${AWS_REGION:-us-east-2}"
 STACK_NAME="${STACK_NAME:-MyArtverseStack}"
 ACTION="${1:-}"
 

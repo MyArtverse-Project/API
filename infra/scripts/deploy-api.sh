@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-REGION="${AWS_REGION:-us-east-1}"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+REGION="${AWS_REGION:-us-east-2}"
 STACK_NAME="${STACK_NAME:-MyArtverseStack}"
 
 echo "==> Resolving ECR repository from stack outputs..."
@@ -22,7 +22,7 @@ aws ecr get-login-password --region "$REGION" | \
   docker login --username AWS --password-stdin "${ECR_URI%%/*}"
 
 echo "==> Building Docker image..."
-docker build -t myartverse-api:latest "$ROOT_DIR"
+docker build --platform linux/amd64 -t myartverse-api:latest "$ROOT_DIR"
 
 echo "==> Pushing to ECR..."
 docker tag myartverse-api:latest "$ECR_URI:latest"

@@ -1,6 +1,5 @@
 import RefSheet from "./RefSheet"
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm"
-import User from "./Users"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
 
 @Entity()
 export default class RefSheetVariant {

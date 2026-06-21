@@ -38,23 +38,31 @@ Bootstrap CDK once per account/region:
 ```bash
 cd infra
 npm install
-npx cdk bootstrap aws://ACCOUNT_ID/us-east-1
+npx cdk bootstrap aws://ACCOUNT_ID/us-east-2
 ```
+
+**Region must match:** if you bootstrap `us-east-2`, set `"region": "us-east-2"` in `cdk.json` (already set). Bootstrapping one region does not work in another.
 
 ## Deploy infrastructure
 
-With Route 53 (auto DNS + ACM certificates):
+**No Route 53 zone yet?** Deploy without `hostedZoneId` — you get an ALB URL over HTTP, then add DNS later:
+
+```bash
+cd infra
+npm run deploy
+```
+
+With Route 53 (auto DNS + ACM certificates for `api.myartverse.app`):
 
 ```bash
 cd infra
 npm run deploy -- -c hostedZoneId=Z0123456789ABCDEFGHIJ
 ```
 
-Without Route 53 (ALB on HTTP only until you add DNS + cert manually):
+Find your zone (empty result means the domain is not in Route 53 yet):
 
 ```bash
-cd infra
-npm run deploy
+aws route53 list-hosted-zones-by-name --dns-name myartverse.app
 ```
 
 ## Configure secrets
