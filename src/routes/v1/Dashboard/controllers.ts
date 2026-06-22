@@ -2,24 +2,9 @@ import { FastifyReply, FastifyRequest } from "fastify"
 import Dashboard from "../../../models/Dashboard"
 import { Character, User } from "../../../models"
 import CharacterDashboard from "../../../models/CharacterDashboard"
+import { PANEL_COMPONENT_TYPES } from "./panelTypes"
 
-const ALLOWED_PANEL_TYPES = [
-  "comments",
-  "information",
-  "featured_gallery",
-  "featured_artwork",
-  "reference_sheet",
-  "featured_character",
-  "popular_character",
-  "multiple_characters",
-  "recent_artworks",
-  "multiple_artworks",
-  "popular_artwork",
-  "multiple_galleries",
-  "featured_listing",
-  "recent_listings",
-  "commission_queue",
-] as const
+const ALLOWED_PANEL_TYPES = PANEL_COMPONENT_TYPES
 
 const CHARACTER_ONLY_PANELS = new Set(["reference_sheet"])
 const USER_ONLY_PANELS = new Set([

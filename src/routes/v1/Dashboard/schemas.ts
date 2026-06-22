@@ -1,4 +1,8 @@
 import { FastifySchema } from "fastify"
+import {
+  PANEL_SETTINGS_SCHEMA,
+  SET_PANEL_BODY_SCHEMA,
+} from "./panelTypes"
 
 export const GET_USER_DASHBOARD_PANELS_SCHEMA: FastifySchema = {
   summary: "Get user panels",
@@ -20,12 +24,7 @@ export const GET_USER_DASHBOARD_PANELS_SCHEMA: FastifySchema = {
             },
             required: ["row", "col"],
           },
-          settings: {
-            type: "object",
-            properties: {
-              html: { type: "string" },
-            }
-          },
+          settings: PANEL_SETTINGS_SCHEMA,
         },
         required: ["id", "type", "position", "settings"],
       },
@@ -90,23 +89,9 @@ export const SET_HTML_PANEL_SCHEMA: FastifySchema = {
 
 export const SET_PANEL_SCHEMA: FastifySchema = {
   summary: "Set a new panel",
-  description: "Adds a new panel to the user's dashboard",
+  description: "Adds or updates a panel on the user's dashboard",
   tags: ["Dashboard"],
-  body: {
-    type: "object",
-    properties: {
-      position: {
-        type: "object",
-        properties: {
-          row: { type: "integer" },
-          col: { type: "integer" },
-        },
-        required: ["row", "col"],
-      },
-      component: { type: "string", enum: ["comments", "information"] },
-    },
-    required: ["position", "component"],
-  },
+  body: SET_PANEL_BODY_SCHEMA,
   response: {
     200: {
       type: "object",
@@ -137,4 +122,12 @@ export const SET_PANEL_SCHEMA: FastifySchema = {
       },
     },
   },
+}
+
+export const SET_CHARACTER_PANEL_SCHEMA: FastifySchema = {
+  summary: "Set a character dashboard panel",
+  description: "Adds or updates a panel on a character dashboard",
+  tags: ["Dashboard"],
+  body: SET_PANEL_BODY_SCHEMA,
+  response: SET_PANEL_SCHEMA.response,
 }
