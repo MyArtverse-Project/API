@@ -9,9 +9,28 @@ const ALLOWED_PANEL_TYPES = [
   "featured_gallery",
   "featured_artwork",
   "reference_sheet",
+  "featured_character",
+  "popular_character",
+  "multiple_characters",
+  "recent_artworks",
+  "multiple_artworks",
+  "popular_artwork",
+  "multiple_galleries",
+  "featured_listing",
+  "recent_listings",
+  "commission_queue",
 ] as const
 
 const CHARACTER_ONLY_PANELS = new Set(["reference_sheet"])
+const USER_ONLY_PANELS = new Set([
+  "featured_character",
+  "popular_character",
+  "multiple_characters",
+  "multiple_galleries",
+  "featured_listing",
+  "recent_listings",
+  "commission_queue",
+])
 
 function sanitizeSettings(
   component: string,
@@ -23,8 +42,11 @@ function sanitizeSettings(
   if (typeof input.artworkId === "string") safe.artworkId = input.artworkId
   if (typeof input.artworkIds === "string") safe.artworkIds = input.artworkIds
   if (typeof input.characterSlug === "string") safe.characterSlug = input.characterSlug
+  if (typeof input.characterSlugs === "string") safe.characterSlugs = input.characterSlugs
   if (typeof input.refSheetId === "string") safe.refSheetId = input.refSheetId
   if (typeof input.folderId === "string") safe.folderId = input.folderId
+  if (typeof input.customTitle === "string") safe.customTitle = input.customTitle.slice(0, 120)
+  if (typeof input.limit === "string") safe.limit = input.limit
 
   if (component === "customHTML" && typeof input.html === "string") {
     safe.html = input.html
@@ -39,6 +61,10 @@ function isAllowedPanelType(component: string, context: "user" | "character") {
   }
 
   if (context === "user" && CHARACTER_ONLY_PANELS.has(component)) {
+    return false
+  }
+
+  if (context === "character" && USER_ONLY_PANELS.has(component)) {
     return false
   }
 
