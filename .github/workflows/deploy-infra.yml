@@ -15,6 +15,10 @@ on:
         description: "Cookie domain (e.g. .myartverse.app)"
         required: false
         default: .myartverse.app
+      frontend_domain:
+        description: "Vercel frontend hostname (e.g. dev.myartverse.app)"
+        required: false
+        default: dev.myartverse.app
 
 concurrency:
   group: deploy-infra
@@ -23,8 +27,12 @@ concurrency:
 env:
   AWS_REGION: us-east-2
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
+    name: CDK deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +57,7 @@ jobs:
       - name: Deploy CDK stack
         working-directory: infra
         run: |
-          ARGS=""
+          ARGS="-c frontendDomain=${{ inputs.frontend_domain }}"
           if [[ -n "${{ inputs.certificate_arn }}" ]]; then
             ARGS="$ARGS -c certificateArn=${{ inputs.certificate_arn }}"
           fi

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+    #!/usr/bin/env bash
 # Regenerate /opt/myartverse/.env from Secrets Manager (run on EC2 or via SSM).
 set -euo pipefail
 

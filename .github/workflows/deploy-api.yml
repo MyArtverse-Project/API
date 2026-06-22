@@ -13,6 +13,15 @@ on:
       - "infra/scripts/**"
       - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
+    inputs:
+      frontend_url:
+        description: "Frontend origin for CORS and email links"
+        required: false
+        default: https://dev.myartverse.app
+      frontend_domain:
+        description: "Frontend hostname (no protocol)"
+        required: false
+        default: dev.myartverse.app
 
 concurrency:
   group: deploy-api-${{ github.ref }}
@@ -20,9 +29,15 @@ concurrency:
 
 env:
   AWS_REGION: us-east-2
+  FRONTEND_URL: https://dev.myartverse.app
+  FRONTEND_DOMAIN: dev.myartverse.app
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
+    name: Build, push, and deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +50,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy to EC2 via ECR
-        run: ./infra/scripts/deploy-api.sh
+        env:
+          FRONTEND_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.frontend_url || 'https://dev.myartverse.app' }}
+          FRONTEND_DOMAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.frontend_domain || 'dev.myartverse.app' }}
+        run: |
+          chmod +x infra/scripts/deploy-api.sh infra/scripts/refresh-env.sh
+          ./infra/scripts/deploy-api.sh
 
       - name: Health check
         run: |
