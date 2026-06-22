@@ -2,6 +2,8 @@
 
 CDK stack for the **myartverse.app** API with the **Vercel** frontend at **dev.myartverse.app**.
 
+> **New to this stack?** Read **[AWS_GUIDE.md](./AWS_GUIDE.md)** — a full learning walkthrough with architecture diagrams, step-by-step deploy, troubleshooting, and project notes.
+
 ## Architecture
 
 | Service | URL |
@@ -80,7 +82,8 @@ aws secretsmanager put-secret-value \
     "GOOGLE_CLIENT_ID": "xxx",
     "GOOGLE_CLIENT_SECRET": "xxx",
     "FACEBOOK_CLIENT_ID": "xxx",
-    "FACEBOOK_CLIENT_SECRET": "xxx"
+    "FACEBOOK_CLIENT_SECRET": "xxx",
+    "SENTRY_DSN": "https://xxx@xxx.ingest.us.sentry.io/xxx"
   }'
 ```
 
@@ -110,6 +113,14 @@ Register these in provider consoles:
 - Facebook redirect: `https://api.myartverse.app/v1/auth/facebook/callback`
 - Google authorized JavaScript origin (if needed): `https://dev.myartverse.app`
 - Verify `myartverse.app` in Resend for `noreply@myartverse.app`
+
+## Sentry (error monitoring)
+
+1. Create a project at [sentry.io](https://sentry.io) → **Node.js** → copy the DSN
+2. Add `SENTRY_DSN` to the `myartverse/app/config` secret (see above)
+3. Redeploy the API: `./infra/scripts/deploy-api.sh`
+
+Sentry is disabled when `SENTRY_DSN` is empty (local dev). Optional env vars: `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE` (default `0.1`).
 
 ## Vercel frontend
 

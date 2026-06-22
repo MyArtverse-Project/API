@@ -22,6 +22,7 @@ jq -nr --argjson rds "$RDS_JSON" --argjson app "$APP_JSON" \
   --arg frontend "$FRONTEND_URL" --arg domain "$COOKIE_DOMAIN" \
   --arg frontendDomain "$FRONTEND_DOMAIN" --arg region "$REGION" \
   '$app + {
+    NODE_ENV: "production",
     MA_PORT: "8081",
     MA_INTERFACE: "0.0.0.0",
     MA_FRONTEND_HTTP: "https://",

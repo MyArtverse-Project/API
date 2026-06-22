@@ -1,4 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import * as dotenv from "dotenv"
+import { initSentry, setupFastifySentry, captureException } from "./utils/sentry"
+
+dotenv.config()
+initSentry()
+
 import { S3Client } from "@aws-sdk/client-s3"
 import { fastifyCookie, type FastifyCookieOptions } from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
@@ -6,7 +12,6 @@ import fastifyJwt from "@fastify/jwt"
 import multipart from "@fastify/multipart"
 import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
-import * as dotenv from "dotenv"
 import fastify from "fastify"
 import authRoutes from "./routes/v1/Auth/routes"
 import { createMailer, type Mailer } from "./utils/mailer"
@@ -53,11 +58,10 @@ declare module "fastify" {
 }
 
 const app = async () => {
-  dotenv.config()
-
   // Initalize Database and Fastify
   const connection = await connectDatabase()
   const server = fastify({ logger: true })
+  setupFastifySentry(server)
 
   // cookie
   server.register(fastifyCookie, {
@@ -169,6 +173,7 @@ const app = async () => {
     },
     (err, address) => {
       if (err) {
+        captureException(err)
         server.log.error(err)
         process.exit(1)
       }
@@ -178,4 +183,8 @@ const app = async () => {
   )
 }
 
-app()
+app().catch((error) => {
+  captureException(error)
+  console.error(error)
+  process.exit(1)
+})

@@ -172,9 +172,10 @@ export class MyArtverseStack extends cdk.Stack {
         RESEND_API_KEY: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
         GOOGLE_CLIENT_ID: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
         GOOGLE_CLIENT_SECRET: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
-        FACEBOOK_CLIENT_ID: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
-        FACEBOOK_CLIENT_SECRET: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
-      },
+    FACEBOOK_CLIENT_ID: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
+    FACEBOOK_CLIENT_SECRET: cdk.SecretValue.unsafePlainText("CHANGE_ME"),
+    SENTRY_DSN: cdk.SecretValue.unsafePlainText(""),
+  },
     })
 
     // ── EC2 IAM role ───────────────────────────────────────────────────────
