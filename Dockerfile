@@ -1,15 +1,18 @@
-FROM node:22
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+ARG GIT_COMMIT_SHA=""
+ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA
 
-RUN npm install
+COPY package.json yarn.lock ./
+
+RUN yarn install --frozen-lockfile
 
 COPY . .
 
+RUN yarn build
+
 EXPOSE 8081
 
-RUN npm run build
-
-CMD ["npm", "start"]
+CMD ["yarn", "start"]

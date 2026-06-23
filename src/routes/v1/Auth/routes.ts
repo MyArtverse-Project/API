@@ -8,6 +8,7 @@ import {
   register,
   whoami,
   verify,
+  verifyEmailLink,
   recoverPassword,
   validate,
   loginWithOAuth,
@@ -39,6 +40,7 @@ async function authRoutes(server: FastifyInstance) {
   )
   server.post("/refresh-token", { schema: REFRESH_TOKEN_SCHEMA }, refreshToken)
   server.get("/whoami", { onRequest: [server.auth], schema: WHOAMI_SCHEMA }, whoami)
+  server.get("/verify/:uuid", verifyEmailLink)
   server.post("/verify/:uuid", { schema: VERIFY_SCHEMA }, verify)
   server.get('/:provider/callback', {}, loginWithOAuth)
   server.get('/:provider/link', {}, getOauthLink)

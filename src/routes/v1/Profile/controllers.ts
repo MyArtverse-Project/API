@@ -2,6 +2,12 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { Character, Image, User } from "../../../models"
 import { Comment } from "../../../models"
 import { uploadToS3 } from "../../../utils"
+import {
+  formatUploadLimit,
+  loadUserUploadLimit,
+  UploadLimitError,
+  withEffectiveUploadLimit,
+} from "../../../utils/uploadLimits"
 import { DataSource, ILike, IsNull } from "typeorm"
 import { sendMassNotification, sendNotification } from "../../../utils/notification"
 import { CommissionStatus, Role } from "../../../models/Users"
@@ -46,7 +52,7 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 
   if (!userData.characters) userData.characters = []
-  return reply.code(200).send({ ...userData })
+  return reply.code(200).send(withEffectiveUploadLimit(userData))
 }
 
 export const updateProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -258,13 +264,30 @@ export const upload = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(400).send({ error: "No file uploaded" })
   }
 
-  const result = await uploadToS3(
-    request.server.s3,
-    file,
-    filename,
-    mimetype,
-    user.profileId
-  )
+  const uploadLimit = await loadUserUploadLimit(request.server.db, user.profileId)
+  if (uploadLimit == null) {
+    return reply.code(404).send({ error: "User not found" })
+  }
+
+  let result
+  try {
+    result = await uploadToS3(
+      request.server.s3,
+      file,
+      filename,
+      mimetype,
+      user.profileId,
+      uploadLimit
+    )
+  } catch (error) {
+    if (error instanceof UploadLimitError) {
+      return reply.code(413).send({
+        error: `File exceeds your upload limit of ${formatUploadLimit(error.limitBytes)}`,
+      })
+    }
+    request.log.error({ err: error }, "S3 upload failed")
+    return reply.code(500).send({ error: "Error uploading file to storage" })
+  }
 
   if (!result) {
     return reply.code(500).send({ error: "Error uploading" })
@@ -297,8 +320,11 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
       }
     },
     relations: {
-      owner: true
-    }
+      owner: true,
+      refSheets: {
+        variants: true,
+      },
+    },
   })
 
   return reply.code(200).send(characters)

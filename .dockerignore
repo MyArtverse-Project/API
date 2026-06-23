@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.env
+infra
+*.log
+.tap
+.DS_Store

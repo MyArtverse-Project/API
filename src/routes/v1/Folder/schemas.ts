@@ -9,9 +9,10 @@ export const CREATE_FOLDER_SCHEMA: FastifySchema = {
         required: ["name", "contentType"],
         properties: {
             name: { type: "string" },
-            contentType: { type: "string", enum: ["characters", "art"] },
+            contentType: { type: "string", enum: ["characters", "art", "artworks"] },
             parentId: { type: "string", nullable: true },
-            color: { type: "string", nullable: true }
+            color: { type: "string", nullable: true },
+            characterId: { type: "string", nullable: true }
         }
     },
     response: {
@@ -159,4 +160,68 @@ export const GET_FOLDER_RECURSIVELY_SCHEMA: FastifySchema = {
             }
         }
     }
+};
+
+export const GET_CHARACTER_GALLERY_FOLDERS_SCHEMA: FastifySchema = {
+    description: "Get gallery folders for a character",
+    tags: ["Folder"],
+    summary: "Retrieve art folders scoped to a character gallery",
+    params: {
+        type: "object",
+        required: ["characterId"],
+        properties: {
+            characterId: { type: "string" }
+        }
+    },
+    response: {
+        200: {
+            type: "array",
+            items: { type: "object", additionalProperties: true }
+        },
+        403: {
+            type: "object",
+            properties: {
+                error: { type: "string" }
+            }
+        },
+        404: {
+            type: "object",
+            properties: {
+                error: { type: "string" }
+            }
+        }
+    }
+};
+
+export const DELETE_FOLDER_SCHEMA: FastifySchema = {
+    description: "Delete a folder",
+    tags: ["Folder"],
+    summary: "Delete a folder owned by the authenticated user",
+    params: {
+        type: "object",
+        required: ["folderId"],
+        properties: {
+            folderId: { type: "string" },
+        },
+    },
+    response: {
+        200: {
+            type: "object",
+            properties: {
+                message: { type: "string" },
+            },
+        },
+        400: {
+            type: "object",
+            properties: {
+                error: { type: "string" },
+            },
+        },
+        404: {
+            type: "object",
+            properties: {
+                error: { type: "string" },
+            },
+        },
+    },
 };

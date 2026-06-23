@@ -1,0 +1,77 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [prod]
+    paths:
+      - "src/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "package.json"
+      - "yarn.lock"
+      - "tsconfig.json"
+      - "infra/scripts/**"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+    inputs:
+      frontend_url:
+        description: "Frontend origin for CORS and email links"
+        required: false
+        default: https://dev.myartverse.app
+      frontend_domain:
+        description: "Frontend hostname (no protocol)"
+        required: false
+        default: dev.myartverse.app
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-2
+  FRONTEND_URL: https://dev.myartverse.app
+  FRONTEND_DOMAIN: dev.myartverse.app
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, push, and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to EC2 via ECR
+        env:
+          FRONTEND_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.frontend_url || 'https://dev.myartverse.app' }}
+          FRONTEND_DOMAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.frontend_domain || 'dev.myartverse.app' }}
+        run: |
+          chmod +x infra/scripts/deploy-api.sh infra/scripts/refresh-env.sh
+          ./infra/scripts/deploy-api.sh
+
+      - name: Health check
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name MyArtverseStack \
+            --region "$AWS_REGION" \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text)
+          echo "Checking $API_URL/health"
+          for i in 1 2 3 4 5; do
+            if curl -fsS "$API_URL/health" | grep -q '"status":"ok"'; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Health check failed"
+          exit 1

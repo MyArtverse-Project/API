@@ -88,8 +88,11 @@ export default class Character {
   @ManyToOne(() => User, (user) => user.characters, { eager: true })
   owner: User
 
-  @ManyToOne(() => Folder, (folder) => folder.characters, { onDelete: "CASCADE" })
-  folder: Folder;
+  @ManyToOne(() => Folder, (folder) => folder.characters, { onDelete: "SET NULL", nullable: true })
+  folder: Folder | null;
+
+  @OneToMany(() => Folder, (folder) => folder.character)
+  galleryFolders: Folder[];
 
   @OneToMany(() => Dashboard, (dashboard) => dashboard.character, { cascade: true })
   dashboards: Dashboard[];

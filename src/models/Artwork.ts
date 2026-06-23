@@ -67,7 +67,7 @@ export default class Artwork {
   @JoinTable()
   favoritedBy: User[]
 
-  @OneToOne(() => Character, (character) => character, { nullable: true })
+  @ManyToOne(() => Character, { nullable: true })
   @JoinColumn()
   publishedCharacter: Character | null
 
@@ -75,8 +75,8 @@ export default class Artwork {
   @JoinColumn()
   owner: User
 
-  @ManyToOne(() => Folder, (folder) => folder.artworks, { onDelete: "CASCADE" })
-  folder: Folder;
+  @ManyToOne(() => Folder, (folder) => folder.artworks, { onDelete: "SET NULL", nullable: true })
+  folder: Folder | null;
 
   // Statistics
   @Column({ default: 0 })

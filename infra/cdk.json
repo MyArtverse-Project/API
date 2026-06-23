@@ -1,0 +1,15 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/app.ts",
+  "context": {
+    "domainName": "myartverse.app",
+    "frontendDomain": "dev.myartverse.app",
+    "apiHostname": "api.myartverse.app",
+    "cookieDomain": ".myartverse.app",
+    "apiSubdomain": "api",
+    "cdnSubdomain": "cdn",
+    "vpcCidr": "10.252.254.0/25",
+    "region": "us-east-2",
+    "@aws-cdk/aws-ec2:restrictDefaultSecurityGroup": true,
+    "@aws-cdk/aws-rds:databaseProxyUniqueResourceName": true
+  }
+}

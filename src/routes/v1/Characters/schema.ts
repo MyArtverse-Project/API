@@ -114,62 +114,24 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
   summary: "Creates a new character for the authenticated user",
   body: {
     type: "object",
-    required: ["name", "visibility", "nickname", "mainCharacter", "characterAvatar"],
+    required: ["name", "visibility", "mainCharacter", "characterAvatar"],
     properties: {
       name: { type: "string", description: "Character's name" },
-      visible: {
-        type: "boolean",
-        description: "Whether the character is visible to others"
+      visibility: {
+        type: "string",
+        enum: ["public", "private", "followers"],
+        description: "Who can view this character",
       },
       nickname: { type: "string", description: "Character's nickname" },
       mainCharacter: {
         type: "boolean",
-        description: "Whether this character is the user's main character"
+        description: "Whether this character is the user's main character",
       },
-      species: { type: "string", description: "Character's species" },
-      pronouns: { type: "string", description: "Character's pronouns" },
-      gender: { type: "string", description: "Character's gender" },
-      bio: { type: "string", description: "Character's biography" },
-      refSheet: {
-        type: "object",
-        properties: {
-          refSheetName: { type: "string", description: "Name of the refsheet" },
-          colors: {
-            type: "array",
-            items: { type: "string", description: "List of colors" }
-          },
-          varient: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                name: { type: "string", description: "Name of the varient" },
-                url: { type: "string", description: "URL of the varient" },
-                main: {
-                  type: "boolean",
-                  description: "Whether this is the main varient"
-                },
-                nsfw: { type: "boolean", description: "Whether this is a NSFW varient" }
-              }
-            }
-          }
-        }
+      characterAvatar: {
+        type: ["string", "null"],
+        description: "Avatar image URL",
       },
-      likes: {
-        type: "array",
-        items: { type: "string" },
-        description: "List of things the character likes"
-      },
-      dislikes: {
-        type: "array",
-        items: { type: "string" },
-        description: "List of things the character dislikes"
-      },
-      is_hybrid: {
-        type: "boolean",
-        description: "Whether the character is a hybrid of species"
-      }
-    }
+    },
   },
   response: {
     200: {
@@ -180,19 +142,34 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
           properties: {
             id: { type: "string", description: "The UUID of the created character" },
             name: { type: "string" },
-            visible: { type: "boolean" },
-            nickname: { type: "string" },
-            species: { type: "string" }
-          }
-        }
+            slug: { type: "string" },
+            safename: { type: "string" },
+            visibility: { type: "string" },
+            nickname: { type: ["string", "null"] },
+            avatarUrl: { type: ["string", "null"] },
+            mainCharacter: { type: "boolean" },
+          },
+        },
       },
-      description: "The created character"
+      description: "The created character",
+    },
+    400: {
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
     },
     404: {
       type: "object",
       properties: {
-        error: { type: "string", description: "No user found." }
-      }
-    }
-  }
+        error: { type: "string", description: "No user found." },
+      },
+    },
+    500: {
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+  },
 }
