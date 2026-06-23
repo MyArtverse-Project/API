@@ -6,10 +6,12 @@ interface GetCharacterParams {
 
 interface CreateCharacterBody {
   name: string
-  nickname: string
-  visiblility: "public" | "private" | "followers"
+  nickname?: string
+  visibility: "public" | "private" | "followers"
+  /** @deprecated typo — use visibility */
+  visiblility?: "public" | "private" | "followers"
   mainCharacter: boolean
-  characterAvatar: string
+  characterAvatar: string | null
 }
 
 interface EditCharacterBody {

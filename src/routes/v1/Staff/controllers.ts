@@ -2,6 +2,11 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { User } from "../../../models"
 import { IsNull, Not } from "typeorm"
 import { sendNotification } from "../../../utils/notification"
+import {
+  formatUploadLimit,
+  MAX_MULTIPART_BYTES,
+  withEffectiveUploadLimit,
+} from "../../../utils/uploadLimits"
 
 export const promoteUserToArtist = async (request: FastifyRequest, reply: FastifyReply) => {
   const { userId } = request.params as { userId: string }
@@ -54,4 +59,40 @@ export const getRecentlyApprovedArtists = async (request: FastifyRequest, reply:
 
   if (!artists) return reply.code(404).send({ error: "No artists found" })
   return reply.code(200).send(artists)
+}
+
+export const setUserUploadLimit = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const { userId } = request.params as { userId: string }
+  const { uploadLimitBytes } = request.body as { uploadLimitBytes: number | null }
+
+  if (
+    uploadLimitBytes != null &&
+    (typeof uploadLimitBytes !== "number" ||
+      !Number.isFinite(uploadLimitBytes) ||
+      uploadLimitBytes <= 0 ||
+      uploadLimitBytes > MAX_MULTIPART_BYTES)
+  ) {
+    return reply.code(400).send({
+      error: `uploadLimitBytes must be between 1 and ${MAX_MULTIPART_BYTES}, or null to clear`,
+    })
+  }
+
+  const user = await request.server.db.getRepository(User).findOne({
+    where: { id: userId },
+  })
+
+  if (!user) return reply.code(404).send({ error: "User not found" })
+
+  user.uploadLimitBytes = uploadLimitBytes
+  await request.server.db.getRepository(User).save(user)
+
+  return reply.code(200).send({
+    message: uploadLimitBytes
+      ? `Upload limit set to ${formatUploadLimit(uploadLimitBytes)}`
+      : "Custom upload limit cleared; role default applies",
+    user: withEffectiveUploadLimit(user),
+  })
 }

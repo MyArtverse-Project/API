@@ -26,7 +26,10 @@ aws ecr get-login-password --region "$REGION" | \
   docker login --username AWS --password-stdin "${ECR_URI%%/*}"
 
 echo "==> Building Docker image..."
-docker build --platform linux/amd64 -t myartverse-api:latest "$ROOT_DIR"
+COMMIT_SHA=$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || echo "")
+docker build --platform linux/amd64 \
+  --build-arg "GIT_COMMIT_SHA=$COMMIT_SHA" \
+  -t myartverse-api:latest "$ROOT_DIR"
 
 echo "==> Pushing to ECR..."
 docker tag myartverse-api:latest "$ECR_URI:latest"

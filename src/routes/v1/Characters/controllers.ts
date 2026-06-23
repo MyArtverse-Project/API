@@ -10,6 +10,11 @@ import type {
   GetCharacterParams,
 } from "../../../types/CharacterTypes"
 import { uploadToS3 } from "../../../utils"
+import {
+  formatUploadLimit,
+  loadUserUploadLimit,
+  UploadLimitError,
+} from "../../../utils/uploadLimits"
 
 export const getCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -197,48 +202,77 @@ export const getCharacterWithOwner = async (
 }
 
 export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
-  const { name, nickname, visiblility, mainCharacter, characterAvatar } =
-    request.body as CreateCharacterBody
+  const body = request.body as CreateCharacterBody
+  const { name, nickname, mainCharacter, characterAvatar } = body
+  const visibility = body.visibility ?? body.visiblility ?? "public"
 
   const user = request.user as { id: string; profileId: string }
 
-  const data = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId }
-  })
+  try {
+    const owner = await request.server.db.getRepository(User).findOne({
+      where: { id: user.profileId },
+      relations: { mainCharacter: true },
+    })
 
-  if (!data) return reply.status(404).send("No user found.")
-  const safeName = name.toLowerCase().replace(/[^a-z0-9]/g, "-")
+    if (!owner) return reply.status(404).send({ error: "No user found." })
 
-  const safeNameCheck = await request.server.db.getRepository(Character).findOne({
-    where: { safename: safeName, owner: data }
-  })
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      return reply.code(400).send({ error: "Character name is required." })
+    }
 
-  if (safeNameCheck) {
-    return reply.code(400).send({ error: "Character with that name already exists." })
+    const safeName = trimmedName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    if (!safeName) {
+      return reply.code(400).send({ error: "Character name must include letters or numbers." })
+    }
+
+    const characterRepo = request.server.db.getRepository(Character)
+    const attributesRepo = request.server.db.getRepository(Attributes)
+
+    const safeNameCheck = await characterRepo.findOne({
+      where: { safename: safeName, owner: { id: owner.id } },
+    })
+
+    if (safeNameCheck) {
+      return reply.code(400).send({ error: "Character with that name already exists." })
+    }
+
+    const attributes = await attributesRepo.save(attributesRepo.create({}))
+
+    const characterDraft = characterRepo.create({
+      name: trimmedName,
+      safename: safeName,
+      slug: safeName,
+      visibility,
+      nickname: nickname?.trim() || undefined,
+      avatarUrl: characterAvatar || undefined,
+      attributes,
+    })
+    characterDraft.owner = owner
+
+    const newCharacter = await characterRepo.save(characterDraft)
+
+    if (mainCharacter) {
+      owner.mainCharacter = newCharacter
+      await request.server.db.getRepository(User).save(owner)
+    }
+
+    return reply.code(200).send({
+      character: {
+        id: newCharacter.id,
+        name: newCharacter.name,
+        slug: newCharacter.slug,
+        safename: newCharacter.safename,
+        visibility: newCharacter.visibility,
+        nickname: newCharacter.nickname,
+        avatarUrl: newCharacter.avatarUrl,
+        mainCharacter: !!mainCharacter,
+      },
+    })
+  } catch (error) {
+    request.log.error({ err: error }, "createCharacter failed")
+    return reply.code(500).send({ error: "Internal server error" })
   }
-
-  const newCharacter = await request.server.db.getRepository(Character).save({
-    name: name,
-    safeName: safeName,
-    slug: safeName,
-    visibility: visiblility,
-    nickname: nickname,
-    avatarUrl: characterAvatar,
-    owner: data
-  })
-
-  await request.server.db.getRepository(Attributes).save({
-    character: newCharacter
-  })
-
-  if (mainCharacter) {
-    data.mainCharacter = null
-    await request.server.db.getRepository(User).save(data)
-    data.mainCharacter = newCharacter
-    await request.server.db.getRepository(User).save(data)
-  }
-
-  return reply.code(200).send({ character: newCharacter })
 }
 
 export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -248,14 +282,31 @@ export const uploadArtwork = async (request: FastifyRequest, reply: FastifyReply
     return reply.code(400).send({ message: "No file uploaded" })
   }
 
+  const uploadLimit = await loadUserUploadLimit(request.server.db, user.profileId)
+  if (uploadLimit == null) {
+    return reply.code(404).send({ message: "User not found" })
+  }
+
   const { file, filename, mimetype } = data
-  const uploadResult = await uploadToS3(
-    request.server.s3,
-    file,
-    filename,
-    mimetype,
-    user.id
-  )
+
+  let uploadResult
+  try {
+    uploadResult = await uploadToS3(
+      request.server.s3,
+      file,
+      filename,
+      mimetype,
+      user.id,
+      uploadLimit
+    )
+  } catch (error) {
+    if (error instanceof UploadLimitError) {
+      return reply.code(413).send({
+        message: `File exceeds your upload limit of ${formatUploadLimit(error.limitBytes)}`,
+      })
+    }
+    throw error
+  }
 
   if (!uploadResult) {
     return reply.code(500).send({ message: "Error uploading file" })

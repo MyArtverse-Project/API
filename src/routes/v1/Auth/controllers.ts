@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"
+import { withEffectiveUploadLimit } from "../../../utils/uploadLimits"
 import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
 import { getApiBaseUrl, getFrontendOrigin } from "../../../utils/config"
 import { OAuth2Namespace } from "@fastify/oauth2"
@@ -331,7 +332,7 @@ export const whoami = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(401).send({ error: "Unauthorized" })
   }
 
-  return reply.code(200).send({ ...data.user })
+  return reply.code(200).send(withEffectiveUploadLimit(data.user))
 }
 
 export const verify = async (request: FastifyRequest, reply: FastifyReply) => {

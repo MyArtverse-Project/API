@@ -12,6 +12,7 @@ import os from "os"
 import path from "path"
 import { pipeline } from "stream/promises"
 import { isLocalS3 } from "./config"
+import { UploadLimitError } from "./uploadLimits"
 
 export const ensureS3Bucket = async (client: S3Client) => {
   if (!isLocalS3()) {
@@ -76,7 +77,8 @@ export const uploadToS3 = async (
   file: BusboyFileStream,
   key: string,
   mimetype: string,
-  userID: string
+  userID: string,
+  maxBytes?: number
 ) => {
   const bucket = process.env.S3_BUCKET
   if (!bucket) {
@@ -92,6 +94,11 @@ export const uploadToS3 = async (
     await pipeline(file, fs.createWriteStream(tempFilePath))
 
     const { size: length } = fs.statSync(tempFilePath)
+
+    if (maxBytes != null && length > maxBytes) {
+      throw new UploadLimitError(maxBytes)
+    }
+
     fileStream = fs.createReadStream(tempFilePath)
 
     const command = new PutObjectCommand({

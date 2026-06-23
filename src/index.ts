@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotenv from "dotenv"
 import { initSentry, setupFastifySentry, captureException } from "./utils/sentry"
+import { MAX_MULTIPART_BYTES } from "./utils/uploadLimits"
 
 dotenv.config()
 initSentry()
@@ -31,8 +32,9 @@ import fastifyOauth2, { OAuth2Namespace } from "@fastify/oauth2"
 import fastifySession from "@fastify/session"
 import folderRoutes from "./routes/v1/Folder/routes"
 import dashboardRoutes from "./routes/v1/Dashboard/routes"
-import { DataSource } from "typeorm"
+import { getGitCommitSha } from "./utils/buildInfo"
 import { generalRoutes } from "./routes/v1/General/routes"
+import { DataSource } from "typeorm"
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -117,13 +119,16 @@ const app = async () => {
   // Multer
   server.register(multipart, {
     limits: {
-      fileSize: 10 * 1024 * 1024 // 10MB Limit
-    }
+      fileSize: MAX_MULTIPART_BYTES,
+    },
   })
 
   // Health Check
   server.get("/health", async () => {
-    return { status: "ok" }
+    return {
+      status: "ok",
+      commit: getGitCommitSha(),
+    }
   })
 
   // Swaggy Styff

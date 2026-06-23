@@ -150,6 +150,9 @@ export default class User {
   @Column({ default: Role.USER })
   role: Role
 
+  @Column({ type: "integer", nullable: true })
+  uploadLimitBytes: number | null
+
   @Column({ nullable: true, type: "jsonb" })
   artistApplication: {
     name: string
