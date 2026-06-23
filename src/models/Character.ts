@@ -18,7 +18,7 @@ import User from "./Users"
 import RefSheet from "./RefSheet"
 import Artwork from "./Artwork"
 import Folder from "./Folder"
-import Dashboard from "./CharacterDashboard"
+import CharacterDashboard from "./CharacterDashboard"
 
 @Entity()
 export default class Character {
@@ -94,8 +94,10 @@ export default class Character {
   @OneToMany(() => Folder, (folder) => folder.character)
   galleryFolders: Folder[];
 
-  @OneToMany(() => Dashboard, (dashboard) => dashboard.character, { cascade: true })
-  dashboards: Dashboard[];
+  @OneToMany(() => CharacterDashboard, (dashboard) => dashboard.character, {
+    cascade: true,
+  })
+  dashboards: CharacterDashboard[]
 
   // Stats
 

@@ -1,19 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
-import Character from "./Character";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  Unique,
+} from "typeorm"
+import Character from "./Character"
 
-@Entity()
-export default class Dashboard {
-    @PrimaryGeneratedColumn("uuid")
-    id: string;
+@Entity("character_dashboard")
+@Unique(["character"])
+export default class CharacterDashboard {
+  @PrimaryGeneratedColumn("uuid")
+  id: string
 
-    @ManyToOne(() => Character, (character) => character.dashboards, { onDelete: "CASCADE" })
-    character: Character;
+  @ManyToOne(() => Character, (character) => character.dashboards, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "characterId" })
+  character: Character
 
-    @Column("jsonb", { nullable: false, default: [] })
-    panels: {
-        id: string;
-        type: string;
-        position: { row: number; col: number };
-        settings: any;
-    }[];
+  @Column("jsonb", { nullable: false, default: [] })
+  panels: {
+    id: string
+    type: string
+    position: { row: number; col: number }
+    settings: Record<string, unknown>
+  }[]
 }
