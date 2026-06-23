@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 import { ILike, type EntityManager } from "typeorm"
 import { Attributes, Character, Comment, RefSheet, RefSheetVariant, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
+import CharacterDashboard from "../../../models/CharacterDashboard"
 import Folder from "../../../models/Folder"
 
 import type {
@@ -604,6 +605,20 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
 
       await variantRepo.save(newVariant)
     }
+
+    if (refSheet.id) {
+      const existingForSheet = await variantRepo.find({
+        where: { refSheet: { id: refSheet.id } },
+      })
+      const keepIds = new Set(
+        body.refSheet.variants.filter((variant) => variant.id).map((variant) => variant.id!)
+      )
+      const removedVariants = existingForSheet.filter((variant) => !keepIds.has(variant.id))
+
+      if (removedVariants.length > 0) {
+        await variantRepo.remove(removedVariants)
+      }
+    }
   })
 
   return reply.code(200).send({ message: "Ref sheet uploaded successfully" })
@@ -639,21 +654,23 @@ export const deleteRefsheet = async (request: FastifyRequest, reply: FastifyRepl
   const user = request.user as { id: string; profileId: string }
   const { id } = request.params as { id: string }
 
-  const refSheet = await request.server.db.getRepository(RefSheet).findOne({
-    where: { id: id, character: { owner: { id: user.profileId } } }
-  })
+  const refSheet = await request.server.db
+    .getRepository(RefSheet)
+    .createQueryBuilder("refSheet")
+    .innerJoin("refSheet.character", "character")
+    .innerJoin("character.owner", "owner")
+    .where("refSheet.id = :id", { id })
+    .andWhere("owner.id = :profileId", { profileId: user.profileId })
+    .getOne()
 
-  if (!refSheet) return reply.status(404).send("No ref sheet found.")
-
-  const variants = await request.server.db.getRepository(RefSheetVariant).find({
-    where: { refSheet: { id: refSheet.id } }
-  })
-
-  for (const variant of variants) {
-    await request.server.db.getRepository(RefSheetVariant).remove(variant)
+  if (!refSheet) {
+    return reply.status(404).send({ error: "No ref sheet found." })
   }
 
-  await request.server.db.getRepository(RefSheet).remove(refSheet)
+  await request.server.db.transaction(async (manager) => {
+    await manager.delete(RefSheetVariant, { refSheet: { id: refSheet.id } })
+    await manager.remove(RefSheet, refSheet)
+  })
 
   return reply.code(200).send({ message: "Ref sheet deleted" })
 }
@@ -747,19 +764,28 @@ export const deleteCharacter = async (request: FastifyRequest, reply: FastifyRep
       refSheets: true,
       migration: true,
       adoptionStatus: true,
-      owner: true
+      owner: true,
+      mainOwner: true,
+      dashboards: true,
+      artworks: { charactersFeatured: true },
+      favoritedBy: true,
     },
-    where: { id: id, owner: { id: user.profileId } }
+    where: { id, owner: { id: user.profileId } },
   })
 
   if (!character) {
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  await request.server.db.transaction(async (manager) => {
-    await updateOrDeleteRelatedEntities(character, manager)
-    await manager.remove(Character, character)
-  })
+  try {
+    await request.server.db.transaction(async (manager) => {
+      await updateOrDeleteRelatedEntities(character, manager)
+      await manager.remove(Character, character)
+    })
+  } catch (error) {
+    request.log.error(error, "Failed to delete character")
+    return reply.code(500).send({ error: "Failed to delete character" })
+  }
 
   return reply.code(200).send({ message: "Character deleted" })
 }
@@ -768,11 +794,34 @@ async function updateOrDeleteRelatedEntities(
   character: Character,
   entityManager: EntityManager
 ) {
-  if (character.artworks) {
+  await entityManager.update(
+    User,
+    { mainCharacter: { id: character.id } },
+    { mainCharacter: null }
+  )
+
+  if (character.favoritedBy?.length) {
+    for (const favoritingUser of character.favoritedBy) {
+      await entityManager
+        .createQueryBuilder()
+        .relation(User, "favoriteCharacters")
+        .of(favoritingUser.id)
+        .remove(character.id)
+    }
+  }
+
+  await entityManager.update(
+    Artwork,
+    { publishedCharacter: { id: character.id } },
+    { publishedCharacter: null }
+  )
+
+  if (character.artworks?.length) {
     for (const artwork of character.artworks) {
-      artwork.charactersFeatured = artwork.charactersFeatured.filter(
-        (c) => c.id !== character.id
+      artwork.charactersFeatured = (artwork.charactersFeatured ?? []).filter(
+        (featured) => featured.id !== character.id
       )
+
       if (artwork.charactersFeatured.length === 0) {
         await entityManager.remove(Artwork, artwork)
       } else {
@@ -781,25 +830,17 @@ async function updateOrDeleteRelatedEntities(
     }
   }
 
-  if (character.refSheets) {
-    for (const refSheet of character.refSheets) {
-      if (!refSheet.variants) continue
-      for (const variant of refSheet.variants) {
-        await entityManager.remove(variant)
-      }
-
-      await entityManager.remove(RefSheet, refSheet)
-    }
+  for (const refSheet of character.refSheets ?? []) {
+    await entityManager.delete(RefSheetVariant, { refSheet: { id: refSheet.id } })
+    await entityManager.remove(RefSheet, refSheet)
   }
 
+  await entityManager.delete(Comment, { character: { id: character.id } })
+  await entityManager.delete(CharacterDashboard, { character: { id: character.id } })
+  await entityManager.delete(Folder, { character: { id: character.id } })
+
   if (character.attributes) {
-    // @ts-expect-error
-    await entityManager.update(Character, { id: character.id }, { attributes: null })
-    const attributes = await entityManager.findOne(Attributes, {
-      where: { character: { id: character.id } }
-    })
-    await entityManager.remove(attributes)
-    await entityManager.remove(character.attributes)
+    await entityManager.remove(Attributes, character.attributes)
   }
 
   if (character.migration) {
@@ -813,17 +854,5 @@ async function updateOrDeleteRelatedEntities(
   if (character.mainOwner) {
     character.mainOwner.mainCharacter = null
     await entityManager.save(User, character.mainOwner)
-  }
-
-  if (character.owner) {
-    const owner = await entityManager.findOne(User, {
-      where: { id: character.owner.id },
-      relations: { characters: true }
-    })
-
-    if (owner) {
-      owner.characters = owner.characters.filter((c) => c.id !== character.id)
-      await entityManager.save(User, owner)
-    }
   }
 }
