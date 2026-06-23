@@ -192,3 +192,36 @@ export const GET_CHARACTER_GALLERY_FOLDERS_SCHEMA: FastifySchema = {
         }
     }
 };
+
+export const DELETE_FOLDER_SCHEMA: FastifySchema = {
+    description: "Delete a folder",
+    tags: ["Folder"],
+    summary: "Delete a folder owned by the authenticated user",
+    params: {
+        type: "object",
+        required: ["folderId"],
+        properties: {
+            folderId: { type: "string" },
+        },
+    },
+    response: {
+        200: {
+            type: "object",
+            properties: {
+                message: { type: "string" },
+            },
+        },
+        400: {
+            type: "object",
+            properties: {
+                error: { type: "string" },
+            },
+        },
+        404: {
+            type: "object",
+            properties: {
+                error: { type: "string" },
+            },
+        },
+    },
+};

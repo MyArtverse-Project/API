@@ -165,3 +165,26 @@ export const getCharacterGalleryFolders = async (
 
     return reply.send(buildFolderTree(folders));
 };
+
+export const deleteFolder = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { folderId } = request.params as { folderId: string };
+    const { profileId } = request.user as { profileId: string };
+
+    if (!folderId) {
+        return reply.status(400).send({ error: "Missing folderId" });
+    }
+
+    const folderRepo = request.server.db.getRepository(Folder);
+
+    const folder = await folderRepo.findOne({
+        where: { id: folderId, owner: { id: profileId } },
+    });
+
+    if (!folder) {
+        return reply.status(404).send({ error: "Folder not found" });
+    }
+
+    await folderRepo.remove(folder);
+
+    return reply.send({ message: "Folder deleted" });
+};

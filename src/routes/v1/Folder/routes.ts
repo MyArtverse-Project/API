@@ -1,12 +1,14 @@
 import type { FastifyInstance } from "fastify"
 import {
   createFolder,
+  deleteFolder,
   getCharacterGalleryFolders,
   getFolderByHandle,
   getFolders,
 } from "./controllers"
 import {
   CREATE_FOLDER_SCHEMA,
+  DELETE_FOLDER_SCHEMA,
   GET_CHARACTER_GALLERY_FOLDERS_SCHEMA,
   GET_FOLDER_BY_HANDLE_SCHEMA,
   GET_FOLDER_SCHEMA,
@@ -18,6 +20,11 @@ async function folderRoutes(server: FastifyInstance) {
     "/create",
     { onRequest: [server.auth], schema: CREATE_FOLDER_SCHEMA },
     createFolder
+  )
+  server.delete(
+    "/:folderId",
+    { onRequest: [server.auth], schema: DELETE_FOLDER_SCHEMA },
+    deleteFolder
   )
   server.get(
     "/character/:characterId",
