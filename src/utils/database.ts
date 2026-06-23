@@ -1,23 +1,7 @@
+import "reflect-metadata"
+import { join } from "path"
 import { DataSource } from "typeorm"
-import {
-  AdoptionStatus,
-  Artwork,
-  Attributes,
-  Auth,
-  Character,
-  Comment,
-  Dashboard,
-  Folder,
-  Image,
-  Commission,
-  Migration,
-  Notification,
-  RefSheet,
-  RefSheetVariant,
-  Relationships,
-  User
-} from '../models'
-import CharacterDashboard from "../models/CharacterDashboard"
+
 /**
  * Connects to the database
  */
@@ -33,27 +17,8 @@ const connectDatabase = async (): Promise<DataSource> => {
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     ...(useSsl ? { ssl: { rejectUnauthorized: false } } : {}),
-    entities: [
-      AdoptionStatus,
-      Artwork,
-      Attributes,
-      Auth,
-      Character,
-      CharacterDashboard,
-      Comment,
-      Dashboard,
-      Folder,
-      Image,
-      Commission,
-      Migration,
-      Notification,
-      RefSheet,
-      RefSheetVariant,
-      Relationships,
-      User
-    ],
+    entities: [join(__dirname, "..", "models", "**", "*.{js,ts}")],
     synchronize: true,
-
     logging: false,
   })
   await connection

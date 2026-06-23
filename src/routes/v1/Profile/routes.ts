@@ -17,7 +17,7 @@ import {
 
 async function profileRoutes(server: FastifyInstance) {
   server.get("/me", { onRequest: [server.auth] }, me)
-  server.get("/favorites/:handle", getFavorites)
+  server.get("/favorites/:handle", { onRequest: [server.optionalAuth] }, getFavorites)
   server.put("/me", { onRequest: [server.auth] }, updateProfile)
   server.patch(
     "/content-preferences",

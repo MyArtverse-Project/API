@@ -75,7 +75,13 @@ COMMAND_ID=$(aws ssm send-command \
     \"aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ECR_URI%%/*}\",
     \"docker pull $ECR_URI:latest\",
     \"docker rm -f myartverse-api || true\",
-    \"docker run -d --name myartverse-api --restart always --env-file /opt/myartverse/.env -p 8081:8081 $ECR_URI:latest\"
+    \"docker run -d --name myartverse-api --restart always --env-file /opt/myartverse/.env -p 8081:8081 $ECR_URI:latest\",
+    \"sleep 5\",
+    \"docker ps --filter name=myartverse-api --format '{{.Status}}'\",
+    \"for i in 1 2 3 4 5 6 7 8 9 10 11 12; do curl -fsS http://127.0.0.1:8081/health | grep -q '\\\"status\\\":\\\"ok\\\"' && exit 0; sleep 5; done\",
+    \"echo 'Container failed local health check:'\",
+    \"docker logs myartverse-api --tail 80 2>&1\",
+    \"exit 1\"
   ]" \
   --query Command.CommandId \
   --output text)

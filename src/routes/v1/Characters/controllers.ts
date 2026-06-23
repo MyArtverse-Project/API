@@ -15,6 +15,11 @@ import {
   loadUserUploadLimit,
   UploadLimitError,
 } from "../../../utils/uploadLimits"
+import {
+  filterRefSheetsForViewer,
+  sanitizeCharacterForViewer,
+  sanitizeCharactersForViewer,
+} from "../../../utils/nsfw"
 
 export const getCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
@@ -44,7 +49,7 @@ export const searchCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!characters) return reply.status(404).send("No characters found.")
 
-  return reply.code(200).send(characters)
+  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
 }
 
 export const getOwnersCharacters = async (
@@ -83,9 +88,14 @@ export const getOwnersCharacters = async (
 
   if (!data) return reply.status(404).send("No user found.")
 
+  const characters = sanitizeCharactersForViewer(data.characters ?? [], request)
+  const sanitizedMainCharacter = mainCharacter
+    ? sanitizeCharacterForViewer(mainCharacter, request)
+    : null
+
   return reply
     .code(200)
-    .send({ characters: data.characters, mainCharacter: mainCharacter ?? null })
+    .send({ characters, mainCharacter: sanitizedMainCharacter })
 }
 
 export const getCharacterById = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -107,7 +117,7 @@ export const getCharacterById = async (request: FastifyRequest, reply: FastifyRe
     data.views += 1
     await request.server.db.getRepository(Character).save(data)
 
-    return reply.code(200).send({ ...data })
+    return reply.code(200).send(sanitizeCharacterForViewer(data, request))
   } catch (error) {
     return reply.code(500).send({ error: "Internal server error." })
   }
@@ -150,7 +160,10 @@ export const getCharacterByName = async (
     data.views += 1
     await request.server.db.getRepository(Character).save(data)
 
-    return reply.code(200).send({ ...data, comments: comments })
+    return reply.code(200).send({
+      ...sanitizeCharacterForViewer(data, request),
+      comments: comments,
+    })
   } catch (error) {
     return reply.code(500).send({ error: "Internal server" })
   }
@@ -466,7 +479,7 @@ export const getRefsheets = async (request: FastifyRequest, reply: FastifyReply)
     return reply.code(404).send({ error: "No ref sheets found" })
   }
 
-  return reply.code(200).send(refSheets)
+  return reply.code(200).send(filterRefSheetsForViewer(refSheets, request))
 }
 
 export const getComments = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -678,7 +691,7 @@ export const getFeaturedCharacters = async (
 
   if (!data) return reply.status(404).send("No featured characters found.")
 
-  return reply.code(200).send(data)
+  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
 }
 
 export const getNewCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -695,7 +708,7 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!data) return reply.status(404).send("No new characters found.")
 
-  return reply.code(200).send(data)
+  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
 }
 
 export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {

@@ -7,7 +7,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from "typeorm"
-import { Character, User } from "."
+import Character from "./Character"
+import User from "./Users"
 import Artwork from "./Artwork"
 
 @Entity()

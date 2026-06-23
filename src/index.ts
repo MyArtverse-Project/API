@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import "reflect-metadata"
 import * as dotenv from "dotenv"
 import { initSentry, setupFastifySentry, captureException } from "./utils/sentry"
 import { MAX_MULTIPART_BYTES } from "./utils/uploadLimits"

@@ -10,6 +10,7 @@ import {
 } from "../../../utils/uploadLimits"
 import { DataSource, ILike, IsNull } from "typeorm"
 import { sendMassNotification, sendNotification } from "../../../utils/notification"
+import { sanitizeCharactersForViewer } from "../../../utils/nsfw"
 import { CommissionStatus, Role } from "../../../models/Users"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -327,7 +328,7 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
     },
   })
 
-  return reply.code(200).send(characters)
+  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
 }
 
 export const notifications = async (request: FastifyRequest, reply: FastifyReply) => {
