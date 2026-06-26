@@ -30,6 +30,7 @@ export const me = async (request: FastifyRequest, reply: FastifyReply) => {
       },
       characters: true,
       favoriteCharacters: true,
+      favoriteArtworks: true,
       followers: {
         follower: true,
         following: true

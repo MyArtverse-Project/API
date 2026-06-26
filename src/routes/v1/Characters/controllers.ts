@@ -824,7 +824,8 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   const character = await request.server.db.getRepository(Character).findOne({
     where: { id: id },
     relations: {
-      favoritedBy: true
+      favoritedBy: true,
+      owner: true,
     }
   })
 
@@ -837,6 +838,17 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
 
   if (!character || !data) {
     return reply.code(404).send({ error: "Character not found" })
+  }
+
+  if (
+    await denyIfCharacterNotViewable(
+      character,
+      request,
+      reply,
+      request.server.db
+    )
+  ) {
+    return
   }
 
   if (!data.favoriteCharacters) {

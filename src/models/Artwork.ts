@@ -69,7 +69,11 @@ export default class Artwork {
   title: string
 
   @ManyToMany(() => User, (user) => user.favoriteArtworks)
-  @JoinTable()
+  @JoinTable({
+    name: "artwork_favorited_by_user",
+    joinColumn: { name: "artworkId", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "userId", referencedColumnName: "id" },
+  })
   favoritedBy: User[]
 
   @ManyToOne(() => Character, { nullable: true })

@@ -127,8 +127,7 @@ export default class User {
   @JoinColumn()
   ownedArtworks: Artwork[]
 
-  @ManyToMany(() => Artwork, (artwork) => artwork)
-  @JoinTable()
+  @ManyToMany(() => Artwork, (artwork) => artwork.favoritedBy)
   favoriteArtworks: Artwork[]
 
   @Column({ default: "offline" })

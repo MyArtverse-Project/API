@@ -534,3 +534,52 @@ export const getSelfArtworks = async (request: FastifyRequest, reply: FastifyRep
   return reply.code(200).send(artworks)
 }
 
+export const favoriteArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { artworkId } = request.params as { artworkId: string }
+
+  const artwork = await request.server.db.getRepository(Artwork).findOne({
+    where: { id: artworkId },
+    relations: {
+      favoritedBy: true,
+      owner: true,
+    }
+  })
+
+  const data = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+    relations: {
+      favoriteArtworks: true
+    }
+  })
+
+  if (!artwork || !data) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (
+    await denyIfArtworkNotViewable(artwork, request, reply, request.server.db)
+  ) {
+    return
+  }
+
+  if (artwork.nsfw && shouldFilterNsfw(request)) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (!data.favoriteArtworks) {
+    data.favoriteArtworks = []
+  }
+
+  if (artwork.favoritedBy.some((u) => u.id === data.id)) {
+    artwork.favoritedBy = artwork.favoritedBy.filter((u) => u.id !== data.id)
+    await request.server.db.getRepository(Artwork).save(artwork)
+    return reply.code(200).send({ message: "Artwork unfavorited" })
+  }
+
+  artwork.favoritedBy.push(data)
+  await request.server.db.getRepository(Artwork).save(artwork)
+
+  return reply.code(200).send({ message: "Artwork favorited" })
+}
+
