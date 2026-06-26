@@ -9,7 +9,6 @@ import {
   JoinColumn,
   ManyToOne,
   ManyToMany,
-  JoinTable,
   type ObjectId
 } from "typeorm"
 import Auth from "./Auth"
@@ -120,7 +119,6 @@ export default class User {
   listings: Commission[]
 
   @ManyToMany(() => Character, (character) => character.favoritedBy)
-  @JoinTable()
   favoriteCharacters: Character[]
 
   @OneToMany(() => Artwork, (artwork) => artwork.owner)

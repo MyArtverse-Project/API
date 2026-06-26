@@ -8,8 +8,9 @@ import {
   UploadLimitError,
   withEffectiveUploadLimit,
 } from "../../../utils/uploadLimits"
-import { DataSource, ILike, IsNull } from "typeorm"
+import { ILike, IsNull } from "typeorm"
 import { sendMassNotification, sendNotification } from "../../../utils/notification"
+import { recursivelyGetReplies } from "../../../utils/comments"
 import { sanitizeCharactersForViewer } from "../../../utils/visibility"
 import { CommissionStatus, Role } from "../../../models/Users"
 
@@ -478,20 +479,5 @@ export const getArtistsWithOpenCommissions = async (request: FastifyRequest, rep
   }
 
   return reply.code(200).send(users)
-}
-
-const recursivelyGetReplies = async (commentId: string, db: DataSource) => {
-  const replies = await db.getRepository(Comment).find({
-    where: { parentComment: { id: commentId } },
-    relations: {
-      author: true,
-    },
-    order: { createdAt: "ASC" }
-  })
-
-  for (const reply of replies) {
-    reply.replies = await recursivelyGetReplies(reply.id, db)
-  }
-  return replies
 }
 
