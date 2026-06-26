@@ -31,10 +31,22 @@ export default class RefSheet {
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn()
-  artistUser: User
+  artistUser: User | null
+
+  @Column({ type: "varchar", length: 32, nullable: true })
+  artistPlatform: string | null
+
+  @Column({ type: "varchar", length: 200, nullable: true })
+  artistExternalHandle: string | null
+
+  @Column({ type: "varchar", nullable: true })
+  artistUrl: string | null
+
+  @Column({ type: "varchar", nullable: true })
+  artistExternalAvatarUrl: string | null
 
   @Column({ type: "text", nullable: true })
-  artistExternal: string
+  artistExternal: string | null
 
   @OneToMany(() => RefSheetVariant, (variant) => variant.refSheet, { eager: true })
   @JoinColumn()
