@@ -14,48 +14,66 @@ import { recursivelyGetReplies } from "../../../utils/comments"
 import { sanitizeCharactersForViewer } from "../../../utils/visibility"
 import { CommissionStatus, Role } from "../../../models/Users"
 
+function toJSONSafe<T>(value: T): T {
+  const seen = new WeakSet<object>()
+  return JSON.parse(
+    JSON.stringify(value, (_key, val) => {
+      if (val !== null && typeof val === "object") {
+        if (seen.has(val)) return undefined
+        seen.add(val)
+      }
+      return val
+    })
+  ) as T
+}
+
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
 
-  const userData = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId },
-    relations: {
-      folders: {
-        characters: true,
-        artworks: true,
-        children: {
+  try {
+    const userData = await request.server.db.getRepository(User).findOne({
+      where: { id: user.profileId },
+      relations: {
+        folders: {
           characters: true,
           artworks: true,
+          children: {
+            characters: true,
+            artworks: true,
+          },
+        },
+        characters: true,
+        favoriteCharacters: true,
+        favoriteArtworks: true,
+        followers: {
+          follower: true,
+          following: true,
+        },
+        following: {
+          follower: true,
+          following: true,
+        },
+        notifications: {
+          sender: true,
+          user: true,
+          comment: true,
+          artwork: true,
+        },
+      },
+    })
 
-        }
-      },
-      characters: true,
-      favoriteCharacters: true,
-      favoriteArtworks: true,
-      followers: {
-        follower: true,
-        following: true
-
-      },
-      following: {
-        follower: true,
-        following: true
-      },
-      notifications: {
-        sender: true,
-        user: true,
-        comment: true,
-        artwork: true
-      }
+    if (!userData) {
+      return reply.code(404).send({ error: "User not found" })
     }
-  })
 
-  if (!userData) {
-    return reply.code(404).send({ error: "User not found" })
+    if (!userData.characters) userData.characters = []
+
+    const profile = toJSONSafe(userData)
+    return reply.code(200).send(withEffectiveUploadLimit(profile as User))
+  } catch (error) {
+    request.log.error({ err: error }, "GET /v1/profile/me failed")
+    return reply.code(500).send({ error: "Failed to load profile" })
   }
-
-  if (!userData.characters) userData.characters = []
-  return reply.code(200).send(withEffectiveUploadLimit(userData))
 }
 
 export const updateProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -144,10 +162,17 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       },
       favoriteCharacters: true,
       followers: {
-        follower: true,
-        following: true
+        follower: {
+          followers: true,
+          following: true,
+        },
       },
-      following: true
+      following: {
+        following: {
+          followers: true,
+          following: true,
+        },
+      },
     }
   })
 

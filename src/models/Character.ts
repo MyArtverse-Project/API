@@ -60,7 +60,11 @@ export default class Character {
   updatedAt: Date
 
   @ManyToMany(() => User, (user) => user.favoriteCharacters)
-  @JoinTable()
+  @JoinTable({
+    name: "character_favorited_by_users",
+    joinColumn: { name: "characterId", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "usersId", referencedColumnName: "id" },
+  })
   favoritedBy: User[]
 
   @OneToMany(() => RefSheet, (refSheet) => refSheet.character, { eager: true })
