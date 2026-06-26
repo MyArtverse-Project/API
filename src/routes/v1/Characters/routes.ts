@@ -30,15 +30,15 @@ import {
 
 export async function characterRoutes(server: FastifyInstance) {
   server.get("/", { onRequest: [server.auth] }, getCharacters)
-  server.get("/featured", getFeaturedCharacters)
-  server.get("/new", getNewCharacters)
+  server.get("/featured", { onRequest: [server.optionalAuth] }, getFeaturedCharacters)
+  server.get("/new", { onRequest: [server.optionalAuth] }, getNewCharacters)
   server.delete("/delete/:id", { onRequest: [server.auth] }, deleteCharacter)
   server.post("/favorite/:id", { onRequest: [server.auth] }, favoriteCharacter)
-  server.get("/:ownerHandle", getOwnersCharacters)
-  server.get("/id/:id", getCharacterById)
+  server.get("/:ownerHandle", { onRequest: [server.optionalAuth] }, getOwnersCharacters)
+  server.get("/id/:id", { onRequest: [server.optionalAuth] }, getCharacterById)
   server.get(
     "/name/:ownerHandle/:name",
-
+    { onRequest: [server.optionalAuth] },
     getCharacterByName
   )
   server.post(
@@ -55,8 +55,8 @@ export async function characterRoutes(server: FastifyInstance) {
   server.post("/assign-avatar", { onRequest: [server.auth] }, setArtAsAvatar)
   server.put("/update/:id", { preHandler: [server.auth] }, updateCharacter)
   server.post("/:handle/:name/comment", { onRequest: [server.auth] }, commentCharacter)
-  server.get("/:handle/refSheets", getRefsheets)
+  server.get("/:handle/refSheets", { onRequest: [server.optionalAuth] }, getRefsheets)
   server.get("/:handle/:name/comments", getComments)
   server.put('/:id/folder/:folderId', { onRequest: [server.auth] }, updateCharacterFolder)
-  server.get("/search", searchCharacters)
+  server.get("/search", { onRequest: [server.optionalAuth] }, searchCharacters)
 }

@@ -65,7 +65,7 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
             --output text)
           echo "Checking $API_URL/health"
-          for i in 1 2 3 4 5; do
+          for i in $(seq 1 18); do
             if curl -fsS "$API_URL/health" | grep -q '"status":"ok"'; then
               echo "Health check passed"
               exit 0
@@ -73,5 +73,27 @@ jobs:
             echo "Attempt $i failed, retrying..."
             sleep 10
           done
-          echo "Health check failed"
+          echo "Health check failed — fetching container logs from EC2..."
+          INSTANCE_ID=$(aws cloudformation describe-stacks \
+            --stack-name MyArtverseStack \
+            --region "$AWS_REGION" \
+            --query "Stacks[0].Outputs[?OutputKey=='Ec2InstanceId'].OutputValue" \
+            --output text)
+          CMD_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":["docker ps -a","docker logs myartverse-api --tail 100 2>&1"]}' \
+            --query Command.CommandId \
+            --output text)
+          aws ssm wait command-executed \
+            --region "$AWS_REGION" \
+            --command-id "$CMD_ID" \
+            --instance-id "$INSTANCE_ID" || true
+          aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$CMD_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent \
+            --output text || true
           exit 1

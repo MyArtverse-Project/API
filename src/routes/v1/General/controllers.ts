@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import { Artwork, Character, User } from "../../../models"
+import { filterArtworksForViewer } from "../../../utils/nsfw"
 
 export const search = async (request: FastifyRequest, reply: FastifyReply) => {
     const { query, type } = request.query as { query?: string; type?: string }
@@ -49,7 +50,17 @@ export const search = async (request: FastifyRequest, reply: FastifyReply) => {
     }
 
     return results.reduce((acc: Record<string, any[]>, res) => {
-        if (res.results.length) acc[res.type] = res.results
+        if (!res.results.length) return acc
+
+        if (res.type === "artwork") {
+            acc.artwork = filterArtworksForViewer(
+                res.results as unknown as Artwork[],
+                request
+            )
+            return acc
+        }
+
+        acc[res.type] = res.results
         return acc
     }, {})
 }

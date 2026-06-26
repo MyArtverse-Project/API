@@ -1,8 +1,16 @@
 import { FastifyReply, FastifyRequest } from "fastify"
-import Dashboard from "../../../models/Dashboard"
+import UserDashboard from "../../../models/Dashboard"
 import { Character, User } from "../../../models"
 import CharacterDashboard from "../../../models/CharacterDashboard"
 import { PANEL_COMPONENT_TYPES } from "./panelTypes"
+import {
+  resolveCharacterDashboard,
+  resolveUserDashboard,
+  saveCharacterDashboard,
+  saveUserDashboard,
+  upsertCustomHtmlPanel,
+  upsertPanelAtSlot,
+} from "./dashboardService"
 
 const ALLOWED_PANEL_TYPES = PANEL_COMPONENT_TYPES
 
@@ -63,23 +71,17 @@ export const getUserPanels = async (request: FastifyRequest, reply: FastifyReply
     return reply.code(400).send({ error: "User handle is required" })
   }
 
-  let dashboard: Dashboard | null
-  dashboard = await request.server.db
-    .getRepository(Dashboard)
-    .findOne({ where: { user: { handle: handle } } })
-  if (!dashboard) {
-    const user = await request.server.db
-      .getRepository(User)
-      .findOne({ where: { handle: handle } })
-    if (!user) {
-      return reply.code(404).send({ error: "User not found" })
-    }
-    dashboard = await request.server.db.getRepository(Dashboard).save({
-      user,
-      panels: [],
-    })
+  const user = await request.server.db.getRepository(User).findOne({ where: { handle } })
+  if (!user) {
+    return reply.code(404).send({ error: "User not found" })
   }
-  return reply.code(200).send(dashboard.panels)
+
+  try {
+    const dashboard = await resolveUserDashboard(request.server.db, user.id)
+    return reply.code(200).send(dashboard.panels)
+  } catch {
+    return reply.code(404).send({ error: "User not found" })
+  }
 }
 
 export const setHTMLPanel = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -90,28 +92,10 @@ export const setHTMLPanel = async (request: FastifyRequest, reply: FastifyReply)
     return reply.code(400).send({ error: "HTML content is required" })
   }
 
-  const dashboard = await request.server.db
-    .getRepository(Dashboard)
-    .findOne({ where: { user: { id: profileId } } })
+  const dashboard = await resolveUserDashboard(request.server.db, profileId)
+  upsertCustomHtmlPanel(dashboard, html)
+  await saveUserDashboard(request.server.db.getRepository(UserDashboard), dashboard)
 
-  if (!dashboard) {
-    return reply.code(404).send({ error: "Dashboard not found" })
-  }
-
-  const customHTMLPanel = dashboard.panels.find((p) => p.type === "customHTML")
-
-  if (customHTMLPanel) {
-    customHTMLPanel.settings.html = html
-  } else {
-    dashboard.panels.push({
-      id: `panel-${Date.now()}`,
-      type: "customHTML",
-      position: { row: 1, col: 1 },
-      settings: { html },
-    })
-  }
-
-  await request.server.db.getRepository(Dashboard).save(dashboard)
   return reply.send(dashboard)
 }
 
@@ -131,48 +115,25 @@ export const setPanel = async (request: FastifyRequest, reply: FastifyReply) => 
     return reply.code(400).send({ error: "Invalid component type" })
   }
 
-  const dashboard = await request.server.db
-    .getRepository(Dashboard)
-    .findOne({ where: { user: { id: profileId } } })
-
-  if (!dashboard) {
-    return reply.code(404).send({ error: "Dashboard not found" })
-  }
-
-  const panelIndex = dashboard.panels.findIndex(
-    (p) => p.position.row === position.row && p.position.col === position.col
-  )
-
-  const newPanel = {
-    id: `panel-${Date.now()}`,
-    type: component,
+  const dashboard = await resolveUserDashboard(request.server.db, profileId)
+  upsertPanelAtSlot(
+    dashboard,
     position,
-    settings: sanitizeSettings(component, settings),
-  }
+    component,
+    sanitizeSettings(component, settings)
+  )
+  await saveUserDashboard(request.server.db.getRepository(UserDashboard), dashboard)
 
-  if (panelIndex !== -1) {
-    dashboard.panels[panelIndex] = newPanel
-  } else {
-    dashboard.panels.push(newPanel)
-  }
-
-  await request.server.db.getRepository(Dashboard).save(dashboard)
   return reply.send(dashboard)
 }
 
 export const resetPanels = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { id: string; profileId: string }
 
-  const dashboard = await request.server.db
-    .getRepository(Dashboard)
-    .findOne({ where: { user: { id: profileId } } })
-
-  if (!dashboard) {
-    return reply.code(404).send({ error: "Dashboard not found" })
-  }
-
+  const dashboard = await resolveUserDashboard(request.server.db, profileId)
   dashboard.panels = []
-  await request.server.db.getRepository(Dashboard).save(dashboard)
+  await saveUserDashboard(request.server.db.getRepository(UserDashboard), dashboard)
+
   return reply.send(dashboard)
 }
 
@@ -186,17 +147,7 @@ export const getCharacterPanels = async (request: FastifyRequest, reply: Fastify
 
   if (!character) return reply.code(404).send({ error: "Character not found" })
 
-  let dashboard = await request.server.db.getRepository(CharacterDashboard).findOne({
-    where: { character: { slug: characterName } },
-  })
-
-  if (!dashboard) {
-    dashboard = await request.server.db.getRepository(CharacterDashboard).save({
-      character,
-      panels: [],
-    })
-  }
-
+  const dashboard = await resolveCharacterDashboard(request.server.db, character.id)
   return reply.send(dashboard.panels)
 }
 
@@ -219,41 +170,25 @@ export const setCharacterPanel = async (request: FastifyRequest, reply: FastifyR
 
   const character = await request.server.db.getRepository(Character).findOne({
     where: { slug: characterName, owner: { id: profileId } },
+    relations: { owner: true },
   })
 
   if (!character) return reply.code(404).send({ error: "Character not found" })
-  if (character.owner.id !== profileId)
+  if (character.owner?.id !== profileId)
     return reply.code(403).send({ error: "You're not the owner of this character" })
 
-  let dashboard = await request.server.db.getRepository(CharacterDashboard).findOne({
-    where: { character: { slug: characterName } },
-  })
-
-  if (!dashboard) {
-    dashboard = await request.server.db.getRepository(CharacterDashboard).save({
-      character,
-      panels: [],
-    })
-  }
-
-  const panelIndex = dashboard.panels.findIndex(
-    (p) => p.position.row === position.row && p.position.col === position.col
+  const dashboard = await resolveCharacterDashboard(request.server.db, character.id)
+  upsertPanelAtSlot(
+    dashboard,
+    position,
+    component,
+    sanitizeSettings(component, settings)
+  )
+  await saveCharacterDashboard(
+    request.server.db.getRepository(CharacterDashboard),
+    dashboard
   )
 
-  const newPanel = {
-    id: `panel-${Date.now()}`,
-    type: component,
-    position,
-    settings: sanitizeSettings(component, settings),
-  }
-
-  if (panelIndex !== -1) {
-    dashboard.panels[panelIndex] = newPanel
-  } else {
-    dashboard.panels.push(newPanel)
-  }
-
-  await request.server.db.getRepository(CharacterDashboard).save(dashboard)
   return reply.send(dashboard)
 }
 
@@ -275,31 +210,13 @@ export const setCharacterHTMLPanel = async (request: FastifyRequest, reply: Fast
   if (character.owner.id !== profileId)
     return reply.code(403).send({ error: "You're not the owner of this character" })
 
-  let dashboard = await request.server.db.getRepository(CharacterDashboard).findOne({
-    where: { character: { id: character.id } },
-  })
+  const dashboard = await resolveCharacterDashboard(request.server.db, character.id)
+  upsertCustomHtmlPanel(dashboard, html)
+  await saveCharacterDashboard(
+    request.server.db.getRepository(CharacterDashboard),
+    dashboard
+  )
 
-  if (!dashboard) {
-    dashboard = await request.server.db.getRepository(CharacterDashboard).save({
-      character,
-      panels: [],
-    })
-  }
-
-  const customHTMLPanel = dashboard.panels.find((p) => p.type === "customHTML")
-
-  if (customHTMLPanel) {
-    customHTMLPanel.settings.html = html
-  } else {
-    dashboard.panels.push({
-      id: `panel-${Date.now()}`,
-      type: "customHTML",
-      position: { row: 1, col: 1 },
-      settings: { html },
-    })
-  }
-
-  await request.server.db.getRepository(CharacterDashboard).save(dashboard)
   return reply.send(dashboard)
 }
 
@@ -318,15 +235,12 @@ export const resetCharacterPanels = async (request: FastifyRequest, reply: Fasti
   if (character.owner.id !== profileId)
     return reply.code(403).send({ error: "You're not the owner of this character" })
 
-  const dashboard = await request.server.db.getRepository(CharacterDashboard).findOne({
-    where: { character: { id: character.id } },
-  })
-
-  if (!dashboard) {
-    return reply.code(404).send({ error: "Dashboard not found" })
-  }
-
+  const dashboard = await resolveCharacterDashboard(request.server.db, character.id)
   dashboard.panels = []
-  await request.server.db.getRepository(CharacterDashboard).save(dashboard)
+  await saveCharacterDashboard(
+    request.server.db.getRepository(CharacterDashboard),
+    dashboard
+  )
+
   return reply.send(dashboard)
 }

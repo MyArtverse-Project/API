@@ -15,14 +15,18 @@ import {
 
 async function artRoutes(server: FastifyInstance) {
   server.post("/upload/:characterId", { onRequest: [server.auth] }, uploadArt)
-  server.get("/characters/:ownerHandle/:characterName", getCharacterArtwork)
+  server.get(
+    "/characters/:ownerHandle/:characterName",
+    { onRequest: [server.optionalAuth] },
+    getCharacterArtwork
+  )
   server.get("/gallery", { onRequest: [server.auth] }, getSelfArtworks)
   server.put(
     "/:artworkId/folder/:folderId",
     { onRequest: [server.auth] },
     assignArtworkToFolder
   )
-  server.get("/:artworkId", getArtwork)
+  server.get("/:artworkId", { onRequest: [server.optionalAuth] }, getArtwork)
   // server.get('/:artworkId/comments', getArtworkComments)
   server.post("/:artworkId/comment", { onRequest: [server.auth] }, commentArtwork)
   server.post(

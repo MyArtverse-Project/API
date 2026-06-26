@@ -5,6 +5,7 @@ import Comment from "../../../models/Comments"
 import Notification from "../../../models/Notifications"
 import Folder from "../../../models/Folder"
 import { sendNotification } from "../../../utils/notification"
+import { filterArtworksForViewer, shouldFilterNsfw } from "../../../utils/nsfw"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
@@ -115,7 +116,7 @@ export const getCharacterArtwork = async (
   //   }
   // })
 
-  return reply.code(200).send(character.artworks)
+  return reply.code(200).send(filterArtworksForViewer(character.artworks ?? [], request))
 }
 
 export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -130,6 +131,10 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
   })
 
   if (!artwork) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (artwork.nsfw && shouldFilterNsfw(request)) {
     return reply.code(404).send({ error: "Artwork not found" })
   }
 
