@@ -10,7 +10,7 @@ import {
 } from "../../../utils/uploadLimits"
 import { DataSource, ILike, IsNull } from "typeorm"
 import { sendMassNotification, sendNotification } from "../../../utils/notification"
-import { sanitizeCharactersForViewer } from "../../../utils/nsfw"
+import { sanitizeCharactersForViewer } from "../../../utils/visibility"
 import { CommissionStatus, Role } from "../../../models/Users"
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -156,7 +156,8 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       owner: {
         id: profile.id
       }
-    }
+    },
+    relations: { owner: true },
   })
 
   const comments = await request.server.db.getRepository(Comment).find({
@@ -175,7 +176,16 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   profile.views += 1
   await request.server.db.getRepository(User).save(profile)
 
-  return reply.code(200).send({ ...profile, characters, comments: comments })
+  const visibleCharacters = await sanitizeCharactersForViewer(
+    characters,
+    request,
+    request.server.db,
+    profile.id
+  )
+
+  return reply
+    .code(200)
+    .send({ ...profile, characters: visibleCharacters, comments: comments })
 }
 
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -328,7 +338,15 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
     },
   })
 
-  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(
+        characters,
+        request,
+        request.server.db
+      )
+    )
 }
 
 export const notifications = async (request: FastifyRequest, reply: FastifyReply) => {

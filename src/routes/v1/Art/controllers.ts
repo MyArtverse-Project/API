@@ -5,19 +5,26 @@ import Comment from "../../../models/Comments"
 import Notification from "../../../models/Notifications"
 import Folder from "../../../models/Folder"
 import { sendNotification } from "../../../utils/notification"
-import { filterArtworksForViewer, shouldFilterNsfw } from "../../../utils/nsfw"
+import { shouldFilterNsfw } from "../../../utils/nsfw"
+import {
+  denyIfArtworkNotViewable,
+  denyIfCharacterNotViewable,
+  filterArtworksForViewer,
+} from "../../../utils/visibility"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
   const { characterId } = request.params as { characterId: string }
-  const { title, description, imageUrl, userAsArtist, tags, nsfw } = request.body as {
-    title: string
-    description: string
-    imageUrl: string
-    userAsArtist: boolean
-    tags: string[]
-    nsfw?: boolean
-  }
+  const { title, description, imageUrl, userAsArtist, tags, nsfw, visibility } =
+    request.body as {
+      title: string
+      description: string
+      imageUrl: string
+      userAsArtist: boolean
+      tags: string[]
+      nsfw?: boolean
+      visibility?: string
+    }
 
   const character = await request.server.db.getRepository(Character).findOne({
     where: { id: characterId }
@@ -49,6 +56,7 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
     artist: userAsArtist ? user : null,
     tags: tags,
     nsfw: nsfw ?? false,
+    visibility: visibility ?? "public",
     owner: user,
     artworkUrl: image.url
   })
@@ -99,24 +107,27 @@ export const getCharacterArtwork = async (
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  console.log(character.artworks)
+  if (
+    await denyIfCharacterNotViewable(
+      character,
+      request,
+      reply,
+      request.server.db
+    )
+  ) {
+    return
+  }
 
-  // const artwork = await request.server.db.getRepository(Artwork).find({
-  //   relations: {
-  //     owner: true,
-  //     charactersFeatured: true,
-  //     artist: true,
-  //     comments: true
-  //   },
-  //   where: {
-  //     charactersFeatured: { id: character.id },
-  //     owner: {
-  //       id: character.owner.id
-  //     }
-  //   }
-  // })
-
-  return reply.code(200).send(filterArtworksForViewer(character.artworks ?? [], request))
+  return reply
+    .code(200)
+    .send(
+      await filterArtworksForViewer(
+        character.artworks ?? [],
+        request,
+        request.server.db,
+        character.owner?.id
+      )
+    )
 }
 
 export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -132,6 +143,12 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
 
   if (!artwork) {
     return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (
+    await denyIfArtworkNotViewable(artwork, request, reply, request.server.db)
+  ) {
+    return
   }
 
   if (artwork.nsfw && shouldFilterNsfw(request)) {
@@ -283,12 +300,13 @@ export const unfeatureCharacter = async (
 export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
   const { artworkId } = request.params as { artworkId: string }
-  const { title, description, tags, nsfw, imageUrl } = request.body as {
+  const { title, description, tags, nsfw, imageUrl, visibility } = request.body as {
     title?: string
     description?: string
     tags?: string[]
     nsfw?: boolean
     imageUrl?: string
+    visibility?: string
   }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
@@ -308,6 +326,7 @@ export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply
   if (description !== undefined) artwork.description = description
   if (tags !== undefined) artwork.tags = tags
   if (nsfw !== undefined) artwork.nsfw = nsfw
+  if (visibility !== undefined) artwork.visibility = visibility
 
   if (imageUrl) {
     const image = await request.server.db.getRepository(Image).findOne({

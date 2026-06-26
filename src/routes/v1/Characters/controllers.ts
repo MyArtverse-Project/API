@@ -20,6 +20,13 @@ import {
   applyRefSheetArtistCredit,
   type ArtistCreditPayload,
 } from "../../../utils/artistCredit"
+import {
+  denyIfCharacterNotViewable,
+  filterRefSheetsForViewer,
+  sanitizeCharacterForViewer,
+  sanitizeCharactersForViewer,
+  viewerCanViewCharacter,
+} from "../../../utils/visibility"
 
 const REF_SHEET_RELATIONS = {
   variants: true,
@@ -54,7 +61,15 @@ export const searchCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!characters) return reply.status(404).send("No characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(
+        characters,
+        request,
+        request.server.db
+      )
+    )
 }
 
 export const getOwnersCharacters = async (
@@ -94,10 +109,21 @@ export const getOwnersCharacters = async (
 
   if (!data) return reply.status(404).send("No user found.")
 
-  const characters = sanitizeCharactersForViewer(data.characters ?? [], request)
-  const sanitizedMainCharacter = mainCharacter
-    ? sanitizeCharacterForViewer(mainCharacter, request)
-    : null
+  const characters = await sanitizeCharactersForViewer(
+    data.characters ?? [],
+    request,
+    request.server.db,
+    data.id
+  )
+  const sanitizedMainCharacter =
+    mainCharacter &&
+    (await viewerCanViewCharacter(
+      mainCharacter,
+      request,
+      request.server.db
+    ))
+      ? sanitizeCharacterForViewer(mainCharacter, request)
+      : null
 
   return reply
     .code(200)
@@ -123,6 +149,17 @@ export const getCharacterById = async (request: FastifyRequest, reply: FastifyRe
 
     if (!data) {
       return reply.code(404).send({ error: "Character not found." })
+    }
+
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
     }
 
     data.views += 1
@@ -158,6 +195,17 @@ export const getCharacterByName = async (
 
     if (!data) {
       return reply.code(404).send({ error: "Character not found." })
+    }
+
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
     }
 
     const comments = await request.server.db.getRepository(Comment).find({
@@ -211,6 +259,17 @@ export const getCharacterWithOwner = async (
       return reply.code(404).send({ error: "Character not found." })
     }
 
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
+    }
+
     data.views += 1
     await request.server.db.getRepository(Character).save(data)
 
@@ -228,7 +287,7 @@ export const getCharacterWithOwner = async (
 export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const body = request.body as CreateCharacterBody
   const { name, nickname, mainCharacter, characterAvatar } = body
-  const visibility = body.visibility ?? body.visiblility ?? "public"
+  const visibility = body.visibility ?? "public"
 
   const user = request.user as { id: string; profileId: string }
 
@@ -729,11 +788,16 @@ export const getFeaturedCharacters = async (
 
   if (!data) return reply.status(404).send("No featured characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(data, request, request.server.db)
+    )
 }
 
 export const getNewCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const data = await request.server.db.getRepository(Character).find({
+    where: { visibility: "public" },
     take: 10,
     relations: {
       owner: true,
@@ -746,7 +810,11 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!data) return reply.status(404).send("No new characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(data, request, request.server.db)
+    )
 }
 
 export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {

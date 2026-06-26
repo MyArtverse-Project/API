@@ -184,6 +184,9 @@ export function upsertPanelAtSlot(
     (panel) => panel.position.row === position.row && panel.position.col === position.col
   )
 
+  const previousSettings =
+    panelIndex !== -1 ? dashboard.panels[panelIndex].settings : {}
+
   const nextPanel: DashboardPanelRecord = {
     id:
       panelIndex !== -1
@@ -191,7 +194,7 @@ export function upsertPanelAtSlot(
         : `panel-${Date.now()}-${position.row}-${position.col}`,
     type: component,
     position,
-    settings,
+    settings: { ...previousSettings, ...settings },
   }
 
   const panels =

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   JoinTable,
   ManyToMany,
@@ -41,6 +42,10 @@ export default class Artwork {
 
   @OneToOne(() => User, (user) => user.artworks, { nullable: true })
   artist: User | null
+
+  @Index()
+  @Column({ default: "public" })
+  visibility: string
 
   @Column({ nullable: true, default: false })
   nsfw: boolean

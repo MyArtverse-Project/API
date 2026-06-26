@@ -7,9 +7,7 @@ interface GetCharacterParams {
 interface CreateCharacterBody {
   name: string
   nickname?: string
-  visibility: "public" | "private" | "followers"
-  /** @deprecated typo — use visibility */
-  visiblility?: "public" | "private" | "followers"
+  visibility: "public" | "private" | "followers" | "unlisted"
   mainCharacter: boolean
   characterAvatar: string | null
 }
@@ -26,7 +24,7 @@ interface EditCharacterBody {
     }
   }
   nickname?: string
-  visibility?: "public" | "private" | "followers"
+  visibility?: "public" | "private" | "followers" | "unlisted"
   mainCharacter?: boolean
   species?: string
   isHybrid?: boolean

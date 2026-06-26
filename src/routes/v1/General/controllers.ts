@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import { Artwork, Character, User } from "../../../models"
-import { filterArtworksForViewer } from "../../../utils/nsfw"
+import { filterArtworksForViewer, filterCharactersByVisibility } from "../../../utils/visibility"
 
 export const search = async (request: FastifyRequest, reply: FastifyReply) => {
     const { query, type } = request.query as { query?: string; type?: string }
@@ -24,6 +24,10 @@ export const search = async (request: FastifyRequest, reply: FastifyReply) => {
             const repo = request.server.db.getRepository(entity)
 
             let queryBuilder = repo.createQueryBuilder(key)
+
+            if (key === "artwork" || key === "character") {
+                queryBuilder = queryBuilder.leftJoinAndSelect(`${key}.owner`, "owner")
+            }
 
             fields.forEach((field, index) => {
                 if (index === 0) {
@@ -49,18 +53,30 @@ export const search = async (request: FastifyRequest, reply: FastifyReply) => {
         await request.server.db.getRepository(User).save(user)
     }
 
-    return results.reduce((acc: Record<string, any[]>, res) => {
-        if (!res.results.length) return acc
+    const acc: Record<string, unknown[]> = {}
+    for (const res of results) {
+        if (!res.results.length) continue
 
         if (res.type === "artwork") {
-            acc.artwork = filterArtworksForViewer(
+            acc.artwork = await filterArtworksForViewer(
                 res.results as unknown as Artwork[],
-                request
+                request,
+                request.server.db
             )
-            return acc
+            continue
+        }
+
+        if (res.type === "character") {
+            acc.character = await filterCharactersByVisibility(
+                res.results as unknown as Character[],
+                request,
+                request.server.db
+            )
+            continue
         }
 
         acc[res.type] = res.results
-        return acc
-    }, {})
+    }
+
+    return acc
 }
