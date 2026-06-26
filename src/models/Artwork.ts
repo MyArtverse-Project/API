@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   JoinTable,
   ManyToMany,
@@ -42,6 +43,10 @@ export default class Artwork {
   @OneToOne(() => User, (user) => user.artworks, { nullable: true })
   artist: User | null
 
+  @Index()
+  @Column({ default: "public" })
+  visibility: string
+
   @Column({ nullable: true, default: false })
   nsfw: boolean
 
@@ -64,7 +69,11 @@ export default class Artwork {
   title: string
 
   @ManyToMany(() => User, (user) => user.favoriteArtworks)
-  @JoinTable()
+  @JoinTable({
+    name: "artwork_favorited_by_user",
+    joinColumn: { name: "artworkId", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "userId", referencedColumnName: "id" },
+  })
   favoritedBy: User[]
 
   @ManyToOne(() => Character, { nullable: true })

@@ -2,6 +2,10 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import Character from "../../../models/Character";
 import Folder from "../../../models/Folder";
 import { User } from "../../../models";
+import {
+    buildVisibilityContext,
+    viewerCanViewEntityWithContext,
+} from "../../../utils/visibility";
 
 const normalizeContentType = (contentType: string) => {
     if (contentType === "artworks") return "art";
@@ -147,11 +151,9 @@ export const getCharacterGalleryFolders = async (
         return reply.status(404).send({ error: "Character not found" });
     }
 
-    const authUser = request.user as { profileId: string } | undefined;
-    const isOwner = authUser?.profileId === character.owner.id;
-
-    if (character.visibility === "private" && !isOwner) {
-        return reply.status(403).send({ error: "Forbidden" });
+    const ctx = await buildVisibilityContext(request.server.db, request)
+    if (!viewerCanViewEntityWithContext(character, ctx)) {
+        return reply.status(404).send({ error: "Character not found" });
     }
 
     const folders = await folderRepo.find({

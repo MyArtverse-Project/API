@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
-import { ILike, type EntityManager } from "typeorm"
+import { ILike, IsNull, type EntityManager } from "typeorm"
 import { Attributes, Character, Comment, RefSheet, RefSheetVariant, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import CharacterDashboard from "../../../models/CharacterDashboard"
@@ -20,6 +20,14 @@ import {
   applyRefSheetArtistCredit,
   type ArtistCreditPayload,
 } from "../../../utils/artistCredit"
+import {
+  denyIfCharacterNotViewable,
+  filterRefSheetsForViewer,
+  sanitizeCharacterForViewer,
+  sanitizeCharactersForViewer,
+  viewerCanViewCharacter,
+} from "../../../utils/visibility"
+import { attachCommentReplies } from "../../../utils/comments"
 
 const REF_SHEET_RELATIONS = {
   variants: true,
@@ -54,7 +62,15 @@ export const searchCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!characters) return reply.status(404).send("No characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(
+        characters,
+        request,
+        request.server.db
+      )
+    )
 }
 
 export const getOwnersCharacters = async (
@@ -94,10 +110,21 @@ export const getOwnersCharacters = async (
 
   if (!data) return reply.status(404).send("No user found.")
 
-  const characters = sanitizeCharactersForViewer(data.characters ?? [], request)
-  const sanitizedMainCharacter = mainCharacter
-    ? sanitizeCharacterForViewer(mainCharacter, request)
-    : null
+  const characters = await sanitizeCharactersForViewer(
+    data.characters ?? [],
+    request,
+    request.server.db,
+    data.id
+  )
+  const sanitizedMainCharacter =
+    mainCharacter &&
+    (await viewerCanViewCharacter(
+      mainCharacter,
+      request,
+      request.server.db
+    ))
+      ? sanitizeCharacterForViewer(mainCharacter, request)
+      : null
 
   return reply
     .code(200)
@@ -123,6 +150,17 @@ export const getCharacterById = async (request: FastifyRequest, reply: FastifyRe
 
     if (!data) {
       return reply.code(404).send({ error: "Character not found." })
+    }
+
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
     }
 
     data.views += 1
@@ -158,6 +196,17 @@ export const getCharacterByName = async (
 
     if (!data) {
       return reply.code(404).send({ error: "Character not found." })
+    }
+
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
     }
 
     const comments = await request.server.db.getRepository(Comment).find({
@@ -211,6 +260,17 @@ export const getCharacterWithOwner = async (
       return reply.code(404).send({ error: "Character not found." })
     }
 
+    if (
+      await denyIfCharacterNotViewable(
+        data,
+        request,
+        reply,
+        request.server.db
+      )
+    ) {
+      return
+    }
+
     data.views += 1
     await request.server.db.getRepository(Character).save(data)
 
@@ -228,7 +288,7 @@ export const getCharacterWithOwner = async (
 export const createCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
   const body = request.body as CreateCharacterBody
   const { name, nickname, mainCharacter, characterAvatar } = body
-  const visibility = body.visibility ?? body.visiblility ?? "public"
+  const visibility = body.visibility ?? "public"
 
   const user = request.user as { id: string; profileId: string }
 
@@ -443,24 +503,45 @@ export const commentCharacter = async (request: FastifyRequest, reply: FastifyRe
     ownerHandle: string
   }
 
-  const { content } = request.body as { content: string }
+  const { content, parentCommentId } = request.body as {
+    content: string
+    parentCommentId?: string
+  }
+
+  if (!content?.trim()) {
+    return reply.code(400).send({ error: "No content provided" })
+  }
 
   const character = await request.server.db.getRepository(Character).findOne({
-    where: { slug: name, owner: { handle: ownerHandle } }
+    where: { slug: name, owner: { handle: ownerHandle } },
   })
 
   const author = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId }
+    where: { id: user.profileId },
   })
 
   if (!character || !author) {
     return reply.code(404).send({ error: "Character not found" })
   }
 
+  if (parentCommentId) {
+    const parentComment = await request.server.db.getRepository(Comment).findOne({
+      where: {
+        id: parentCommentId,
+        character: { id: character.id },
+      },
+    })
+
+    if (!parentComment) {
+      return reply.code(404).send({ error: "Parent comment not found" })
+    }
+  }
+
   const comment = await request.server.db.getRepository(Comment).save({
-    content: content,
-    author: author,
-    character: character
+    content: content.trim(),
+    author,
+    character,
+    parentComment: parentCommentId ? { id: parentCommentId } : undefined,
   })
 
   if (!comment) {
@@ -501,16 +582,22 @@ export const getComments = async (request: FastifyRequest, reply: FastifyReply) 
   }
 
   const comments = await request.server.db.getRepository(Comment).find({
-    where: { character: { safename: safeName, owner: { handle: ownerHandle } } },
+    where: {
+      character: { safename: safeName, owner: { handle: ownerHandle } },
+      parentComment: IsNull(),
+    },
     relations: {
       author: true,
-      character: true
-    }
+      character: true,
+    },
+    order: { createdAt: "DESC" },
   })
 
-  if (!comments) {
+  if (!comments.length) {
     return reply.code(404).send({ error: "No comments found" })
   }
+
+  await attachCommentReplies(comments, request.server.db)
 
   return reply.code(200).send(comments)
 }
@@ -729,11 +816,16 @@ export const getFeaturedCharacters = async (
 
   if (!data) return reply.status(404).send("No featured characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(data, request, request.server.db)
+    )
 }
 
 export const getNewCharacters = async (request: FastifyRequest, reply: FastifyReply) => {
   const data = await request.server.db.getRepository(Character).find({
+    where: { visibility: "public" },
     take: 10,
     relations: {
       owner: true,
@@ -746,7 +838,11 @@ export const getNewCharacters = async (request: FastifyRequest, reply: FastifyRe
 
   if (!data) return reply.status(404).send("No new characters found.")
 
-  return reply.code(200).send(sanitizeCharactersForViewer(data, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(data, request, request.server.db)
+    )
 }
 
 export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -754,38 +850,53 @@ export const favoriteCharacter = async (request: FastifyRequest, reply: FastifyR
   const { id } = request.params as { id: string }
 
   const character = await request.server.db.getRepository(Character).findOne({
-    where: { id: id },
+    where: { id },
     relations: {
-      favoritedBy: true
-    }
+      favoritedBy: true,
+      owner: true,
+    },
   })
 
-  const data = await request.server.db.getRepository(User).findOne({
+  const profile = await request.server.db.getRepository(User).findOne({
     where: { id: user.profileId },
-    relations: {
-      favoriteCharacters: true
-    }
   })
 
-  if (!character || !data) {
+  if (!character || !profile) {
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  if (!data.favoriteCharacters) {
-    data.favoriteCharacters = []
+  if (
+    await denyIfCharacterNotViewable(
+      character,
+      request,
+      reply,
+      request.server.db
+    )
+  ) {
+    return
   }
 
-  if (character.favoritedBy.some((c) => c.id === data.id)) {
-    // Remove from favorites
-    character.favoritedBy = character.favoritedBy.filter((c) => c.id !== data.id)
-    await request.server.db.getRepository(Character).save(character)
-    return reply.code(200).send({ message: "Character unfavorited" })
+  const isFavorited =
+    character.favoritedBy?.some((favoritingUser) => favoritingUser.id === profile.id) ??
+    false
+
+  try {
+    const relation = request.server.db
+      .createQueryBuilder()
+      .relation(Character, "favoritedBy")
+      .of(character.id)
+
+    if (isFavorited) {
+      await relation.remove(profile.id)
+      return reply.code(200).send({ message: "Character unfavorited" })
+    }
+
+    await relation.add(profile.id)
+    return reply.code(200).send({ message: "Character favorited" })
+  } catch (error) {
+    request.log.error(error)
+    return reply.code(500).send({ error: "Failed to update favorite" })
   }
-
-  character.favoritedBy.push(data)
-  await request.server.db.getRepository(Character).save(character)
-
-  return reply.code(200).send({ message: "Character favorited" })
 }
 
 export const deleteCharacter = async (request: FastifyRequest, reply: FastifyReply) => {

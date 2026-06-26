@@ -1,23 +1,32 @@
 import type { FastifyReply, FastifyRequest } from "fastify"
+import { IsNull } from "typeorm"
 import { Character, Commission, Image, User } from "../../../models"
 import Artwork from "../../../models/Artwork"
 import Comment from "../../../models/Comments"
 import Notification from "../../../models/Notifications"
 import Folder from "../../../models/Folder"
 import { sendNotification } from "../../../utils/notification"
-import { filterArtworksForViewer, shouldFilterNsfw } from "../../../utils/nsfw"
+import { attachCommentReplies } from "../../../utils/comments"
+import { shouldFilterNsfw } from "../../../utils/nsfw"
+import {
+  denyIfArtworkNotViewable,
+  denyIfCharacterNotViewable,
+  filterArtworksForViewer,
+} from "../../../utils/visibility"
 
 export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
   const { characterId } = request.params as { characterId: string }
-  const { title, description, imageUrl, userAsArtist, tags, nsfw } = request.body as {
-    title: string
-    description: string
-    imageUrl: string
-    userAsArtist: boolean
-    tags: string[]
-    nsfw?: boolean
-  }
+  const { title, description, imageUrl, userAsArtist, tags, nsfw, visibility } =
+    request.body as {
+      title: string
+      description: string
+      imageUrl: string
+      userAsArtist: boolean
+      tags: string[]
+      nsfw?: boolean
+      visibility?: string
+    }
 
   const character = await request.server.db.getRepository(Character).findOne({
     where: { id: characterId }
@@ -49,6 +58,7 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
     artist: userAsArtist ? user : null,
     tags: tags,
     nsfw: nsfw ?? false,
+    visibility: visibility ?? "public",
     owner: user,
     artworkUrl: image.url
   })
@@ -99,24 +109,27 @@ export const getCharacterArtwork = async (
     return reply.code(404).send({ error: "Character not found" })
   }
 
-  console.log(character.artworks)
+  if (
+    await denyIfCharacterNotViewable(
+      character,
+      request,
+      reply,
+      request.server.db
+    )
+  ) {
+    return
+  }
 
-  // const artwork = await request.server.db.getRepository(Artwork).find({
-  //   relations: {
-  //     owner: true,
-  //     charactersFeatured: true,
-  //     artist: true,
-  //     comments: true
-  //   },
-  //   where: {
-  //     charactersFeatured: { id: character.id },
-  //     owner: {
-  //       id: character.owner.id
-  //     }
-  //   }
-  // })
-
-  return reply.code(200).send(filterArtworksForViewer(character.artworks ?? [], request))
+  return reply
+    .code(200)
+    .send(
+      await filterArtworksForViewer(
+        character.artworks ?? [],
+        request,
+        request.server.db,
+        character.owner?.id
+      )
+    )
 }
 
 export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -134,6 +147,12 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
     return reply.code(404).send({ error: "Artwork not found" })
   }
 
+  if (
+    await denyIfArtworkNotViewable(artwork, request, reply, request.server.db)
+  ) {
+    return
+  }
+
   if (artwork.nsfw && shouldFilterNsfw(request)) {
     return reply.code(404).send({ error: "Artwork not found" })
   }
@@ -141,43 +160,70 @@ export const getArtwork = async (request: FastifyRequest, reply: FastifyReply) =
   const comments = await request.server.db.getRepository(Comment).find({
     relations: {
       artwork: true,
-      author: true
+      author: true,
     },
-    where: { artwork: { id: artworkId } }
+    where: {
+      artwork: { id: artworkId },
+      parentComment: IsNull(),
+    },
+    order: { createdAt: "DESC" },
   })
+
+  await attachCommentReplies(comments, request.server.db)
 
   artwork.views += 1
   await request.server.db.getRepository(Artwork).save(artwork)
 
-  return reply.code(200).send({ ...artwork, comments: comments })
+  return reply.code(200).send({ ...artwork, comments })
 }
 
 export const commentArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
   const { artworkId } = request.params as { artworkId: string }
-  const { content } = request.body as { content: string }
+  const { content, parentCommentId } = request.body as {
+    content: string
+    parentCommentId?: string
+  }
+
+  if (!content?.trim()) {
+    return reply.code(400).send({ error: "No content provided" })
+  }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
     where: { id: artworkId },
     relations: {
       owner: true,
       artist: true,
-      comments: true
-    }
+      comments: true,
+    },
   })
 
   const author = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId }
+    where: { id: user.profileId },
   })
 
   if (!artwork || !author) {
     return reply.code(404).send({ error: "Artwork not found" })
   }
 
+  if (parentCommentId) {
+    const parentComment = await request.server.db.getRepository(Comment).findOne({
+      where: {
+        id: parentCommentId,
+        artwork: { id: artworkId },
+      },
+    })
+
+    if (!parentComment) {
+      return reply.code(404).send({ error: "Parent comment not found" })
+    }
+  }
+
   const comment = await request.server.db.getRepository(Comment).save({
-    artwork: artwork,
-    author: author,
-    content: content
+    artwork,
+    author,
+    content: content.trim(),
+    parentComment: parentCommentId ? { id: parentCommentId } : undefined,
   })
 
   if (!comment) {
@@ -283,12 +329,13 @@ export const unfeatureCharacter = async (
 export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
   const { profileId } = request.user as { profileId: string }
   const { artworkId } = request.params as { artworkId: string }
-  const { title, description, tags, nsfw, imageUrl } = request.body as {
+  const { title, description, tags, nsfw, imageUrl, visibility } = request.body as {
     title?: string
     description?: string
     tags?: string[]
     nsfw?: boolean
     imageUrl?: string
+    visibility?: string
   }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
@@ -308,6 +355,7 @@ export const updateArtwork = async (request: FastifyRequest, reply: FastifyReply
   if (description !== undefined) artwork.description = description
   if (tags !== undefined) artwork.tags = tags
   if (nsfw !== undefined) artwork.nsfw = nsfw
+  if (visibility !== undefined) artwork.visibility = visibility
 
   if (imageUrl) {
     const image = await request.server.db.getRepository(Image).findOne({
@@ -513,5 +561,58 @@ export const getSelfArtworks = async (request: FastifyRequest, reply: FastifyRep
     },
   })
   return reply.code(200).send(artworks)
+}
+
+export const favoriteArtwork = async (request: FastifyRequest, reply: FastifyReply) => {
+  const user = request.user as { id: string; profileId: string }
+  const { artworkId } = request.params as { artworkId: string }
+
+  const artwork = await request.server.db.getRepository(Artwork).findOne({
+    where: { id: artworkId },
+    relations: {
+      favoritedBy: true,
+      owner: true,
+    },
+  })
+
+  const profile = await request.server.db.getRepository(User).findOne({
+    where: { id: user.profileId },
+  })
+
+  if (!artwork || !profile) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  if (
+    await denyIfArtworkNotViewable(artwork, request, reply, request.server.db)
+  ) {
+    return
+  }
+
+  if (artwork.nsfw && shouldFilterNsfw(request)) {
+    return reply.code(404).send({ error: "Artwork not found" })
+  }
+
+  const isFavorited =
+    artwork.favoritedBy?.some((favoritingUser) => favoritingUser.id === profile.id) ??
+    false
+
+  try {
+    const relation = request.server.db
+      .createQueryBuilder()
+      .relation(Artwork, "favoritedBy")
+      .of(artwork.id)
+
+    if (isFavorited) {
+      await relation.remove(profile.id)
+      return reply.code(200).send({ message: "Artwork unfavorited" })
+    }
+
+    await relation.add(profile.id)
+    return reply.code(200).send({ message: "Artwork favorited" })
+  } catch (error) {
+    request.log.error(error)
+    return reply.code(500).send({ error: "Failed to update favorite" })
+  }
 }
 

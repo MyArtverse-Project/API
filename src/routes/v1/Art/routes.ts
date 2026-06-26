@@ -4,6 +4,7 @@ import {
   assignArtworkToFolder,
   commentArtwork,
   deleteArtwork,
+  favoriteArtwork,
   featureCharacter,
   getArtwork,
   getCharacterArtwork,
@@ -27,6 +28,7 @@ async function artRoutes(server: FastifyInstance) {
     assignArtworkToFolder
   )
   server.get("/:artworkId", { onRequest: [server.optionalAuth] }, getArtwork)
+  server.post("/:artworkId/favorite", { onRequest: [server.auth] }, favoriteArtwork)
   // server.get('/:artworkId/comments', getArtworkComments)
   server.post("/:artworkId/comment", { onRequest: [server.auth] }, commentArtwork)
   server.post(

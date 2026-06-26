@@ -8,52 +8,72 @@ import {
   UploadLimitError,
   withEffectiveUploadLimit,
 } from "../../../utils/uploadLimits"
-import { DataSource, ILike, IsNull } from "typeorm"
+import { ILike, IsNull } from "typeorm"
 import { sendMassNotification, sendNotification } from "../../../utils/notification"
-import { sanitizeCharactersForViewer } from "../../../utils/nsfw"
+import { recursivelyGetReplies } from "../../../utils/comments"
+import { sanitizeCharactersForViewer } from "../../../utils/visibility"
 import { CommissionStatus, Role } from "../../../models/Users"
+
+function toJSONSafe<T>(value: T): T {
+  const seen = new WeakSet<object>()
+  return JSON.parse(
+    JSON.stringify(value, (_key, val) => {
+      if (val !== null && typeof val === "object") {
+        if (seen.has(val)) return undefined
+        seen.add(val)
+      }
+      return val
+    })
+  ) as T
+}
 
 export const me = async (request: FastifyRequest, reply: FastifyReply) => {
   const user = request.user as { id: string; profileId: string }
 
-  const userData = await request.server.db.getRepository(User).findOne({
-    where: { id: user.profileId },
-    relations: {
-      folders: {
-        characters: true,
-        artworks: true,
-        children: {
+  try {
+    const userData = await request.server.db.getRepository(User).findOne({
+      where: { id: user.profileId },
+      relations: {
+        folders: {
           characters: true,
           artworks: true,
+          children: {
+            characters: true,
+            artworks: true,
+          },
+        },
+        characters: true,
+        favoriteCharacters: true,
+        favoriteArtworks: true,
+        followers: {
+          follower: true,
+          following: true,
+        },
+        following: {
+          follower: true,
+          following: true,
+        },
+        notifications: {
+          sender: true,
+          user: true,
+          comment: true,
+          artwork: true,
+        },
+      },
+    })
 
-        }
-      },
-      characters: true,
-      favoriteCharacters: true,
-      followers: {
-        follower: true,
-        following: true
-
-      },
-      following: {
-        follower: true,
-        following: true
-      },
-      notifications: {
-        sender: true,
-        user: true,
-        comment: true,
-        artwork: true
-      }
+    if (!userData) {
+      return reply.code(404).send({ error: "User not found" })
     }
-  })
 
-  if (!userData) {
-    return reply.code(404).send({ error: "User not found" })
+    if (!userData.characters) userData.characters = []
+
+    const profile = toJSONSafe(userData)
+    return reply.code(200).send(withEffectiveUploadLimit(profile as User))
+  } catch (error) {
+    request.log.error({ err: error }, "GET /v1/profile/me failed")
+    return reply.code(500).send({ error: "Failed to load profile" })
   }
-
-  if (!userData.characters) userData.characters = []
-  return reply.code(200).send(withEffectiveUploadLimit(userData))
 }
 
 export const updateProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -142,10 +162,17 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       },
       favoriteCharacters: true,
       followers: {
-        follower: true,
-        following: true
+        follower: {
+          followers: true,
+          following: true,
+        },
       },
-      following: true
+      following: {
+        following: {
+          followers: true,
+          following: true,
+        },
+      },
     }
   })
 
@@ -156,7 +183,8 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
       owner: {
         id: profile.id
       }
-    }
+    },
+    relations: { owner: true },
   })
 
   const comments = await request.server.db.getRepository(Comment).find({
@@ -175,7 +203,16 @@ export const getProfile = async (request: FastifyRequest, reply: FastifyReply) =
   profile.views += 1
   await request.server.db.getRepository(User).save(profile)
 
-  return reply.code(200).send({ ...profile, characters, comments: comments })
+  const visibleCharacters = await sanitizeCharactersForViewer(
+    characters,
+    request,
+    request.server.db,
+    profile.id
+  )
+
+  return reply
+    .code(200)
+    .send({ ...profile, characters: visibleCharacters, comments: comments })
 }
 
 export const commentProfile = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -328,7 +365,15 @@ export const getFavorites = async (request: FastifyRequest, reply: FastifyReply)
     },
   })
 
-  return reply.code(200).send(sanitizeCharactersForViewer(characters, request))
+  return reply
+    .code(200)
+    .send(
+      await sanitizeCharactersForViewer(
+        characters,
+        request,
+        request.server.db
+      )
+    )
 }
 
 export const notifications = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -459,20 +504,5 @@ export const getArtistsWithOpenCommissions = async (request: FastifyRequest, rep
   }
 
   return reply.code(200).send(users)
-}
-
-const recursivelyGetReplies = async (commentId: string, db: DataSource) => {
-  const replies = await db.getRepository(Comment).find({
-    where: { parentComment: { id: commentId } },
-    relations: {
-      author: true,
-    },
-    order: { createdAt: "ASC" }
-  })
-
-  for (const reply of replies) {
-    reply.replies = await recursivelyGetReplies(reply.id, db)
-  }
-  return replies
 }
 

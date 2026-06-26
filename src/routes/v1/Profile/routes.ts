@@ -24,7 +24,7 @@ async function profileRoutes(server: FastifyInstance) {
     { onRequest: [server.auth] },
     updateContentPreferences
   )
-  server.get("/:handle", getProfile)
+  server.get("/:handle", { onRequest: [server.optionalAuth] }, getProfile)
   server.post("/:handle/comment", { onRequest: [server.auth] }, commentProfile)
   server.get("/:handle/comments", getComments)
   server.post("/upload", { onRequest: [server.auth] }, upload)

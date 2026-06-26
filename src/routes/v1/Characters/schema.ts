@@ -119,7 +119,7 @@ export const CREATE_CHARACTER_SCHEMA: FastifySchema = {
       name: { type: "string", description: "Character's name" },
       visibility: {
         type: "string",
-        enum: ["public", "private", "followers"],
+        enum: ["public", "private", "followers", "unlisted"],
         description: "Who can view this character",
       },
       nickname: { type: "string", description: "Character's nickname" },

@@ -28,7 +28,7 @@ async function folderRoutes(server: FastifyInstance) {
   )
   server.get(
     "/character/:characterId",
-    { schema: GET_CHARACTER_GALLERY_FOLDERS_SCHEMA },
+    { onRequest: [server.optionalAuth], schema: GET_CHARACTER_GALLERY_FOLDERS_SCHEMA },
     getCharacterGalleryFolders
   )
   server.get("/:folderId", { schema: GET_FOLDER_SCHEMA }, getFolders)
