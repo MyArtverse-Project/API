@@ -1,82 +1,135 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import { Artwork, Character, User } from "../../../models"
-import { filterArtworksForViewer, filterCharactersByVisibility } from "../../../utils/visibility"
+import {
+  filterArtworksForViewer,
+  sanitizeCharactersForViewer,
+} from "../../../utils/visibility"
+
+const SEARCH_LIMIT = 20
+
+const TYPE_ALIASES: Record<string, "user" | "artwork" | "character"> = {
+  user: "user",
+  users: "user",
+  artwork: "artwork",
+  artworks: "artwork",
+  character: "character",
+  characters: "character",
+}
 
 export const search = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { query, type } = request.query as { query?: string; type?: string }
-    const { profileId } = request.user as { id: string; profileId?: string }
+  const { query, type } = request.query as { query?: string; type?: string }
+  const profileId = (request.user as { profileId?: string } | undefined)
+    ?.profileId
 
-    if (!query) {
-        return reply.status(400).send({ error: "Search query is required" })
-    }
+  if (!query?.trim()) {
+    return reply.status(400).send({ error: "Search query is required" })
+  }
 
-    const repoMap = {
-        artwork: { entity: Artwork, fields: ["title"] },
-        user: { entity: User, fields: ["displayName", "handle"] },
-        character: { entity: Character, fields: ["name"] },
-    }
+  const trimmedQuery = query.trim()
+  const normalizedType = type ? TYPE_ALIASES[type.toLowerCase()] : undefined
 
-    const searchTypes = type && type in repoMap ? [type] : Object.keys(repoMap)
+  const repoMap = {
+    artwork: { entity: Artwork, fields: ["title"] as const },
+    user: { entity: User, fields: ["displayName", "handle"] as const },
+    character: {
+      entity: Character,
+      fields: ["name", "slug", "nickname"] as const,
+    },
+  }
 
-    const results = await Promise.all(
-        searchTypes.map(async (key) => {
-            const { entity, fields } = repoMap[key as keyof typeof repoMap]
-            const repo = request.server.db.getRepository(entity)
+  const searchTypes =
+    normalizedType && normalizedType in repoMap
+      ? [normalizedType]
+      : (Object.keys(repoMap) as Array<keyof typeof repoMap>)
 
-            let queryBuilder = repo.createQueryBuilder(key)
+  const results = await Promise.all(
+    searchTypes.map(async (key) => {
+      const { entity, fields } = repoMap[key]
+      const repo = request.server.db.getRepository(entity)
 
-            if (key === "artwork" || key === "character") {
-                queryBuilder = queryBuilder.leftJoinAndSelect(`${key}.owner`, "owner")
-            }
+      let queryBuilder = repo.createQueryBuilder(key)
 
-            fields.forEach((field, index) => {
-                if (index === 0) {
-                    queryBuilder.where(`${key}.${field} ILIKE :query`, { query: `%${query}%` })
-                } else {
-                    queryBuilder.orWhere(`${key}.${field} ILIKE :query`, { query: `%${query}%` })
-                }
-            })
+      if (key === "artwork") {
+        queryBuilder = queryBuilder
+          .leftJoinAndSelect(`${key}.owner`, "owner")
+          .leftJoinAndSelect(`${key}.publishedCharacter`, "publishedCharacter")
+          .leftJoinAndSelect("publishedCharacter.owner", "pcOwner")
+      } else if (key === "character") {
+        queryBuilder = queryBuilder.leftJoinAndSelect(`${key}.owner`, "owner")
+      }
 
-            return queryBuilder
-                .getMany()
-                .then((res) => ({ type: key, results: res }))
+      fields.forEach((field, index) => {
+        if (index === 0) {
+          queryBuilder.where(`${key}.${field} ILIKE :query`, {
+            query: `%${trimmedQuery}%`,
+          })
+        } else {
+          queryBuilder.orWhere(`${key}.${field} ILIKE :query`, {
+            query: `%${trimmedQuery}%`,
+          })
+        }
+      })
+
+      if (key === "artwork") {
+        queryBuilder.orWhere(`CAST(${key}.tags AS TEXT) ILIKE :query`, {
+          query: `%${trimmedQuery}%`,
         })
-    )
+      }
 
-    if (profileId) {
-        const user = await request.server.db.getRepository(User).findOne({ where: { id: profileId } })
-        if (!user) {
-            return reply.status(404).send({ error: "User not found" })
-        }
-        const recentSearches = new Set([query, ...(user.recentSearches || []).slice(0, 4)])
-        user.recentSearches = [...recentSearches]
-        await request.server.db.getRepository(User).save(user)
+      return queryBuilder
+        .take(SEARCH_LIMIT)
+        .getMany()
+        .then((res) => ({ type: key, results: res }))
+    })
+  )
+
+  if (profileId) {
+    const user = await request.server.db
+      .getRepository(User)
+      .findOne({ where: { id: profileId } })
+    if (user) {
+      const recentSearches = new Set([
+        trimmedQuery,
+        ...(user.recentSearches || []).slice(0, 4),
+      ])
+      user.recentSearches = [...recentSearches]
+      await request.server.db.getRepository(User).save(user)
+    }
+  }
+
+  const acc: {
+    user?: User[]
+    artwork?: Artwork[]
+    character?: Character[]
+  } = {}
+
+  for (const res of results) {
+    if (!res.results.length) continue
+
+    if (res.type === "artwork") {
+      acc.artwork = await filterArtworksForViewer(
+        res.results as unknown as Artwork[],
+        request,
+        request.server.db
+      )
+      continue
     }
 
-    const acc: Record<string, unknown[]> = {}
-    for (const res of results) {
-        if (!res.results.length) continue
-
-        if (res.type === "artwork") {
-            acc.artwork = await filterArtworksForViewer(
-                res.results as unknown as Artwork[],
-                request,
-                request.server.db
-            )
-            continue
-        }
-
-        if (res.type === "character") {
-            acc.character = await filterCharactersByVisibility(
-                res.results as unknown as Character[],
-                request,
-                request.server.db
-            )
-            continue
-        }
-
-        acc[res.type] = res.results
+    if (res.type === "character") {
+      acc.character = await sanitizeCharactersForViewer(
+        res.results as unknown as Character[],
+        request,
+        request.server.db
+      )
+      continue
     }
 
-    return acc
+    acc.user = res.results as User[]
+  }
+
+  return reply.send({
+    user: acc.user ?? [],
+    artwork: acc.artwork ?? [],
+    character: acc.character ?? [],
+  })
 }
