@@ -172,10 +172,9 @@ export const CHANGE_PASSWORD_SCHEMA: FastifySchema = {
   summary: "Allows a user to change their password",
   body: {
     type: "object",
-    required: ["newPassword", "userId"],
+    required: ["newPassword"],
     properties: {
-      newPassword: { type: "string" },
-      userId: { type: "string" }
+      newPassword: { type: "string", minLength: 8 }
     }
   },
   response: {

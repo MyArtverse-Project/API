@@ -747,25 +747,29 @@ export const uploadRefSheet = async (request: FastifyRequest, reply: FastifyRepl
 
 
 export const setRefAsMain = async (request: FastifyRequest, reply: FastifyReply) => {
-  // const user = request.user as { id: string; profileId: string }
+  const user = request.user as { id: string; profileId: string }
   const { id } = request.params as { id: string }
 
-  const character = await request.server.db.getRepository(Character).findOne({
-    where: { refSheets: { id: id } },
-    relations: {
-      refSheets: true
-    }
-  })
+  const refSheet = await request.server.db
+    .getRepository(RefSheet)
+    .createQueryBuilder("refSheet")
+    .innerJoinAndSelect("refSheet.character", "character")
+    .innerJoin("character.owner", "owner")
+    .where("refSheet.id = :id", { id })
+    .andWhere("owner.id = :profileId", { profileId: user.profileId })
+    .getOne()
 
-  if (!character) return reply.status(404).send("No character found.")
+  if (!refSheet) {
+    return reply.status(404).send({ error: "No ref sheet found." })
+  }
 
   const refSheets = await request.server.db.getRepository(RefSheet).find({
-    where: { character: { id: character.id } }
+    where: { character: { id: refSheet.character.id } },
   })
 
-  for (const refSheet of refSheets) {
-    refSheet.active = refSheet.id === id
-    await request.server.db.getRepository(RefSheet).save(refSheet)
+  for (const sheet of refSheets) {
+    sheet.active = sheet.id === id
+    await request.server.db.getRepository(RefSheet).save(sheet)
   }
 
   return reply.code(200).send({ message: "Ref sheet set as main" })

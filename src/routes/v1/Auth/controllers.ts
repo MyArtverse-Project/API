@@ -4,7 +4,11 @@ import { type FastifyReply, type FastifyRequest } from "fastify"
 import { Auth, User } from "../../../models"
 import { welcome, forgotPassword as forgot } from "../../../utils"
 import { withEffectiveUploadLimit } from "../../../utils/uploadLimits"
-import { accessTokenOptions, refreshTokenOptions } from "../../../utils/auth"
+import {
+  ACCESS_TOKEN_EXPIRES_IN,
+  accessTokenOptions,
+  refreshTokenOptions,
+} from "../../../utils/auth"
 import { getApiBaseUrl, getFrontendOrigin } from "../../../utils/config"
 import { OAuth2Namespace } from "@fastify/oauth2"
 import { providers } from "../../../config/oauth"
@@ -13,7 +17,6 @@ import { providers } from "../../../config/oauth"
 
 export const refreshToken = async (request: FastifyRequest, reply: FastifyReply) => {
   const { refreshToken } = request.cookies
-  console.log(request.cookies)
   if (!refreshToken) {
     return reply.code(401).send({ error: "Unauthorized" })
   }
@@ -32,7 +35,10 @@ export const refreshToken = async (request: FastifyRequest, reply: FastifyReply)
       return reply.code(401).send({ error: "Unauthorized" })
     }
 
-    const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
+    const accessToken = request.server.jwt.sign(
+      { id: user.id },
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+    )
 
     return reply
       .code(200)
@@ -78,7 +84,10 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.code(401).send({ error: "You must be verified to login" })
   }
 
-  const accessToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "10m" })
+  const accessToken = request.server.jwt.sign(
+    { id: user.id },
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+  )
   const refreshToken = request.server.jwt.sign({ id: user.id }, { expiresIn: "7d" })
 
   // Return the token
@@ -286,15 +295,16 @@ export const validate = async (request: FastifyRequest, reply: FastifyReply) => 
 }
 
 export const changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
-  const body = request.body as { newPassword: string; userId: string }
+  const authenticatedUser = request.user as { id: string }
+  const body = request.body as { newPassword: string }
   if (!body.newPassword) {
     return reply.code(400).send({ error: "New password is required" })
   }
 
-  const { newPassword, userId } = body
+  const { newPassword } = body
   const user = await request.server.db
     .getRepository(Auth)
-    .findOne({ where: { id: userId } })
+    .findOne({ where: { id: authenticatedUser.id } })
 
   if (!user) {
     return reply.code(400).send({ error: "User not found" })
@@ -426,8 +436,6 @@ export const loginWithOAuth = async (request: FastifyRequest, reply: FastifyRepl
       return reply.code(400).send({ error: "Failed to retrieve user info" })
     }
 
-    console.log(userInfo)
-
     let auth = await request.server.db.getRepository(Auth).findOne({
       where: { email: userInfo.email }
     })
@@ -465,7 +473,10 @@ export const loginWithOAuth = async (request: FastifyRequest, reply: FastifyRepl
       return reply.code(500).send({ error: "Error finding user profile" })
     }
 
-    const accessToken = request.server.jwt.sign({ id: auth.id }, { expiresIn: "10m" })
+    const accessToken = request.server.jwt.sign(
+      { id: auth.id },
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+    )
     const refreshToken = request.server.jwt.sign({ id: auth.id }, { expiresIn: "7d" })
 
     return reply
@@ -475,7 +486,7 @@ export const loginWithOAuth = async (request: FastifyRequest, reply: FastifyRepl
         `${getFrontendOrigin()}/@${profileData.handle}`
       )
   } catch (error) {
-    console.error(`OAuth Error (${provider}):`, error)
+    request.log.error({ err: error, provider }, "OAuth authentication failed")
     return reply.code(500).send({ error: "OAuth authentication failed" })
   }
 }

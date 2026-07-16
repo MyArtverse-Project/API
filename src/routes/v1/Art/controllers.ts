@@ -29,11 +29,16 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
     }
 
   const character = await request.server.db.getRepository(Character).findOne({
-    where: { id: characterId }
+    where: { id: characterId },
+    relations: { owner: true },
   })
 
   if (!character) {
     return reply.code(404).send({ error: "Character not found" })
+  }
+
+  if (character.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   const user = await request.server.db.getRepository(User).findOne({
@@ -50,6 +55,10 @@ export const uploadArt = async (request: FastifyRequest, reply: FastifyReply) =>
 
   if (!image) {
     return reply.code(404).send({ error: "Image not found" })
+  }
+
+  if (!image.url.includes(`/${profileId}/`)) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   const artwork = await request.server.db.getRepository(Artwork).save({
@@ -244,6 +253,7 @@ export const commentArtwork = async (request: FastifyRequest, reply: FastifyRepl
 
 // TODO: Only call this if user agreed to be featured or user is mutuals
 export const featureCharacter = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
   const { artworkId, characterId } = request.params as {
     artworkId: string
     characterId: string
@@ -256,8 +266,9 @@ export const featureCharacter = async (request: FastifyRequest, reply: FastifyRe
   const artwork = await request.server.db.getRepository(Artwork).findOne({
     where: { id: artworkId },
     relations: {
-      charactersFeatured: true
-    }
+      charactersFeatured: true,
+      owner: true,
+    },
   })
 
   const character = await request.server.db.getRepository(Character).findOne({
@@ -266,6 +277,10 @@ export const featureCharacter = async (request: FastifyRequest, reply: FastifyRe
 
   if (!artwork || !character) {
     return reply.code(404).send({ error: "Artwork or character not found" })
+  }
+
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   if (!artwork.charactersFeatured) {
@@ -286,6 +301,7 @@ export const unfeatureCharacter = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
+  const { profileId } = request.user as { profileId: string }
   const { artworkId, characterId } = request.params as {
     artworkId: string
     characterId: string
@@ -298,8 +314,9 @@ export const unfeatureCharacter = async (
   const artwork = await request.server.db.getRepository(Artwork).findOne({
     where: { id: artworkId },
     relations: {
-      charactersFeatured: true
-    }
+      charactersFeatured: true,
+      owner: true,
+    },
   })
 
   const character = await request.server.db.getRepository(Character).findOne({
@@ -308,6 +325,10 @@ export const unfeatureCharacter = async (
 
   if (!artwork || !character) {
     return reply.code(404).send({ error: "Artwork or character not found" })
+  }
+
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   if (!artwork.charactersFeatured) {
@@ -475,13 +496,15 @@ export const deleteArtwork = async (request: FastifyRequest, reply: FastifyReply
 }
 
 export const assignArtist = async (request: FastifyRequest, reply: FastifyReply) => {
+  const { profileId } = request.user as { profileId: string }
   const { artworkId, artistId } = request.params as {
     artworkId: string
     artistId: string
   }
 
   const artwork = await request.server.db.getRepository(Artwork).findOne({
-    where: { id: artworkId }
+    where: { id: artworkId },
+    relations: { owner: true },
   })
 
   const artist = await request.server.db.getRepository(User).findOne({
@@ -490,6 +513,10 @@ export const assignArtist = async (request: FastifyRequest, reply: FastifyReply)
 
   if (!artwork || !artist) {
     return reply.code(404).send({ error: "Artwork or artist not found" })
+  }
+
+  if (artwork.owner?.id !== profileId) {
+    return reply.code(403).send({ error: "Forbidden" })
   }
 
   artwork.artist = null
