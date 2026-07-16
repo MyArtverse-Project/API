@@ -19,6 +19,8 @@ export const refreshTokenOptions: CookieSerializeOptions = {
   secure: true
 }
 
+export const ACCESS_TOKEN_EXPIRES_IN = "10m" as const
+
 /** Cookie jar from @fastify/cookie, or Cookie header (Next.js server actions). */
 const getAccessToken = (request: FastifyRequest): string | undefined => {
   const authorization = request.headers.authorization
@@ -117,7 +119,10 @@ async function refreshTokenLogic(request: FastifyRequest, reply: FastifyReply, f
 
     if (!auth) return force401 ? reply.code(401).send({ error: "Unauthorized" }) : null
 
-    const newAccessToken = request.server.jwt.sign({ id: payload.id })
+    const newAccessToken = request.server.jwt.sign(
+      { id: payload.id },
+      { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+    )
     reply.setCookie("accessToken", newAccessToken, accessTokenOptions)
 
     request.user = { id: payload.id, profileId: auth.user.id }
