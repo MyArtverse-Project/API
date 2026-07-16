@@ -11,6 +11,7 @@ import { S3Client } from "@aws-sdk/client-s3"
 import { fastifyCookie, type FastifyCookieOptions } from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
 import fastifyJwt from "@fastify/jwt"
+import rateLimit from "@fastify/rate-limit"
 import multipart from "@fastify/multipart"
 import swagger from "@fastify/swagger"
 import swaggerUI from "@fastify/swagger-ui"
@@ -115,6 +116,17 @@ const app = async () => {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
+  })
+
+  server.register(rateLimit, {
+    global: true,
+    max: 200,
+    timeWindow: "1 minute",
+    errorResponseBuilder: (_request, context) => ({
+      statusCode: 429,
+      error: "Too Many Requests",
+      message: `Rate limit exceeded. Retry in ${context.after}.`,
+    }),
   })
 
   // Multer
